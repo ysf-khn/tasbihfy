@@ -1,0 +1,48 @@
+{
+  "source": "https://sunnah.com/hisn",
+  "title": "Hisnul Muslim - Fortress of the Muslim",
+  "extractedAt": "2025-08-29",
+  "totalChapters": 132,
+  "notes": "This is a starter template. You can manually add more duas or chapters as needed.",
+  "chapters": [
+    {
+      "id": 1,
+      "title": "When waking up",
+      "duas": [
+        {
+          "id": 1,
+          "arabic": "الحَمْـدُ لِلّهِ الّذي أَحْـيانا بَعْـدَ ما أَماتَـنا وَإليه النُّـشور",
+          "translation": "Praise is to Allah Who gives us life after He has caused us to die and to Him is the return",
+          "transliteration": "Alhamdu lillaahil-lathee ahyaanaa ba'da maa amaatanaa wa-ilayhin-nushoor",
+          "reference": "Al-Bukhari, cf. Al-Asqalani, Fathul-Bari 11/113; Muslim 4/2083"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Supplication when wearing a garment",
+      "duas": [
+        {
+          "id": 2,
+          "arabic": "الحمدُ للهِ الّذي كَساني هذا (الثّوب) وَرَزَقَنيه مِنْ غَـيـْرِ حَولٍ مِنّي وَلا قـوّة",
+          "translation": "Praise is to Allah Who has clothed me with this (garment) and provided it for me, though I was powerless myself and incapable",
+          "transliteration": "Alhamdu lillaahil-lathee kasaanee haatha (ath-thawb) wa razaqaneehi min ghayri hawlin minnee wa laa quwwah",
+          "reference": "Abu Dawud 4/41, At-Tirmidhi 5/504"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "What to say when wearing a new garment",
+      "duas": [
+        {
+          "id": 3,
+          "arabic": "اللّهُـمَّ لَكَ الحَمْـدُ أَنْـتَ كَسَـوْتَنيهِ، أَسْـأَلُـكَ مِنْ خَـيْرِهِ وَخَـيْرِ ما صُنِعَ لَـه، وَأَعـوذُ بِكَ مِنْ شَـرِّهِ وَشَـرِّ ما صُنِعَ لَـه",
+          "translation": "O Allah, praise is to You. You have clothed me. I ask You for its goodness and the goodness of what it has been made for, and I seek Your protection from the evil of it and the evil of what it has been made for",
+          "transliteration": "Allaahumma lakal-hamdu anta kasawtaneehi, as-aluka min khayrihi wa khayri maa suni'a lah, wa a'oothu bika min sharrihi wa sharri maa suni'a lah",
+          "reference": "Abu Dawud 4/41, At-Tirmidhi 5/504"
+        }
+      ]
+    }
+  ]
+}

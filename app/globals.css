@@ -1,26 +1,56 @@
 @import "tailwindcss";
+@plugin "daisyui" {
+  themes: all;
+}
 
+/* Set default theme to a warm, friendly one */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+[data-theme="cupcake"] {
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Apply the Bricolage Grotesque font */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-bricolage-grotesque), system-ui, sans-serif;
+}
+
+/* Arabic text base styles */
+.arabic {
+  direction: rtl;
+  text-align: right;
+  line-height: 1.8;
+  transition: all 0.2s ease;
+}
+
+/* Arabic font variants with higher specificity */
+.arabic.arabic-naskh {
+  font-family: var(--font-arabic-naskh), 'Noto Naskh Arabic', 'Times New Roman', serif;
+  line-height: 1.8;
+}
+
+.arabic.arabic-nastaliq {
+  font-family: var(--font-arabic-nastaliq), 'Noto Nastaliq Urdu', 'Times New Roman', serif;
+  line-height: 2.0; /* Nastaliq needs more space */
+}
+
+/* Improved Arabic display for counter */
+.arabic-counter {
+  direction: rtl;
+  text-align: center;
+  line-height: 1.6;
+  transition: all 0.2s ease;
+}
+
+/* Responsive Arabic text */
+@media (max-width: 640px) {
+  .arabic {
+    line-height: 1.7;
+  }
+  
+  .arabic.arabic-nastaliq {
+    line-height: 1.9;
+  }
 }

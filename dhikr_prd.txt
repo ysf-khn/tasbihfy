@@ -1,0 +1,91 @@
+Dhikr App Implementation Plan                                                                                                                                 │ │
+│ │                                                                                                                                                               │ │
+│ │ Tech Stack                                                                                                                                                    │ │
+│ │                                                                                                                                                               │ │
+│ │ - Frontend: Next.js 14+ (App Router)                                                                                                                          │ │
+│ │ - UI: DaisyUI + Tailwind CSS                                                                                                                                  │ │
+│ │ - Auth: Better Auth                                                                                                                                           │ │
+│ │ - Database: PostgreSQL with Prisma ORM                                                                                                                        │ │
+│ │ - Animations: Canvas Confetti for completion                                                                                                                  │ │
+│ │ - State: React hooks + Context API                                                                                                                            │ │
+│ │ - PWA: next-pwa for offline support                                                                                                                           │ │
+│ │                                                                                                                                                               │ │
+│ │ Database Schema                                                                                                                                               │ │
+│ │                                                                                                                                                               │ │
+│ │ User                                                                                                                                                          │ │
+│ │ - id, email, name, password (managed by Better Auth)                                                                                                          │ │
+│ │                                                                                                                                                               │ │
+│ │ Dhikr                                                                                                                                                         │ │
+│ │ - id, userId, name, targetCount, createdAt, updatedAt                                                                                                         │ │
+│ │                                                                                                                                                               │ │
+│ │ DhikrSession                                                                                                                                                  │ │
+│ │ - id, dhikrId, userId, currentCount, completed, startedAt, completedAt                                                                                        │ │
+│ │                                                                                                                                                               │ │
+│ │ Project Structure                                                                                                                                             │ │
+│ │                                                                                                                                                               │ │
+│ │ /app                                                                                                                                                          │ │
+│ │   /api                                                                                                                                                        │ │
+│ │     /auth/[...all]/route.ts - Better Auth endpoints                                                                                                           │ │
+│ │     /dhikrs/route.ts - CRUD for dhikrs                                                                                                                        │ │
+│ │     /sessions/route.ts - Session management                                                                                                                   │ │
+│ │   /(auth)                                                                                                                                                     │ │
+│ │     /login/page.tsx                                                                                                                                           │ │
+│ │     /register/page.tsx                                                                                                                                        │ │
+│ │   /(dashboard)                                                                                                                                                │ │
+│ │     /page.tsx - Main counter screen                                                                                                                           │ │
+│ │     /dhikrs/page.tsx - Manage saved dhikrs                                                                                                                    │ │
+│ │   /layout.tsx                                                                                                                                                 │ │
+│ │   /providers.tsx                                                                                                                                              │ │
+│ │   /manifest.json - PWA manifest                                                                                                                               │ │
+│ │                                                                                                                                                               │ │
+│ │ /components                                                                                                                                                   │ │
+│ │   /counter/DhikrCounter.tsx - Main counting interface                                                                                                         │ │
+│ │   /dhikr/DhikrList.tsx - List of saved dhikrs                                                                                                                 │ │
+│ │   /dhikr/DhikrCard.tsx - Individual dhikr card                                                                                                                │ │
+│ │   /ui/Confetti.tsx - Completion animation                                                                                                                     │ │
+│ │                                                                                                                                                               │ │
+│ │ /lib                                                                                                                                                          │ │
+│ │   /auth.ts - Better Auth configuration                                                                                                                        │ │
+│ │   /db.ts - Prisma client                                                                                                                                      │ │
+│ │                                                                                                                                                               │ │
+│ │ /prisma                                                                                                                                                       │ │
+│ │   schema.prisma - Database schema                                                                                                                             │ │
+│ │                                                                                                                                                               │ │
+│ │ /public                                                                                                                                                       │ │
+│ │   /icons - PWA icons (various sizes)                                                                                                                          │ │
+│ │   /sw.js - Service worker for offline support                                                                                                                 │ │
+│ │                                                                                                                                                               │ │
+│ │ Implementation Steps                                                                                                                                          │ │
+│ │                                                                                                                                                               │ │
+│ │ 1. Initialize Next.js project with TypeScript, Tailwind CSS, and DaisyUI                                                                                      │ │
+│ │ 2. Set up PostgreSQL database and Prisma ORM                                                                                                                  │ │
+│ │ 3. Configure Better Auth with email/password authentication                                                                                                   │ │
+│ │ 4. Set up PWA configuration with next-pwa for offline support                                                                                                 │ │
+│ │ 5. Create database models for User, Dhikr, and DhikrSession                                                                                                   │ │
+│ │ 6. Build authentication pages (login/register)                                                                                                                │ │
+│ │ 7. Create main counter interface with tap-to-increment functionality                                                                                          │ │
+│ │ 8. Implement dhikr management (create, edit, delete saved dhikrs)                                                                                             │ │
+│ │ 9. Add session tracking to save progress                                                                                                                      │ │
+│ │ 10. Implement confetti animation on completion                                                                                                                │ │
+│ │ 11. Configure service worker for offline caching of app shell and data                                                                                        │ │
+│ │ 12. Add responsive design for mobile-first experience                                                                                                         │ │
+│ │                                                                                                                                                               │ │
+│ │ Key Features                                                                                                                                                  │ │
+│ │                                                                                                                                                               │ │
+│ │ - PWA with offline support - Works without internet connection                                                                                                │ │
+│ │ - Install prompt - Can be installed on mobile/desktop like native app                                                                                         │ │
+│ │ - Clean, minimalist UI with large tap area for counting                                                                                                       │ │
+│ │ - Visual progress indicator showing current/target count                                                                                                      │ │
+│ │ - Haptic feedback on mobile devices (vibration on tap)                                                                                                        │ │
+│ │ - Dark mode support via DaisyUI themes                                                                                                                        │ │
+│ │ - Local storage sync for offline data persistence                                                                                                             │ │
+│ │ - Background sync when connection restored                                                                                                                    │ │
+│ │                                                                                                                                                               │ │
+│ │ PWA Features                                                                                                                                                  │ │
+│ │                                                                                                                                                               │ │
+│ │ - Service worker for offline functionality                                                                                                                    │ │
+│ │ - Cache API for storing app shell and static assets                                                                                                           │ │
+│ │ - IndexedDB for offline data storage                                                                                                                          │ │
+│ │ - Background sync for data synchronization                                                                                                                    │ │
+│ │ - Web app manifest for installation                                                                                                                           │ │
+│ │ - Push notifications (optional, for dhikr reminders) 
