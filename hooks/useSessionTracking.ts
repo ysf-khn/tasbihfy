@@ -125,7 +125,7 @@ export function useSessionTracking({
     } finally {
       setIsLoading(false)
     }
-  }, [dhikrId, user])
+  }, [dhikrId, user, tempDhikr])
 
   // Create new session
   const createSession = useCallback(async (count = 0) => {
@@ -231,11 +231,6 @@ export function useSessionTracking({
     loadSession()
   }, [loadSession])
 
-  // Update loadSession dependency when tempDhikr changes
-  useEffect(() => {
-    loadSession()
-  }, [tempDhikr])
-
   // Save on important events
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -288,6 +283,8 @@ export function useSessionTracking({
     resetCount,
     saveProgress: () => saveProgress(),
     dhikrName,
-    targetCount
+    targetCount,
+    arabicText: dhikr?.arabicText,
+    transliteration: dhikr?.transliteration
   }
 }

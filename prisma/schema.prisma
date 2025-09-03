@@ -29,6 +29,7 @@ model User {
   dhikrs    Dhikr[]
   dhikrSessions DhikrSession[]
   dailyProgress DailyProgress[]
+  prayerLocation PrayerLocation?
 }
 
 model Account {
@@ -68,13 +69,15 @@ model VerificationToken {
 
 // Dhikr App models
 model Dhikr {
-  id          String   @id @default(cuid())
-  userId      String
-  name        String
-  targetCount Int
-  isFavorite  Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  userId         String
+  name           String
+  targetCount    Int
+  isFavorite     Boolean  @default(false)
+  arabicText     String?  @db.Text
+  transliteration String? @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
   user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -121,4 +124,49 @@ model DailyProgress {
   @@unique([userId, dhikrId, date])
   @@index([userId, date])
   @@index([dhikrId])
+}
+
+// Prayer Times models
+model PrayerLocation {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  name        String   // e.g., "London", "New York"
+  latitude    String
+  longitude   String
+  timezone    String?
+  country     String?
+  countryCode String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+}
+
+model PrayerTimeCache {
+  id               String   @id @default(cuid())
+  locationQuery    String   // location parameter used in API call
+  date             DateTime @db.Date
+  fajr             String
+  shurooq          String
+  dhuhr            String
+  asr              String
+  maghrib          String
+  isha             String
+  qiblaDirection   String?
+  latitude         String?
+  longitude        String?
+  timezone         String?
+  country          String?
+  countryCode      String?
+  temperature      String?
+  pressure         String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([locationQuery, date])
+  @@index([date])
+  @@index([locationQuery])
 }

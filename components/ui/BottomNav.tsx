@@ -2,22 +2,26 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  HomeIcon, 
+import {
+  HomeIcon,
   BookOpenIcon,
-  CalendarIcon, 
-  Cog6ToothIcon 
+  CalendarIcon,
+  ClockIcon,
+  Cog6ToothIcon,
+  DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 import {
   HomeIcon as HomeIconSolid,
   BookOpenIcon as BookOpenIconSolid,
   CalendarIcon as CalendarIconSolid,
-  Cog6ToothIcon as Cog6ToothIconSolid
+  ClockIcon as ClockIconSolid,
+  Cog6ToothIcon as Cog6ToothIconSolid,
+  DocumentTextIcon as DocumentTextIconSolid,
 } from "@heroicons/react/24/solid";
 
 export default function BottomNav() {
   const pathname = usePathname();
-  
+
   const isActive = (path: string) => {
     if (path === "/") {
       return pathname === "/";
@@ -33,16 +37,22 @@ export default function BottomNav() {
       activeIcon: HomeIconSolid,
     },
     {
-      name: "Duas",
-      path: "/duas",
+      name: "Prayer",
+      path: "/prayer",
+      icon: ClockIcon,
+      activeIcon: ClockIconSolid,
+    },
+    {
+      name: "Quran",
+      path: "/quran",
       icon: BookOpenIcon,
       activeIcon: BookOpenIconSolid,
     },
     {
-      name: "Daily",
-      path: "/daily",
-      icon: CalendarIcon,
-      activeIcon: CalendarIconSolid,
+      name: "Duas",
+      path: "/duas",
+      icon: DocumentTextIcon,
+      activeIcon: DocumentTextIconSolid,
     },
     {
       name: "Settings",
@@ -58,14 +68,14 @@ export default function BottomNav() {
         {navItems.map((item) => {
           const active = isActive(item.path);
           const IconComponent = active ? item.activeIcon : item.icon;
-          
+
           return (
             <Link
               key={item.path}
               href={item.path}
               className={`flex flex-col items-center px-4 py-2 rounded-lg transition-colors duration-200 ${
-                active 
-                  ? "text-primary" 
+                active
+                  ? "text-base-content"
                   : "text-base-content/60 hover:text-base-content"
               }`}
             >

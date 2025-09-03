@@ -5,14 +5,53 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { signOut } from "@/lib/auth-client";
 import PageHeader from "@/components/ui/PageHeader";
 import ArabicTextControls from "@/components/ui/ArabicTextControls";
-import { 
+import Link from "next/link";
+import {
   ChevronLeftIcon,
   ChevronRightIcon,
   HeartIcon,
   ChartBarIcon,
   BellIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  EnvelopeIcon,
 } from "@heroicons/react/24/outline";
+import type { ComponentType, SVGProps } from "react";
+
+// Type definitions for settings items
+type IconType = ComponentType<SVGProps<SVGSVGElement>>;
+
+type LinkSettingsItem = {
+  type: 'link';
+  icon: IconType;
+  label: string;
+  href: string;
+  subtitle?: string;
+  hasChevron: boolean;
+};
+
+type ButtonSettingsItem = {
+  type: 'button';
+  icon: IconType;
+  label: string;
+  onClick: () => void;
+  hasChevron: boolean;
+};
+
+type ToggleSettingsItem = {
+  type: 'toggle';
+  icon: IconType;
+  label: string;
+  hasToggle: true;
+  toggleValue: boolean;
+  onToggle: (value: boolean) => void;
+};
+
+type SettingsItem = LinkSettingsItem | ButtonSettingsItem | ToggleSettingsItem;
+
+type SettingsSection = {
+  title: string;
+  items: SettingsItem[];
+};
 
 export default function SettingsPage() {
   const [dailyReminder, setDailyReminder] = useState(true);
@@ -22,17 +61,19 @@ export default function SettingsPage() {
     await signOut();
   };
 
-  const settingSections = [
+  const settingSections: SettingsSection[] = [
     {
       title: "GENERAL",
       items: [
         {
+          type: 'button',
           icon: HeartIcon,
           label: "Favorites",
           hasChevron: true,
           onClick: () => console.log("Favorites clicked"),
         },
         {
+          type: 'button',
           icon: ChartBarIcon,
           label: "Daily Goal",
           hasChevron: true,
@@ -44,6 +85,7 @@ export default function SettingsPage() {
       title: "NOTIFICATIONS",
       items: [
         {
+          type: 'toggle',
           icon: BellIcon,
           label: "Daily Reminder",
           hasToggle: true,
@@ -56,10 +98,24 @@ export default function SettingsPage() {
       title: "ABOUT",
       items: [
         {
+          type: 'link',
           icon: InformationCircleIcon,
           label: "About Tasbihfy",
           hasChevron: true,
-          onClick: () => console.log("About clicked"),
+          href: "/about",
+        },
+      ],
+    },
+    {
+      title: "SUPPORT",
+      items: [
+        {
+          type: 'link',
+          icon: EnvelopeIcon,
+          label: "Contact Developer",
+          subtitle: "yusuf@tasbihfy.com",
+          hasChevron: true,
+          href: "mailto:yusuf@tasbihfy.com",
         },
       ],
     },
@@ -69,11 +125,10 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-base-200">
       <PageHeader />
       <div>
-
         {/* Content */}
         <div className="p-6 space-y-8">
           <h2 className="text-2xl font-bold text-base-content">Settings</h2>
-          
+
           {/* Arabic Text Settings */}
           <div className="space-y-4">
             <h3 className="text-xs font-semibold text-base-content/60 uppercase tracking-wider px-2">
@@ -81,7 +136,7 @@ export default function SettingsPage() {
             </h3>
             <ArabicTextControls />
           </div>
-          
+
           {settingSections.map((section, sectionIndex) => (
             <div key={sectionIndex} className="space-y-4">
               {/* Section Header */}
@@ -93,32 +148,67 @@ export default function SettingsPage() {
               <div className="bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden">
                 {section.items.map((item, itemIndex) => (
                   <div key={itemIndex}>
-                    <button
-                      className="w-full flex items-center justify-between p-6 hover:bg-base-200 transition-colors"
-                      onClick={item.onClick}
-                      disabled={item.hasToggle}
-                    >
-                      {/* Left side: Icon and Label */}
-                      <div className="flex items-center gap-4">
-                        <item.icon className="w-6 h-6 text-base-content/70" />
-                        <span className="text-base font-medium text-base-content">
-                          {item.label}
-                        </span>
-                      </div>
+                    {item.type === 'link' ? (
+                      <Link href={item.href} className="block">
+                        <div className="w-full flex items-center justify-between p-6 hover:bg-base-200 transition-colors">
+                          {/* Left side: Icon and Label */}
+                          <div className="flex items-center gap-4">
+                            <item.icon className="w-6 h-6 text-base-content/70" />
+                            <div>
+                              <span className="text-base font-medium text-base-content">
+                                {item.label}
+                              </span>
+                              {item.subtitle && (
+                                <div className="text-sm text-base-content/60">
+                                  {item.subtitle}
+                                </div>
+                              )}
+                            </div>
+                          </div>
 
-                      {/* Right side: Toggle or Chevron */}
-                      {item.hasToggle ? (
+                          {/* Right side: Chevron */}
+                          {item.hasChevron && (
+                            <ChevronRightIcon className="w-5 h-5 text-base-content/40" />
+                          )}
+                        </div>
+                      </Link>
+                    ) : item.type === 'toggle' ? (
+                      <div className="w-full flex items-center justify-between p-6">
+                        {/* Left side: Icon and Label */}
+                        <div className="flex items-center gap-4">
+                          <item.icon className="w-6 h-6 text-base-content/70" />
+                          <span className="text-base font-medium text-base-content">
+                            {item.label}
+                          </span>
+                        </div>
+
+                        {/* Right side: Toggle */}
                         <input
                           type="checkbox"
                           className="toggle toggle-primary"
                           checked={item.toggleValue}
-                          onChange={(e) => item.onToggle?.(e.target.checked)}
-                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => item.onToggle(e.target.checked)}
                         />
-                      ) : item.hasChevron ? (
-                        <ChevronRightIcon className="w-5 h-5 text-base-content/40" />
-                      ) : null}
-                    </button>
+                      </div>
+                    ) : (
+                      <button
+                        className="w-full flex items-center justify-between p-6 hover:bg-base-200 transition-colors"
+                        onClick={item.onClick}
+                      >
+                        {/* Left side: Icon and Label */}
+                        <div className="flex items-center gap-4">
+                          <item.icon className="w-6 h-6 text-base-content/70" />
+                          <span className="text-base font-medium text-base-content">
+                            {item.label}
+                          </span>
+                        </div>
+
+                        {/* Right side: Chevron */}
+                        {item.hasChevron && (
+                          <ChevronRightIcon className="w-5 h-5 text-base-content/40" />
+                        )}
+                      </button>
+                    )}
 
                     {/* Divider (except for last item) */}
                     {itemIndex < section.items.length - 1 && (
@@ -136,7 +226,7 @@ export default function SettingsPage() {
               <h2 className="text-xs font-semibold text-base-content/60 uppercase tracking-wider px-2">
                 ACCOUNT
               </h2>
-              
+
               <div className="bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden">
                 {/* User Info */}
                 <div className="p-6 border-b border-base-200">
@@ -147,8 +237,12 @@ export default function SettingsPage() {
                       </span>
                     </div>
                     <div>
-                      <div className="font-semibold text-base-content">{user.name || "User"}</div>
-                      <div className="text-sm text-base-content/70">{user.email}</div>
+                      <div className="font-semibold text-base-content">
+                        {user.name || "User"}
+                      </div>
+                      <div className="text-sm text-base-content/70">
+                        {user.email}
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -5,7 +5,7 @@ import type { Dhikr, DhikrSession } from "@prisma/client";
 import { HeartIcon } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 
-interface DhikrWithSession extends Dhikr {
+interface DhikrWithSession extends Omit<Dhikr, 'isFavorite'> {
   sessions: DhikrSession[];
   isFavorite?: boolean;
 }

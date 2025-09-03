@@ -48,9 +48,11 @@ interface ArabicSettingsProviderProps {
 
 export function ArabicSettingsProvider({ children }: ArabicSettingsProviderProps) {
   const [settings, setSettings] = useState<ArabicSettings>(defaultSettings);
+  const [mounted, setMounted] = useState(false);
 
   // Load settings from localStorage on mount
   useEffect(() => {
+    setMounted(true);
     try {
       const saved = localStorage.getItem("arabic-text-settings");
       if (saved) {
@@ -62,10 +64,12 @@ export function ArabicSettingsProvider({ children }: ArabicSettingsProviderProps
     }
   }, []);
 
-  // Save settings to localStorage whenever they change
+  // Save settings to localStorage whenever they change (only after mounted)
   useEffect(() => {
-    localStorage.setItem("arabic-text-settings", JSON.stringify(settings));
-  }, [settings]);
+    if (mounted) {
+      localStorage.setItem("arabic-text-settings", JSON.stringify(settings));
+    }
+  }, [settings, mounted]);
 
   const toggleFont = () => {
     setSettings(prev => ({

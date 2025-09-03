@@ -56,12 +56,11 @@ export default function ChapterPage() {
   };
 
   const startDhikr = (dua: any) => {
-    // Navigate to counter with temporary dhikr
+    // Navigate to counter with temporary dhikr using IDs only
     const searchParams = new URLSearchParams({
       temp: "true",
-      text: dua.translation,
-      arabic: dua.arabic,
-      source: `Hisnul Muslim - ${dua.hisnNumber}`,
+      chapterId: chapter.id.toString(),
+      duaId: dua.id.toString(),
     });
     router.push(`/?${searchParams.toString()}`);
   };

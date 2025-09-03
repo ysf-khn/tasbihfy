@@ -25,20 +25,6 @@ export const greetings = {
 };
 
 export const encouragements = {
-  start: [
-    "Bismillah, let's begin!",
-    "In the name of Allah, start your dhikr",
-    "May Allah make this easy for you",
-    "Begin with the name of Allah",
-  ],
-  progress: [
-    "MashaAllah! Keep going!",
-    "SubhanAllah! You're doing wonderfully",
-    "May Allah reward your efforts",
-    "Your dhikr is beautiful",
-    "Allah sees your dedication",
-    "Keep up the great work!",
-  ],
   milestones: {
     25: [
       "MashaAllah! Quarter way there!",
@@ -54,6 +40,34 @@ export const encouragements = {
       "SubhanAllah! Almost there!",
       "MashaAllah! Your dedication shines!",
       "May Allah accept your dhikr",
+    ],
+  },
+  instantTasbih: {
+    10: [
+      "SubhanAllah! Great start!",
+      "MashaAllah! 10 counts reached!",
+      "May Allah bless your dhikr",
+    ],
+    33: [
+      "SubhanAllah! 33 - A blessed number!",
+      "MashaAllah! Like the 33 dhikrs after prayer!",
+      "33 times - beautifully done!",
+    ],
+    50: [
+      "Alhamdulillah! Halfway to 100!",
+      "MashaAllah! 50 counts completed!",
+      "Your dedication is inspiring!",
+    ],
+    67: [
+      "Keep going! Allah sees your dedication!",
+      "SubhanAllah! 67 and counting!",
+      "May Allah reward your persistence!",
+    ],
+    100: [
+      "SubhanAllah! 100 counts reached!",
+      "MashaAllah! A century of dhikr!",
+      "Alhamdulillah! 100 times completed!",
+      "Your heart is filled with dhikr!",
     ],
   },
   completion: [
@@ -123,5 +137,29 @@ export const getMilestoneMessage = (percentage: number): string => {
   } else if (percentage >= 25) {
     return getRandomMessage(encouragements.milestones[25]);
   }
-  return getRandomMessage(encouragements.progress);
+  return "";
+};
+
+export const getInstantTasbihMilestone = (count: number): string => {
+  if (count === 10) {
+    return getRandomMessage(encouragements.instantTasbih[10]);
+  } else if (count === 33) {
+    return getRandomMessage(encouragements.instantTasbih[33]);
+  } else if (count === 50) {
+    return getRandomMessage(encouragements.instantTasbih[50]);
+  } else if (count === 67) {
+    return getRandomMessage(encouragements.instantTasbih[67]);
+  } else if (count === 100) {
+    return getRandomMessage(encouragements.instantTasbih[100]);
+  } else if (count > 100 && count % 25 === 0) {
+    // Every 25 after 100: 125, 150, 175, etc.
+    const messages = [
+      `MashaAllah! ${count} counts completed!`,
+      `SubhanAllah! ${count} times - amazing dedication!`,
+      `Alhamdulillah! ${count} dhikr and counting!`,
+      `May Allah accept your ${count} counts!`,
+    ];
+    return getRandomMessage(messages);
+  }
+  return "";
 };

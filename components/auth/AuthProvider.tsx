@@ -23,7 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user: session?.user || null,
-        session: session || null,
+        session: session?.session || null,
         isLoading,
       }}
     >

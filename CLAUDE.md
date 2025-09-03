@@ -123,3 +123,7 @@ Fully functional dhikr counting app with:
 - 🔄 PWA features (next-pwa installed but not fully configured)
 
 The PRD document (`dhikr_prd.txt`) contains the original implementation plan and feature specifications.
+
+
+- DO NOT USE GRADIENTS IN THE APP
+- Do NOT hardcode colors, use daisy ui semantic color system

@@ -5,7 +5,9 @@ import { z } from 'zod'
 
 const createDhikrSchema = z.object({
   name: z.string().min(1).max(100),
-  targetCount: z.number().int().min(1).max(10000)
+  targetCount: z.number().int().min(1).max(10000),
+  arabic: z.string().optional(),
+  transliteration: z.string().optional()
 })
 
 export async function GET(request: NextRequest) {
@@ -48,12 +50,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, targetCount } = createDhikrSchema.parse(body)
+    const { name, targetCount, arabic, transliteration } = createDhikrSchema.parse(body)
 
     const dhikr = await prisma.dhikr.create({
       data: {
         name,
         targetCount,
+        arabicText: arabic,
+        transliteration,
         userId: session.user.id
       }
     })
@@ -61,7 +65,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(dhikr, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 })
+      return NextResponse.json({ error: error.issues }, { status: 400 })
     }
     console.error('Error creating dhikr:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

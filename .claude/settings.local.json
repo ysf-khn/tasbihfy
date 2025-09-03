@@ -4,7 +4,18 @@
       "Bash(npm install:*)",
       "mcp__playwright__browser_navigate",
       "mcp__playwright__browser_take_screenshot",
-      "mcp__playwright__browser_wait_for"
+      "mcp__playwright__browser_wait_for",
+      "Read(c:\\Users\\yusuf\\OneDrive\\Pictures\\Screenshots/**)",
+      "Read(c:\\Users\\yusuf\\OneDrive\\Pictures\\Screenshots/**)",
+      "WebFetch(domain:github.com)",
+      "Read(C:\\Users\\yusuf\\OneDrive\\Pictures\\Screenshots/**)",
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "WebFetch(domain:api-docs.quran.com)",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_evaluate",
+      "WebSearch",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

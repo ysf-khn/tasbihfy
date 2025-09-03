@@ -128,6 +128,7 @@ export const metadata: Metadata = {
     ],
     shortcut: ["/favicon.ico"],
   },
+  manifest: "/manifest.webmanifest",
   other: {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes",
@@ -159,7 +160,6 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${bricolageGrotesque.variable} ${notoNaskhArabic.variable} ${notoNastaliqUrdu.variable} antialiased`}
-        suppressHydrationWarning
       >
         <Providers>
           <ServiceWorkerRegistration />
