@@ -33,7 +33,12 @@ export async function getAccessToken(): Promise<string> {
         ? process.env.QURAN_API_CLIENT_SECRET_PROD
         : process.env.QURAN_API_CLIENT_SECRET_TEST;
 
-    if (!clientId || !clientSecret) {
+    const authUrl =
+      process.env.NODE_ENV === "production"
+        ? process.env.QURAN_API_AUTH_URL_PROD
+        : process.env.QURAN_API_AUTH_URL_TEST;
+
+    if (!clientId || !clientSecret || !authUrl) {
       throw new Error("Missing Quran API credentials in environment variables");
     }
 
@@ -46,7 +51,7 @@ export async function getAccessToken(): Promise<string> {
     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
 
     const response = await fetch(
-      "https://prelive-oauth2.quran.foundation/oauth2/token",
+      `${authUrl}/oauth2/token`,
       {
         method: "POST",
         headers: {
