@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
-import PageHeader from "@/components/ui/PageHeader";
+import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import type { Dhikr, DhikrSession } from "@prisma/client";
 import { Bars3Icon } from "@heroicons/react/24/outline";
 
@@ -126,7 +126,7 @@ export default function DailyPage() {
 
   return (
     <div className="min-h-screen bg-base-200">
-      <PageHeader />
+      <UnifiedHeader title="Daily" showSignIn={true} />
       <div>
 
         {/* Content */}

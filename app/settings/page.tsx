@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { signOut } from "@/lib/auth-client";
-import PageHeader from "@/components/ui/PageHeader";
+import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import ArabicTextControls from "@/components/ui/ArabicTextControls";
 import Link from "next/link";
 import {
@@ -123,7 +123,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-base-200">
-      <PageHeader />
+      <UnifiedHeader title="Settings" showSignIn={true} />
       <div>
         {/* Content */}
         <div className="p-6 space-y-8">
@@ -220,43 +220,81 @@ export default function SettingsPage() {
             </div>
           ))}
 
-          {/* User Info & Sign Out */}
-          {user && (
-            <div className="space-y-4">
-              <h2 className="text-xs font-semibold text-base-content/60 uppercase tracking-wider px-2">
-                ACCOUNT
-              </h2>
+          {/* User Info & Sign Out / Sign In */}
+          <div className="space-y-4">
+            <h2 className="text-xs font-semibold text-base-content/60 uppercase tracking-wider px-2">
+              ACCOUNT
+            </h2>
 
-              <div className="bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden">
-                {/* User Info */}
-                <div className="p-6 border-b border-base-200">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-                      <span className="text-primary-content font-semibold text-lg">
-                        {user.name?.charAt(0)?.toUpperCase() || "U"}
-                      </span>
-                    </div>
-                    <div>
-                      <div className="font-semibold text-base-content">
-                        {user.name || "User"}
+            <div className="bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden">
+              {user ? (
+                <>
+                  {/* User Info */}
+                  <div className="p-6 border-b border-base-200">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
+                        <span className="text-primary-content font-semibold text-lg">
+                          {user.name?.charAt(0)?.toUpperCase() || "U"}
+                        </span>
                       </div>
-                      <div className="text-sm text-base-content/70">
-                        {user.email}
+                      <div>
+                        <div className="font-semibold text-base-content">
+                          {user.name || "User"}
+                        </div>
+                        <div className="text-sm text-base-content/70">
+                          {user.email}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Sign Out */}
-                <button
-                  onClick={handleSignOut}
-                  className="w-full p-6 text-error font-medium hover:bg-base-200 transition-colors text-left"
-                >
-                  Sign Out
-                </button>
-              </div>
+                  {/* Sign Out */}
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full p-6 text-error font-medium hover:bg-base-200 transition-colors text-left"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* Guest Info */}
+                  <div className="p-6 border-b border-base-200">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-base-300 rounded-full flex items-center justify-center">
+                        <span className="text-base-content font-semibold text-lg">
+                          G
+                        </span>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-base-content">
+                          Guest User
+                        </div>
+                        <div className="text-sm text-base-content/70">
+                          Using local storage only
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sign In Prompt */}
+                  <div className="p-6">
+                    <div className="space-y-3">
+                      <h3 className="font-semibold text-base-content">
+                        Sign In to Save Your Progress
+                      </h3>
+                      <p className="text-sm text-base-content/70">
+                        Create an account to sync your dhikrs across devices and keep your progress safe.
+                      </p>
+                      <Link href="/login" className="btn btn-primary btn-sm">
+                        Sign In
+                      </Link>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

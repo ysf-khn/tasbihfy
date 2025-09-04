@@ -7,6 +7,7 @@ import PrayerTimesList from "@/components/prayer/PrayerTimesList";
 import LocationDisplay from "@/components/prayer/LocationDisplay";
 import QiblaDirection from "@/components/prayer/QiblaDirection";
 import NextPrayer from "@/components/prayer/NextPrayer";
+import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import { reverseGeocode } from "@/lib/geocoding";
 
 export default function PrayerTimesPage() {
@@ -16,10 +17,20 @@ export default function PrayerTimesPage() {
   const [error, setError] = useState<string | null>(null);
   const [location, setLocation] = useState<string>("");
 
-  // Fetch saved user location from database
+  // Fetch saved user location from database or localStorage
   const fetchSavedLocation = async () => {
-    if (!session?.user) return null;
+    if (!session?.user) {
+      // Guest mode: check localStorage
+      try {
+        const savedLocation = localStorage.getItem('tasbihfy-prayer-location');
+        return savedLocation;
+      } catch (error) {
+        console.error('Failed to fetch location from localStorage:', error);
+        return null;
+      }
+    }
     
+    // Authenticated user: check database
     try {
       const response = await fetch('/api/prayer-times/location');
       if (response.ok) {
@@ -32,10 +43,21 @@ export default function PrayerTimesPage() {
     return null;
   };
 
-  // Save user location to database
+  // Save user location to database or localStorage
   const saveUserLocation = async (locationData: PrayerTimesData) => {
-    if (!session?.user || !locationData.location) return;
+    if (!locationData.location) return;
     
+    if (!session?.user) {
+      // Guest mode: save to localStorage
+      try {
+        localStorage.setItem('tasbihfy-prayer-location', locationData.location.name);
+      } catch (error) {
+        console.error('Failed to save location to localStorage:', error);
+      }
+      return;
+    }
+    
+    // Authenticated user: save to database
     try {
       await fetch('/api/prayer-times/location', {
         method: 'POST',
@@ -94,7 +116,7 @@ export default function PrayerTimesPage() {
 
   useEffect(() => {
     const initializeLocation = async () => {
-      // First, try to get saved location from database
+      // First, try to get saved location from database or localStorage
       const savedLocation = await fetchSavedLocation();
       if (savedLocation) {
         setLocation(savedLocation);
@@ -139,10 +161,11 @@ export default function PrayerTimesPage() {
       }
     };
 
-    if (session?.user) {
+    // Initialize for both guests and authenticated users
+    if (!isSessionLoading) {
       initializeLocation();
     }
-  }, [session?.user]);
+  }, [isSessionLoading]);
 
   const handleLocationChange = (newLocation: string) => {
     setLocation(newLocation);
@@ -153,11 +176,9 @@ export default function PrayerTimesPage() {
   if (isSessionLoading) {
     return (
       <div className="min-h-screen bg-base-200 p-4">
+        <UnifiedHeader title="Prayer Times" showSignIn={true} />
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-8">
-            <h1 className="text-2xl font-bold text-base-content mb-4">
-              Prayer Times
-            </h1>
             <div className="flex justify-center py-8">
               <span className="loading loading-spinner loading-lg"></span>
             </div>
@@ -167,26 +188,11 @@ export default function PrayerTimesPage() {
     );
   }
 
-  // Show login required if no session after loading
-  if (!session?.user) {
-    return (
-      <div className="min-h-screen bg-base-200 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center py-8">
-            <h1 className="text-2xl font-bold text-base-content mb-4">
-              Prayer Times
-            </h1>
-            <p className="text-base-content/60">
-              Please log in to access prayer times
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Prayer times are now available to all users (guests and authenticated)
 
   return (
     <div className="min-h-screen bg-base-200 p-4">
+      <UnifiedHeader title="Prayer Times" showSignIn={true} />
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center">

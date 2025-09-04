@@ -10,7 +10,9 @@ import hisnulMuslim from "@/data/hisnul-muslim-complete.json";
 import HomeDhikrCard from "@/components/dhikr/HomeDhikrCard";
 import CreateDhikrModal from "@/components/dhikr/CreateDhikrModal";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import type { Dhikr, DhikrSession } from "@prisma/client";
+import { GuestStorage, type GuestDhikr } from "@/lib/guestStorage";
 import { PlusIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
@@ -22,17 +24,10 @@ interface DhikrWithSession extends Dhikr {
 function HomePageLoading() {
   return (
     <div className="min-h-screen bg-base-200">
-      <div className="flex justify-between items-center p-4 sm:p-6 bg-base-100 shadow-sm">
-        <h1 className="text-xl sm:text-2xl font-bold text-base-content">
-          Tasbihfy
-        </h1>
-        <ThemeToggle />
-      </div>
+      <UnifiedHeader showSignIn={true} />
       <div className="flex flex-col justify-center items-center min-h-screen space-y-4">
         <div className="loading loading-spinner loading-lg text-primary"></div>
-        <p className="text-base-content/70 animate-pulse">
-          Loading...
-        </p>
+        <p className="text-base-content/70 animate-pulse">Loading...</p>
       </div>
     </div>
   );
@@ -94,6 +89,28 @@ function HomeContent() {
 
   const fetchDhikrs = async () => {
     try {
+      if (!user) {
+        // Guest mode: load from localStorage
+        const guestDhikrs = GuestStorage.getDhikrs();
+        const dhikrsWithSessions = guestDhikrs.map((guestDhikr) => ({
+          id: guestDhikr.id,
+          name: guestDhikr.name,
+          targetCount: guestDhikr.targetCount,
+          arabicText: guestDhikr.arabicText,
+          transliteration: guestDhikr.transliteration,
+          userId: "",
+          isFavorite: false, // Guests don't have favorites yet
+          createdAt: new Date(guestDhikr.createdAt),
+          updatedAt: new Date(guestDhikr.createdAt),
+          sessions: [], // Guest sessions are handled separately
+        })) as DhikrWithSession[];
+
+        setDhikrs(dhikrsWithSessions);
+        setIsLoading(false);
+        return;
+      }
+
+      // Authenticated user: fetch from database
       const response = await fetch("/api/dhikrs");
       if (!response.ok) throw new Error("Failed to fetch dhikrs");
       const data = await response.json();
@@ -107,9 +124,8 @@ function HomeContent() {
   };
 
   useEffect(() => {
-    if (user) {
-      fetchDhikrs();
-    }
+    // Fetch dhikrs for both authenticated users and guests
+    fetchDhikrs();
   }, [user]);
 
   const handleComplete = () => {
@@ -133,6 +149,22 @@ function HomeContent() {
     transliteration?: string;
   }) => {
     try {
+      if (!user) {
+        // Guest mode: save to localStorage
+        GuestStorage.addDhikr({
+          name: data.name,
+          targetCount: data.targetCount,
+          arabicText: data.arabic,
+          transliteration: data.transliteration,
+        });
+
+        // Refresh the dhikrs list for guests
+        await fetchDhikrs();
+        setIsModalOpen(false);
+        return;
+      }
+
+      // Authenticated user: save to database
       const response = await fetch("/api/dhikrs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -151,6 +183,12 @@ function HomeContent() {
 
   const handleToggleFavorite = async (dhikrId: string) => {
     try {
+      if (!user) {
+        // Guest mode: favorites not supported yet
+        return;
+      }
+
+      // Authenticated user: toggle in database
       const response = await fetch(`/api/dhikrs/${dhikrId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -177,6 +215,7 @@ function HomeContent() {
   if (isInstant) {
     return (
       <div className="min-h-screen bg-base-200">
+        <UnifiedHeader showSignIn={true} />
         <div>
           <div className="max-w-2xl mx-auto">
             <DhikrCounter
@@ -199,6 +238,7 @@ function HomeContent() {
     if (isCounterLoading) {
       return (
         <div className="min-h-screen bg-base-200">
+          <UnifiedHeader showSignIn={true} />
           <div className="flex flex-col justify-center items-center min-h-screen space-y-4">
             <div className="loading loading-spinner loading-lg text-primary"></div>
             <p className="text-base-content/70 animate-pulse">
@@ -212,6 +252,7 @@ function HomeContent() {
     if (counterError) {
       return (
         <div className="min-h-screen bg-base-200">
+          <UnifiedHeader showSignIn={true} />
           <div className="flex flex-col justify-center items-center min-h-screen p-4">
             <div className="max-w-md mx-auto">
               <div className="alert alert-error shadow-lg">
@@ -241,6 +282,7 @@ function HomeContent() {
 
     return (
       <div className="min-h-screen bg-base-200">
+        <UnifiedHeader showSignIn={true} />
         <div>
           <div className="max-w-2xl mx-auto">
             <DhikrCounter
@@ -273,6 +315,7 @@ function HomeContent() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-base-200">
+        <UnifiedHeader showSignIn={true} />
         <div className="flex flex-col justify-center items-center min-h-screen space-y-4">
           <div className="loading loading-spinner loading-lg text-primary"></div>
           <p className="text-base-content/70 animate-pulse">
@@ -287,15 +330,8 @@ function HomeContent() {
 
   return (
     <div className="min-h-screen bg-base-200">
+      <UnifiedHeader showSignIn={true} />
       <div>
-        {/* Header */}
-        <div className="flex justify-between items-center p-4 sm:p-6 bg-base-100 shadow-sm">
-          <h1 className="text-xl sm:text-2xl font-bold text-base-content">
-            Tasbihfy
-          </h1>
-          <ThemeToggle />
-        </div>
-
         {/* Content */}
         <div className="p-4 sm:p-6 space-y-6 pb-24">
           {/* Favorites Section */}
@@ -324,8 +360,20 @@ function HomeContent() {
                   Welcome to Tasbihfy
                 </h3>
                 <p className="text-base-content/70">
-                  Start your spiritual journey by adding your first dhikr
+                  Dhikr, Prayers, Quran, and Duas
                 </p>
+                {!user && (
+                  <div className="alert alert-warning max-w-sm mx-auto">
+                    <SparklesIcon className="w-6 h-6" />
+                    <div className="text-left">
+                      <div className="font-semibold">Try as a guest!</div>
+                      <div className="text-sm opacity-70">
+                        Create dhikrs and they'll be saved locally. Sign in to
+                        sync across devices.
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="alert alert-info max-w-sm mx-auto">
                   <SparklesIcon className="w-6 h-6" />
                   <div className="text-left">

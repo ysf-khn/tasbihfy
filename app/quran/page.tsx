@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { BookOpenIcon, CogIcon } from "@heroicons/react/24/outline";
-import PageHeader from "@/components/ui/PageHeader";
-import HeaderControls from "@/components/ui/HeaderControls";
+import { BookOpenIcon } from "@heroicons/react/24/outline";
+import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import SurahCard from "@/components/quran/SurahCard";
-import QuranSettingsDrawer from "@/components/quran/QuranSettingsDrawer";
 import { useQuranSurahList, useLastRead } from "@/hooks/useQuranData";
 
 export default function QuranPage() {
@@ -16,27 +14,11 @@ export default function QuranPage() {
   const [showDebug, setShowDebug] = useState(
     process.env.NODE_ENV === "development"
   );
-  const [showSettings, setShowSettings] = useState(false);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-base-200">
-        <PageHeader
-          fixed={true}
-          glassmorphism={true}
-          rightContent={
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowSettings(true)}
-                className="btn btn-ghost btn-sm btn-square"
-                title="Quran Settings"
-              >
-                <CogIcon className="w-5 h-5" />
-              </button>
-              <HeaderControls />
-            </div>
-          }
-        />
+        <UnifiedHeader title="Quran" showSignIn={true} />
         <div className="container mx-auto px-4 py-6 pt-8">
           <div className="flex flex-col items-center justify-center min-h-[50vh]">
             <div className="loading loading-spinner loading-lg text-primary mb-4"></div>
@@ -56,22 +38,7 @@ export default function QuranPage() {
   if (surahsError) {
     return (
       <div className="min-h-screen bg-base-200">
-        <PageHeader
-          fixed={true}
-          glassmorphism={true}
-          rightContent={
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowSettings(true)}
-                className="btn btn-ghost btn-sm btn-square"
-                title="Quran Settings"
-              >
-                <CogIcon className="w-5 h-5" />
-              </button>
-              <HeaderControls />
-            </div>
-          }
-        />
+        <UnifiedHeader title="Quran" showSignIn={true} />
         <div className="container mx-auto px-4 py-6 pt-24">
           <div className="text-center">
             <div className="alert alert-error max-w-md mx-auto mb-6">
@@ -112,22 +79,7 @@ export default function QuranPage() {
 
   return (
     <div className="min-h-screen bg-base-200 pb-16">
-      <PageHeader
-        fixed={true}
-        glassmorphism={true}
-        rightContent={
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowSettings(true)}
-              className="btn btn-ghost btn-sm btn-square"
-              title="Quran Settings"
-            >
-              <CogIcon className="w-5 h-5" />
-            </button>
-            <HeaderControls />
-          </div>
-        }
-      />
+      <UnifiedHeader title="Quran" showSignIn={true} />
 
       <div className="container mx-auto px-4 max-w-4xl pt-4">
         {/* Header */}
@@ -212,11 +164,6 @@ export default function QuranPage() {
         </>
       </div>
 
-      {/* Settings Drawer */}
-      <QuranSettingsDrawer
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-      />
     </div>
   );
 }

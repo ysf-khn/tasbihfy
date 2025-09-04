@@ -7,8 +7,7 @@ import {
   ShareIcon,
   ClipboardIcon,
 } from "@heroicons/react/24/outline";
-import PageHeader from "@/components/ui/PageHeader";
-import HeaderControls from "@/components/ui/HeaderControls";
+import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import { useArabicSettings } from "@/hooks/useArabicSettings";
 import hisnulMuslim from "@/data/hisnul-muslim-complete.json";
 
@@ -67,11 +66,7 @@ export default function ChapterPage() {
 
   return (
     <div className="min-h-screen bg-base-200">
-      <PageHeader 
-        fixed={true}
-        glassmorphism={true}
-        rightContent={<HeaderControls />}
-      />
+      <UnifiedHeader title="Duas" showSignIn={true} />
       <div className="container mx-auto px-4 py-6 max-w-2xl pt-6">
         {/* Chapter Info */}
         <div className="flex items-center gap-4 mb-6">

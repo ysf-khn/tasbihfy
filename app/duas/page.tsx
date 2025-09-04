@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import PageHeader from "@/components/ui/PageHeader";
+import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import hisnulMuslim from "@/data/hisnul-muslim-complete.json";
 
 export default function DuasPage() {
@@ -27,7 +27,7 @@ export default function DuasPage() {
 
   return (
     <div className="min-h-screen bg-base-200">
-      <PageHeader />
+      <UnifiedHeader title="Duas" showSignIn={true} />
       
       <div className="container mx-auto px-4 py-6 max-w-2xl">
         <div className="mb-6">

@@ -14,10 +14,9 @@ import {
   BookmarkIcon as BookmarkIconOutline,
 } from "@heroicons/react/24/outline";
 import { BookmarkIcon as BookmarkIconSolid } from "@heroicons/react/24/solid";
-import QuranPageHeader from "@/components/ui/QuranPageHeader";
+import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import QuranNavigationDrawer from "@/components/ui/QuranNavigationDrawer";
 import AyahCard from "@/components/quran/AyahCard";
-import QuranSettingsDrawer from "@/components/quran/QuranSettingsDrawer";
 import AudioPlayer from "@/components/quran/AudioPlayer";
 import { useQuranSurah, useLastRead } from "@/hooks/useQuranData";
 import { useQuranSettings } from "@/hooks/useQuranSettings";
@@ -34,7 +33,6 @@ export default function SurahPage() {
   const { updateLastRead } = useLastRead();
 
   // Local state
-  const [showSettings, setShowSettings] = useState(false);
   const [showNavDrawer, setShowNavDrawer] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -99,7 +97,7 @@ export default function SurahPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-base-200">
-        <QuranPageHeader onMenuToggle={() => setShowNavDrawer(true)} />
+        <UnifiedHeader title="Quran" showSignIn={true} />
         <div className="container mx-auto px-4 py-6 pt-24">
           <div className="flex items-center justify-center min-h-[50vh]">
             <div className="loading loading-spinner loading-lg text-primary"></div>
@@ -113,7 +111,7 @@ export default function SurahPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-base-200">
-        <QuranPageHeader onMenuToggle={() => setShowNavDrawer(true)} />
+        <UnifiedHeader title="Quran" showSignIn={true} />
         <div className="container mx-auto px-4 py-6 pt-24">
           <div className="text-center">
             <div className="alert alert-error max-w-md mx-auto mb-6">
@@ -164,7 +162,7 @@ export default function SurahPage() {
   if (!surahData) {
     return (
       <div className="min-h-screen bg-base-200">
-        <QuranPageHeader onMenuToggle={() => setShowNavDrawer(true)} />
+        <UnifiedHeader title="Quran" showSignIn={true} />
         <div className="container mx-auto px-4 py-6 pt-24">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Surah Not Found</h1>
@@ -183,7 +181,7 @@ export default function SurahPage() {
 
   return (
     <div className="min-h-screen bg-base-200 pb-20">
-      <QuranPageHeader onMenuToggle={() => setShowNavDrawer(true)} />
+      <UnifiedHeader title="Quran" showSignIn={true} />
 
       <div className="container mx-auto px-4 py-6 max-w-4xl pt-4">
         {/* Surah Header with Kaaba Background */}
@@ -401,14 +399,9 @@ export default function SurahPage() {
       <QuranNavigationDrawer
         isOpen={showNavDrawer}
         onClose={() => setShowNavDrawer(false)}
-        onSettingsClick={() => setShowSettings(true)}
+        onSettingsClick={() => {}}
       />
 
-      {/* Settings Drawer */}
-      <QuranSettingsDrawer
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-      />
 
       {/* Audio Player */}
       {isPlaying && (

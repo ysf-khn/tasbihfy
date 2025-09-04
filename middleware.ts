@@ -13,8 +13,12 @@ export function middleware(request: NextRequest) {
   }
   
   // Public paths that don't require authentication
-  const publicPaths = ['/login', '/register']
-  const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
+  const publicPaths = ['/login', '/register', '/', '/prayer', '/quran', '/duas']
+  const isPublicPath = publicPaths.some(path => pathname === path || pathname.startsWith(path))
+  
+  // Protected paths that require authentication (settings with account features)
+  const protectedPaths = ['/settings']
+  const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path))
   
   // API routes and auth routes are handled elsewhere
   if (pathname.startsWith('/api/')) {
@@ -23,14 +27,14 @@ export function middleware(request: NextRequest) {
   }
   
   // If no session and trying to access protected route, redirect to login
-  if (!sessionToken && !isPublicPath) {
-    console.log(`[Middleware] No session, redirecting ${pathname} to /login`)
+  if (!sessionToken && isProtectedPath) {
+    console.log(`[Middleware] No session, redirecting protected route ${pathname} to /login`)
     return NextResponse.redirect(new URL('/login', request.url))
   }
   
   // If has session and trying to access auth pages, redirect to home
-  if (sessionToken && isPublicPath) {
-    console.log(`[Middleware] Has session, redirecting ${pathname} to /`)
+  if (sessionToken && (pathname.startsWith('/login') || pathname.startsWith('/register'))) {
+    console.log(`[Middleware] Has session, redirecting auth page ${pathname} to /`)
     return NextResponse.redirect(new URL('/', request.url))
   }
   
