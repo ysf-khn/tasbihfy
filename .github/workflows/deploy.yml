@@ -14,6 +14,26 @@ jobs:
     - name: 🏁 Start Deployment
       run: echo "Starting deployment to production server..."
     
+    - name: 📢 Notify Deployment Start
+      if: ${{ secrets.DISCORD_WEBHOOK }}
+      run: |
+        curl -X POST "${{ secrets.DISCORD_WEBHOOK }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "embeds": [{
+              "title": "🚀 Deployment Started",
+              "description": "Deploying to production server...",
+              "color": 16776960,
+              "fields": [
+                {"name": "Repository", "value": "${{ github.repository }}", "inline": true},
+                {"name": "Branch", "value": "${{ github.ref_name }}", "inline": true},
+                {"name": "Commit", "value": "[${{ github.sha[0:7] }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})", "inline": true},
+                {"name": "Author", "value": "${{ github.actor }}", "inline": true}
+              ],
+              "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+            }]
+          }'
+    
     - name: 🔑 Deploy via SSH
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -60,3 +80,42 @@ jobs:
     
     - name: ✅ Deployment Complete
       run: echo "Deployment finished successfully!"
+    
+    - name: 📢 Notify Success
+      if: success() && secrets.DISCORD_WEBHOOK
+      run: |
+        curl -X POST "${{ secrets.DISCORD_WEBHOOK }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "embeds": [{
+              "title": "✅ Deployment Successful",
+              "description": "Production deployment completed successfully!",
+              "color": 65280,
+              "fields": [
+                {"name": "Repository", "value": "${{ github.repository }}", "inline": true},
+                {"name": "Commit", "value": "[${{ github.sha[0:7] }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})", "inline": true},
+                {"name": "Duration", "value": "${{ job.duration || '~2 minutes' }}", "inline": true},
+                {"name": "🌐 Live Site", "value": "[tasbihfy.com](https://tasbihfy.com)", "inline": false}
+              ],
+              "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+            }]
+          }'
+    
+    - name: 📢 Notify Failure
+      if: failure() && secrets.DISCORD_WEBHOOK
+      run: |
+        curl -X POST "${{ secrets.DISCORD_WEBHOOK }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "embeds": [{
+              "title": "❌ Deployment Failed",
+              "description": "Production deployment encountered an error!",
+              "color": 16711680,
+              "fields": [
+                {"name": "Repository", "value": "${{ github.repository }}", "inline": true},
+                {"name": "Commit", "value": "[${{ github.sha[0:7] }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})", "inline": true},
+                {"name": "🔍 Logs", "value": "[View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})", "inline": false}
+              ],
+              "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+            }]
+          }'

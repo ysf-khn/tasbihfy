@@ -59,14 +59,15 @@ Go to your GitHub repository: `https://github.com/ysf-khn/tasbihfy`
 2. Click **Secrets and variables** → **Actions**
 3. Click **New repository secret**
 
-Add these 4 secrets:
+Add these secrets:
 
-| Secret Name | Value | Description |
-|------------|-------|-------------|
-| `SSH_HOST` | `YOUR_SERVER_IP` | Your Hetzner server IP |
-| `SSH_USERNAME` | `root` | SSH username (usually root) |
-| `SSH_KEY` | `PRIVATE_KEY_CONTENT` | Content of `~/.ssh/tasbihfy_deploy` file |
-| `SSH_PORT` | `22` | SSH port (usually 22) |
+| Secret Name | Value | Description | Required |
+|------------|-------|-------------|----------|
+| `SSH_HOST` | `YOUR_SERVER_IP` | Your Hetzner server IP | ✅ Required |
+| `SSH_USERNAME` | `root` | SSH username (usually root) | ✅ Required |
+| `SSH_KEY` | `PRIVATE_KEY_CONTENT` | Content of `~/.ssh/tasbihfy_deploy` file | ✅ Required |
+| `SSH_PORT` | `22` | SSH port (usually 22) | ✅ Required |
+| `DISCORD_WEBHOOK` | `WEBHOOK_URL` | Discord webhook for notifications | 📱 Optional |
 
 **To get private key content:**
 ```bash
@@ -87,7 +88,23 @@ chmod +x scripts/deploy.sh
 ./scripts/deploy.sh
 ```
 
-### Step 6: Test Automated Deployment
+### Step 6: Setup Discord Notifications (Optional)
+
+Get instant deployment notifications in Discord!
+
+#### Create Discord Webhook:
+1. **Open Discord** → Go to your server
+2. **Server Settings** → **Integrations** → **Webhooks**
+3. **Create Webhook** → Name it "Tasbihfy Deployments"
+4. **Copy Webhook URL** (looks like: `https://discord.com/api/webhooks/123.../xyz`)
+5. **Add to GitHub Secrets** as `DISCORD_WEBHOOK`
+
+#### What you'll get:
+- 🚀 **Start notification**: When deployment begins  
+- ✅ **Success notification**: With live site link when complete
+- ❌ **Failure notification**: With error logs link if it fails
+
+### Step 7: Test Automated Deployment
 
 1. Make a small change to your project locally
 2. Commit and push to main branch:
@@ -97,7 +114,8 @@ chmod +x scripts/deploy.sh
    git push origin main
    ```
 3. Go to GitHub → Actions tab to watch the deployment
-4. Check your website: https://tasbihfy.com
+4. Check your Discord for notifications! 📱
+5. Check your website: https://tasbihfy.com
 
 ## How It Works
 
@@ -120,6 +138,23 @@ chmod +x scripts/deploy.sh
 ### Deployment Time
 - **Average**: ~2-3 minutes
 - **Range**: 1-5 minutes depending on changes
+
+### Discord Notifications
+The notifications include rich embeds with:
+- 🚀 **Start**: Repository, branch, commit info, author
+- ✅ **Success**: Deployment duration, live site link
+- ❌ **Failure**: Error details, link to GitHub Actions logs
+
+**Example Success Message:**
+```
+✅ Deployment Successful
+Production deployment completed successfully!
+
+Repository: ysf-khn/tasbihfy
+Commit: a1b2c3d
+Duration: ~2 minutes
+🌐 Live Site: tasbihfy.com
+```
 
 ## Monitoring Deployments
 
