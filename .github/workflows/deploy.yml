@@ -1,0 +1,62 @@
+name: 🚀 Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Allow manual deployments from GitHub UI
+
+jobs:
+  deploy:
+    name: Deploy to Hetzner Server
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🏁 Start Deployment
+      run: echo "Starting deployment to production server..."
+    
+    - name: 🔑 Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        script: |
+          echo "🚀 Starting deployment at $(date)"
+          cd /var/www/tasbihfy
+          
+          # Pull latest code
+          echo "📥 Pulling latest code..."
+          git pull origin main
+          
+          # Install dependencies
+          echo "📦 Installing dependencies..."
+          npm install
+          
+          # Run database migrations
+          echo "🗄️ Running database migrations..."
+          npx prisma migrate deploy
+          
+          # Build application
+          echo "🏗️ Building application..."
+          npm run build
+          
+          # Restart PM2 process
+          echo "🔄 Restarting application..."
+          pm2 restart tasbihfy --update-env
+          
+          # Health check
+          echo "🩺 Performing health check..."
+          sleep 5
+          if pm2 status tasbihfy | grep -q "online"; then
+            echo "✅ Deployment successful! App is online"
+            echo "🌐 App available at: https://tasbihfy.com"
+          else
+            echo "❌ Deployment failed! App is not online"
+            exit 1
+          fi
+          
+          echo "🎉 Deployment completed at $(date)"
+    
+    - name: ✅ Deployment Complete
+      run: echo "Deployment finished successfully!"
