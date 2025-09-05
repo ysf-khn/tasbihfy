@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dhikr-v1';
+const CACHE_NAME = 'dhikr-v2';
 const OFFLINE_URL = '/offline';
 
 // Assets to cache immediately
@@ -6,10 +6,16 @@ const STATIC_ASSETS = [
   '/',
   '/offline',
   '/dhikrs',
+  '/icons/icon-72x72.png',
+  '/icons/icon-96x96.png',
+  '/icons/icon-128x128.png',
+  '/icons/icon-144x144.png',
+  '/icons/icon-152x152.png',
   '/icons/icon-192x192.png',
+  '/icons/icon-384x384.png',
   '/icons/icon-512x512.png',
   '/apple-touch-icon.png',
-  '/dhikr-icon.svg',
+  '/favicon.ico',
 ];
 
 // Install event - cache essential resources

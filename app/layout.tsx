@@ -1,11 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Noto_Naskh_Arabic, Noto_Nastaliq_Urdu } from "next/font/google";
+import {
+  Bricolage_Grotesque,
+  Noto_Naskh_Arabic,
+  Noto_Nastaliq_Urdu,
+} from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import ServiceWorkerRegistration from "@/components/pwa/ServiceWorkerRegistration";
 import LayoutClient from "@/components/layout/LayoutClient";
+
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 const bricolageGrotesque = Bricolage_Grotesque({
   variable: "--font-bricolage-grotesque",
@@ -133,17 +139,17 @@ export const metadata: Metadata = {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "default",
-    "apple-mobile-web-app-title": "Dhikr",
-    "application-name": "Dhikr",
-    "msapplication-TileColor": "#570df8",
+    "apple-mobile-web-app-title": "Tasbihfy",
+    "application-name": "Tasbihfy",
+    "msapplication-TileColor": "#57c5b6",
     "msapplication-TileImage": "/icons/icon-144x144.png",
     "msapplication-tap-highlight": "no",
-    "theme-color": "#570df8",
+    "theme-color": "#57c5b6",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#570df8",
+  themeColor: "#57c5b6",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -163,13 +169,12 @@ export default function RootLayout({
       >
         <Providers>
           <ServiceWorkerRegistration />
-          <LayoutClient>
-            {children}
-          </LayoutClient>
+          <LayoutClient>{children}</LayoutClient>
           <OfflineIndicator />
           <InstallPrompt />
         </Providers>
       </body>
+      <GoogleAnalytics gaId="G-70LYJPKZN7" />
     </html>
   );
 }

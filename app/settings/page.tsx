@@ -3,6 +3,13 @@
 import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { signOut } from "@/lib/auth-client";
+
+// Declare gtag type for Google Analytics tracking
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void;
+  }
+}
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import ArabicTextControls from "@/components/ui/ArabicTextControls";
 import Link from "next/link";
@@ -58,6 +65,11 @@ export default function SettingsPage() {
   const { user } = useAuth();
 
   const handleSignOut = async () => {
+    // Track user logout
+    window.gtag?.('event', 'user_logout', {
+      event_category: 'Authentication',
+      event_label: 'User logged out'
+    });
     await signOut();
   };
 

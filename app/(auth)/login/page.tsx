@@ -4,6 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "@/lib/auth-client";
+
+// Declare gtag type for Google Analytics tracking
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void;
+  }
+}
 import {
   EnvelopeIcon,
   LockClosedIcon,
@@ -33,6 +40,12 @@ export default function LoginPage() {
         callbackURL: "/",
       });
       console.log("[Login] Signin result:", result);
+      // Track successful login
+      window.gtag?.('event', 'user_login', {
+        event_category: 'Authentication',
+        event_label: 'Email login successful',
+        method: 'email'
+      });
       router.push("/");
     } catch (err: any) {
       console.error("[Login] Signin error:", err);

@@ -15,7 +15,22 @@
       "mcp__playwright__browser_click",
       "mcp__playwright__browser_evaluate",
       "WebSearch",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Read(/C:\\Dev\\dhikr\\app/**)",
+      "Read(/C:\\Dev\\dhikr/**)",
+      "Read(/C:\\Dev\\dhikr\\components/**)",
+      "Read(/C:\\Dev\\dhikr\\components\\pwa/**)",
+      "Read(/C:\\Dev\\dhikr\\app/**)",
+      "Read(/C:\\Dev\\dhikr\\app\\(auth)\\login/**)",
+      "Read(/C:\\Dev\\dhikr\\app\\(auth)\\register/**)",
+      "Read(/C:\\Dev\\dhikr\\components\\auth/**)",
+      "Read(/C:\\Dev\\dhikr\\app\\settings/**)",
+      "Read(/C:\\Dev\\dhikr/**)",
+      "Read(/C:\\Dev\\dhikr\\public/**)",
+      "Read(/C:\\Dev\\dhikr/**)",
+      "Read(/C:\\Dev\\dhikr\\app/**)",
+      "Bash(magick:*)",
+      "Bash(convert:*)"
     ],
     "deny": [],
     "ask": []
