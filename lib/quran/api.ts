@@ -335,7 +335,7 @@ export async function getTranslations(
 export async function getTafsir(
   surahId: number,
   verseNumber: number,
-  tafsirId: number = 1
+  tafsirId: number = 169
 ): Promise<Tafsir | null> {
   const cacheKey = getCacheKey(
     "tafsir",

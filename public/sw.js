@@ -1,4 +1,4 @@
-const CACHE_NAME = "dhikr-v4";
+const CACHE_NAME = "dhikr-v5";
 
 // Assets to cache immediately
 const STATIC_ASSETS = [

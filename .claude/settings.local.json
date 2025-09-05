@@ -32,7 +32,10 @@
       "Bash(magick:*)",
       "Bash(convert:*)",
       "Read(/C:\\Dev\\dhikr\\app\\duas/**)",
-      "Read(/C:\\Dev\\dhikr\\lib/**)"
+      "Read(/C:\\Dev\\dhikr\\lib/**)",
+      "Read(/C:\\Dev\\dhikr/**)",
+      "Read(/C:\\Dev\\dhikr\\app/**)",
+      "Read(/C:\\Dev\\dhikr\\components\\quran/**)"
     ],
     "deny": [],
     "ask": []

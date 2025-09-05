@@ -23,7 +23,7 @@ export default function TafsirModal({
   const [availableTafsirs, setAvailableTafsirs] = useState<TafsirResource[]>(
     []
   );
-  const [selectedTafsirId, setSelectedTafsirId] = useState<number>(1); // Default to first tafsir
+  const [selectedTafsirId, setSelectedTafsirId] = useState<number>(169); // Default to tafsir ID 169
   const [tafsirData, setTafsirData] = useState<Tafsir | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingTafsirs, setLoadingTafsirs] = useState(true);
@@ -57,7 +57,7 @@ export default function TafsirModal({
       console.error("Failed to load available tafsirs:", err);
       setTafsirsError("Failed to load available tafsirs. Using defaults.");
       // Fallback to a default tafsir ID
-      setSelectedTafsirId(1);
+      setSelectedTafsirId(169);
     } finally {
       setLoadingTafsirs(false);
     }

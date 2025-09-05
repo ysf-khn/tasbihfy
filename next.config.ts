@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
           },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; connect-src 'self' https://verses.quran.foundation https://www.googletagmanager.com https://www.google-analytics.com; media-src 'self' https://verses.quran.foundation; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'",
+          },
         ],
       },
       {
@@ -34,7 +38,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com; script-src 'self'",
+            value: "default-src 'self'; connect-src 'self' https://verses.quran.foundation https://www.googletagmanager.com https://www.google-analytics.com; script-src 'self'",
           },
         ],
       },

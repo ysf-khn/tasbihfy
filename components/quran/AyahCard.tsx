@@ -14,6 +14,7 @@ import { BookmarkIcon as BookmarkIconSolid } from "@heroicons/react/24/solid";
 import { VerseWithTranslations, SurahData } from "@/lib/quran/types";
 import { getTranslationById } from "@/lib/quran/translations-data";
 import { useQuranAudio } from "@/hooks/useQuranAudio";
+import { cleanTranslationText } from "@/lib/quran/text-utils";
 import TafsirModal from "./TafsirModal";
 
 interface AyahCardProps {
@@ -298,7 +299,7 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
                     {displayName}
                   </p>
                   <p className="text-base text-base-content leading-relaxed">
-                    {translation.text || "Translation text not available"}
+                    {cleanTranslationText(translation.text) || "Translation text not available"}
                   </p>
                 </div>
               );

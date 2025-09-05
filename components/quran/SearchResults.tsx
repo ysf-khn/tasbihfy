@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { VerseWithTranslations } from '@/lib/quran/types';
+import { cleanTranslationText } from '@/lib/quran/text-utils';
 
 interface SearchResultsProps {
   results: VerseWithTranslations[];
@@ -104,7 +105,7 @@ function SearchResultCard({ verse, query }: SearchResultCardProps) {
             {verse.translations.map((translation, index) => (
               <div key={translation.id || index}>
                 <p className="text-sm text-base-content leading-relaxed">
-                  {highlightText(translation.text, query)}
+                  {highlightText(cleanTranslationText(translation.text), query)}
                 </p>
                 {verse.translations && verse.translations.length > 1 && (
                   <p className="text-xs text-base-content/60 mt-1">
