@@ -13,10 +13,14 @@ export default function QiblaDirection({ direction }: QiblaDirectionProps) {
   >("unknown");
 
   useEffect(() => {
+    // Platform detection
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    
     // Check if device orientation is supported
     if ("DeviceOrientationEvent" in window) {
       const requestPermission = () => {
-        if ("requestPermission" in DeviceOrientationEvent) {
+        if (isIOS && "requestPermission" in DeviceOrientationEvent) {
           // iOS 13+ requires permission
           (DeviceOrientationEvent as any)
             .requestPermission()
@@ -39,16 +43,52 @@ export default function QiblaDirection({ direction }: QiblaDirectionProps) {
       };
 
       const startCompass = () => {
-        const handleOrientation = (event: DeviceOrientationEvent) => {
-          if (event.alpha !== null) {
-            setCompassHeading(360 - event.alpha); // Adjust for compass direction
-          }
-        };
+        let cleanupFunctions: (() => void)[] = [];
+        let hasCompassData = false;
 
-        window.addEventListener("deviceorientation", handleOrientation);
+        // iOS: Use deviceorientation with webkitCompassHeading
+        if (isIOS) {
+          const handleIOSOrientation = (event: DeviceOrientationEvent) => {
+            const webkitHeading = (event as any).webkitCompassHeading;
+            if (webkitHeading !== undefined && webkitHeading !== null) {
+              setCompassHeading(webkitHeading);
+              hasCompassData = true;
+            }
+          };
+
+          window.addEventListener("deviceorientation", handleIOSOrientation);
+          cleanupFunctions.push(() => {
+            window.removeEventListener("deviceorientation", handleIOSOrientation);
+          });
+        } else {
+          // Android: Try deviceorientationabsolute first
+          const handleAbsoluteOrientation = (event: DeviceOrientationEvent) => {
+            if (event.alpha !== null && (event as any).absolute && !hasCompassData) {
+              // For Android with absolute orientation
+              setCompassHeading(Math.abs(event.alpha - 360));
+              hasCompassData = true;
+            }
+          };
+
+          const handleFallbackOrientation = (event: DeviceOrientationEvent) => {
+            if (event.alpha !== null && !hasCompassData) {
+              // Fallback for devices without absolute orientation
+              setCompassHeading(360 - event.alpha);
+              hasCompassData = true;
+            }
+          };
+
+          window.addEventListener("deviceorientationabsolute", handleAbsoluteOrientation as EventListener);
+          window.addEventListener("deviceorientation", handleFallbackOrientation);
+
+          cleanupFunctions.push(() => {
+            window.removeEventListener("deviceorientationabsolute", handleAbsoluteOrientation as EventListener);
+            window.removeEventListener("deviceorientation", handleFallbackOrientation);
+          });
+        }
 
         return () => {
-          window.removeEventListener("deviceorientation", handleOrientation);
+          cleanupFunctions.forEach(cleanup => cleanup());
         };
       };
 
@@ -87,7 +127,12 @@ export default function QiblaDirection({ direction }: QiblaDirectionProps) {
         {/* Compass Container */}
         <div className="relative w-56 h-56 sm:w-64 sm:h-64 mx-auto mb-6">
           {/* Compass Base */}
-          <div className="w-full h-full rounded-full border-4 border-base-300 relative bg-base-300 shadow-xl">
+          <div 
+            className="w-full h-full rounded-full border-4 border-base-300 relative bg-base-300 shadow-xl transition-transform duration-300 ease-out"
+            style={{
+              transform: `rotate(${compassHeading !== null ? -compassHeading : 0}deg)`
+            }}
+          >
             {/* Major Degree Markers (every 30 degrees) */}
             {Array.from({ length: 12 }, (_, i) => i * 30).map((degree) => (
               <div
@@ -127,15 +172,13 @@ export default function QiblaDirection({ direction }: QiblaDirectionProps) {
 
             {/* Elegant Qibla Pointer */}
             <div
-              className={`absolute top-1/2 left-1/2 z-20 transition-all duration-700 ease-out ${
+              className={`absolute top-1/2 left-1/2 z-20 transition-all duration-500 ease-out ${
                 compassHeading !== null && Math.abs(relativeQiblaDirection) < 5
                   ? "drop-shadow-lg"
                   : ""
               }`}
               style={{
-                transform: `translate(-50%, -50%) rotate(${
-                  compassHeading !== null ? relativeQiblaDirection : qiblaAngle
-                }deg)`,
+                transform: `translate(-50%, -50%) rotate(${qiblaAngle}deg)`,
                 transformOrigin: "center center",
               }}
             >
