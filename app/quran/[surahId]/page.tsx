@@ -94,18 +94,6 @@ export default function SurahPage() {
     // Audio playback will be handled by AudioPlayer component
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-base-200">
-        <UnifiedHeader title="Quran" showSignIn={true} />
-        <div className="container mx-auto px-4 py-6 pt-24">
-          <div className="flex items-center justify-center min-h-[50vh]">
-            <div className="loading loading-spinner loading-lg text-primary"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Handle error state
   if (error) {

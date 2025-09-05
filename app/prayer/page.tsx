@@ -147,11 +147,25 @@ export default function PrayerTimesPage() {
               fetchPrayerTimes(defaultLocation);
             }
           },
-          () => {
+          (error) => {
+            console.error("Geolocation error:", error);
+            
+            // Provide specific error handling based on error type
+            if (error.code === error.TIMEOUT) {
+              console.log("Location request timed out - may need to enable location services");
+            } else if (error.code === error.POSITION_UNAVAILABLE) {
+              console.log("Location unavailable - may need to enable location services");
+            }
+            
             // Fallback to default location if geolocation fails
             const defaultLocation = "London";
             setLocation(defaultLocation);
             fetchPrayerTimes(defaultLocation);
+          },
+          {
+            timeout: 10000, // 10 second timeout
+            maximumAge: 0, // Don't use cached location
+            enableHighAccuracy: false // Faster response
           }
         );
       } else {
@@ -239,8 +253,18 @@ export default function PrayerTimesPage() {
 
         {/* Loading State */}
         {loading && !error && (
-          <div className="flex justify-center py-8">
-            <span className="loading loading-spinner loading-lg"></span>
+          <div className="text-center py-8">
+            <div className="flex justify-center py-4">
+              <span className="loading loading-spinner loading-lg"></span>
+            </div>
+            <p className="text-base-content/60 text-sm">
+              {!location ? 'Detecting location...' : 'Loading prayer times...'}
+            </p>
+            {!location && (
+              <p className="text-base-content/40 text-xs mt-2">
+                This may take a few seconds
+              </p>
+            )}
           </div>
         )}
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { MapPinIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { MapPinIcon, MagnifyingGlassIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { reverseGeocode, GeocodeResult } from '@/lib/geocoding';
 
 interface LocationSelectorProps {
@@ -63,19 +63,24 @@ export default function LocationSelector({ currentLocation, onLocationChange, lo
         let errorMessage = 'Failed to get your location. ';
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage += 'Location access denied by user.';
+            errorMessage += 'Location access was denied. Please enable location permissions in your browser settings and try again.';
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage += 'Location information unavailable.';
+            errorMessage += 'Location services are unavailable. Please ensure location services are enabled in your device settings (Settings > Privacy & Security > Location Services on iOS, or Settings > Location on Android).';
             break;
           case error.TIMEOUT:
-            errorMessage += 'Location request timed out.';
+            errorMessage += 'Location request timed out. Please ensure location services are enabled in your device settings and try again.';
             break;
           default:
-            errorMessage += 'Unknown error occurred.';
+            errorMessage += 'An unknown error occurred while trying to access your location.';
             break;
         }
         alert(errorMessage);
+      },
+      {
+        timeout: 10000, // 10 second timeout
+        maximumAge: 300000, // Accept cached location up to 5 minutes old
+        enableHighAccuracy: false // Faster response, less battery usage
       }
     );
   };
@@ -122,6 +127,20 @@ export default function LocationSelector({ currentLocation, onLocationChange, lo
           <div className="flex-1 h-px bg-base-300"></div>
           <span className="text-sm font-medium text-base-content/60">OR</span>
           <div className="flex-1 h-px bg-base-300"></div>
+        </div>
+
+        {/* Location Help Info */}
+        <div className="bg-info/10 border border-info/20 rounded-lg p-3 text-xs">
+          <div className="flex items-start space-x-2">
+            <InformationCircleIcon className="h-4 w-4 text-info mt-0.5 flex-shrink-0" />
+            <div className="text-base-content/70">
+              <div className="font-medium mb-1">For location detection to work:</div>
+              <div className="space-y-1">
+                <div>• Enable location services in your device settings</div>
+                <div>• Allow location access when prompted by your browser</div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Current Location Button */}
