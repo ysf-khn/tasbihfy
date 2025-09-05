@@ -44,7 +44,7 @@ export default function QiblaDirection({ direction }: QiblaDirectionProps) {
 
       const startCompass = () => {
         let cleanupFunctions: (() => void)[] = [];
-        let hasCompassData = false;
+        let usingAbsoluteOrientation = false;
 
         // iOS: Use deviceorientation with webkitCompassHeading
         if (isIOS) {
@@ -52,7 +52,6 @@ export default function QiblaDirection({ direction }: QiblaDirectionProps) {
             const webkitHeading = (event as any).webkitCompassHeading;
             if (webkitHeading !== undefined && webkitHeading !== null) {
               setCompassHeading(webkitHeading);
-              hasCompassData = true;
             }
           };
 
@@ -61,20 +60,19 @@ export default function QiblaDirection({ direction }: QiblaDirectionProps) {
             window.removeEventListener("deviceorientation", handleIOSOrientation);
           });
         } else {
-          // Android: Try deviceorientationabsolute first
+          // Android: Try deviceorientationabsolute first, fallback to deviceorientation
           const handleAbsoluteOrientation = (event: DeviceOrientationEvent) => {
-            if (event.alpha !== null && (event as any).absolute && !hasCompassData) {
+            if (event.alpha !== null && (event as any).absolute) {
               // For Android with absolute orientation
               setCompassHeading(Math.abs(event.alpha - 360));
-              hasCompassData = true;
+              usingAbsoluteOrientation = true;
             }
           };
 
           const handleFallbackOrientation = (event: DeviceOrientationEvent) => {
-            if (event.alpha !== null && !hasCompassData) {
+            if (event.alpha !== null && !usingAbsoluteOrientation) {
               // Fallback for devices without absolute orientation
               setCompassHeading(360 - event.alpha);
-              hasCompassData = true;
             }
           };
 
