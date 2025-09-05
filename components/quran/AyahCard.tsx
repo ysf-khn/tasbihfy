@@ -15,7 +15,10 @@ import { VerseWithTranslations, SurahData } from "@/lib/quran/types";
 import { getTranslationById } from "@/lib/quran/translations-data";
 import { useQuranAudio } from "@/hooks/useQuranAudio";
 import { cleanTranslationText } from "@/lib/quran/text-utils";
+import { useQuranSettings } from "@/hooks/useQuranSettings";
 import TafsirModal from "./TafsirModal";
+import { useShareImage } from "@/hooks/useShareImage";
+import ShareableCard from "@/components/ui/ShareableCard";
 
 interface AyahCardProps {
   verse: VerseWithTranslations;
@@ -26,8 +29,12 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [showTafsir, setShowTafsir] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
+  const { generateAndShare, isGenerating, cardRef } = useShareImage();
 
   const verseKey = `${surahData.id}:${verse.verse_number}`;
+
+  // Settings for font styling
+  const { getArabicStyles, getTranslationStyles } = useQuranSettings();
 
   // Audio functionality
   const {
@@ -55,23 +62,18 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
   };
 
   const shareVerse = async () => {
-    const arabicText = verse.text_uthmani;
+    const arabicText = verse.text_uthmani || verse.text_simple || "";
     const translation = verse.translations?.[0]?.text || "";
-    const shareText = `${arabicText}\n\n${translation}\n\n— Quran ${verseKey}`;
+    const cleanTranslation = cleanTranslationText(translation);
+    const reference = `Quran ${verseKey} • ${surahData.name_simple}`;
 
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Quran ${verseKey}`,
-          text: shareText,
-          url: `${window.location.origin}/quran/${surahData.id}#verse-${verse.verse_number}`,
-        });
-      } catch (err) {
-        console.error("Error sharing:", err);
-      }
-    } else {
-      copyToClipboard(shareText);
-    }
+    await generateAndShare({
+      arabicText,
+      translation: cleanTranslation,
+      reference,
+      type: 'verse',
+      filename: `quran-${verseKey.replace(':', '-')}.png`,
+    });
   };
 
   const toggleBookmark = () => {
@@ -194,10 +196,17 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
 
             <button
               onClick={shareVerse}
-              className="btn btn-ghost btn-sm btn-square"
-              title="Share"
+              disabled={isGenerating}
+              className={`btn btn-ghost btn-sm btn-square ${
+                isGenerating ? "loading" : ""
+              }`}
+              title={isGenerating ? "Generating image..." : "Share as image"}
             >
-              <ShareIcon className="w-4 h-4" />
+              {isGenerating ? (
+                <div className="loading loading-spinner w-4 h-4" />
+              ) : (
+                <ShareIcon className="w-4 h-4" />
+              )}
             </button>
 
             <button
@@ -264,7 +273,10 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
         {/* Arabic Text */}
         <div className="mb-4">
           {verse.text_uthmani || verse.text_simple ? (
-            <p className="quran-arabic text-2xl text-base-content verse-card">
+            <p 
+              className="quran-arabic text-base-content verse-card"
+              style={getArabicStyles()}
+            >
               {verse.text_uthmani || verse.text_simple}
             </p>
           ) : (
@@ -298,7 +310,10 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
                   <p className="text-xs text-base-content/50 italic">
                     {displayName}
                   </p>
-                  <p className="text-base text-base-content leading-relaxed">
+                  <p 
+                    className="text-base-content leading-relaxed"
+                    style={getTranslationStyles()}
+                  >
                     {cleanTranslationText(translation.text) || "Translation text not available"}
                   </p>
                 </div>
@@ -335,6 +350,15 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
           onClose={() => setShowTafsir(false)}
         />
       )}
+
+      {/* Hidden ShareableCard for image generation */}
+      <ShareableCard
+        ref={cardRef}
+        arabicText={verse.text_uthmani || verse.text_simple || ""}
+        translation={cleanTranslationText(verse.translations?.[0]?.text || "")}
+        reference={`Quran ${verseKey} • ${surahData.name_simple}`}
+        type="verse"
+      />
     </div>
   );
 }

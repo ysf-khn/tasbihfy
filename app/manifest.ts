@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Tasbihfy",
     short_name: "Tasbihfy",
     description:
-      "Count your dhikr with a beautiful, offline-capable digital tasbih. Track your spiritual practice with customizable dhikr phrases and progress tracking.",
+      "Your complete Islamic companion app. Count dhikr with tasbih, get accurate prayer times with Qibla compass, read the Quran, and access a collection of Hisnul Muslim duas.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

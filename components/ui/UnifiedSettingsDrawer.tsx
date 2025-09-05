@@ -58,13 +58,14 @@ export default function UnifiedSettingsDrawer({
     getTranslationStyles,
   } = useQuranSettings();
 
-  const [activeTab, setActiveTab] = useState<SettingsTab>("translations");
+  const isDuasPage = currentPath.startsWith("/duas");
+  const [activeTab, setActiveTab] = useState<SettingsTab>(
+    isDuasPage ? "display" : "translations"
+  );
   const [availableRecitations, setAvailableRecitations] = useState<
     Recitation[]
   >([]);
   const [loadingRecitations, setLoadingRecitations] = useState(false);
-
-  const isDuasPage = currentPath.startsWith("/duas");
 
   // Load available recitations
   useEffect(() => {
@@ -441,15 +442,17 @@ export default function UnifiedSettingsDrawer({
 
           {/* Tab Navigation */}
           <div className="tabs tabs-boxed mt-4">
-            <button
-              onClick={() => setActiveTab("translations")}
-              className={`tab gap-2 ${
-                activeTab === "translations" ? "tab-active" : ""
-              }`}
-            >
-              <LanguageIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">Translations</span>
-            </button>
+            {!isDuasPage && (
+              <button
+                onClick={() => setActiveTab("translations")}
+                className={`tab gap-2 ${
+                  activeTab === "translations" ? "tab-active" : ""
+                }`}
+              >
+                <LanguageIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">Translations</span>
+              </button>
+            )}
             <button
               onClick={() => setActiveTab("display")}
               className={`tab gap-2 ${
@@ -459,15 +462,17 @@ export default function UnifiedSettingsDrawer({
               <AdjustmentsHorizontalIcon className="w-4 h-4" />
               <span className="hidden sm:inline">Display</span>
             </button>
-            <button
-              onClick={() => setActiveTab("audio")}
-              className={`tab gap-2 ${
-                activeTab === "audio" ? "tab-active" : ""
-              }`}
-            >
-              <SpeakerWaveIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">Audio</span>
-            </button>
+            {!isDuasPage && (
+              <button
+                onClick={() => setActiveTab("audio")}
+                className={`tab gap-2 ${
+                  activeTab === "audio" ? "tab-active" : ""
+                }`}
+              >
+                <SpeakerWaveIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">Audio</span>
+              </button>
+            )}
           </div>
         </DrawerHeader>
 

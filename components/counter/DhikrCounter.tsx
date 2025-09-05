@@ -184,9 +184,27 @@ export default function DhikrCounter({
           <ChevronLeftIcon className="w-6 h-6" />
         </Link>
         <h1 className="text-xl font-bold text-base-content">
-          {tempDhikr ? "Hisnul Muslim" : "Tasbihfy"}
+          {tempDhikr ? "Hisnul Muslim" : ""}
         </h1>
-        <div className="w-10"></div> {/* Spacer for centering */}
+        <div className="flex items-center gap-2">
+          <button
+            className="btn btn-ghost btn-circle btn-sm"
+            onClick={onReset}
+            disabled={currentCount === 0}
+            title="Reset counter"
+          >
+            <ArrowPathIcon className="w-5 h-5" />
+          </button>
+          <button
+            className={`btn btn-ghost btn-circle btn-sm ${isVibrationEnabled ? 'btn-active' : ''}`}
+            onClick={() => setIsVibrationEnabled(!isVibrationEnabled)}
+            title={isVibrationEnabled ? "Vibration on" : "Vibration off"}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d={isVibrationEnabled ? "M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" : "M9.143 17.082a24.248 24.248 0 003.844.148m-3.844-.148a23.856 23.856 0 01-5.455-1.31 8.964 8.964 0 002.3-5.542m3.155 6.852a3 3 0 005.667 1.97m1.965-2.277L21 21m-4.225-4.225a23.81 23.81 0 003.536-1.003A8.967 8.967 0 0118 9.75V9A6 6 0 006.53 6.53m10.245 10.245L6.53 6.53M3 3l3.53 3.53"} />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Main Content - Adaptive Layout */}
@@ -298,7 +316,7 @@ export default function DhikrCounter({
       )}
 
       {/* Bottom Section */}
-      <div className={`${isLongText || tempDhikr ? "space-y-2" : "space-y-4"} flex-shrink-0`}>
+      <div className={`${isLongText || tempDhikr ? "space-y-2" : "space-y-4"} flex-shrink-0 pb-4`}>
         {/* Main Count Button */}
         <div className="flex justify-center">
           <button
@@ -313,34 +331,6 @@ export default function DhikrCounter({
           >
             Count
           </button>
-        </div>
-
-        {/* Controls Row */}
-        <div
-          className={`flex justify-between items-center bg-base-200/50 rounded-2xl ${
-            tempDhikr ? "p-1" : "p-4"
-          } backdrop-blur-sm`}
-        >
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={onReset}
-            disabled={currentCount === 0}
-          >
-            <ArrowPathIcon className="w-4 h-4" />
-            Reset
-          </button>
-
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-base-content/70">
-              Vibration
-            </span>
-            <input
-              type="checkbox"
-              className="toggle toggle-primary"
-              checked={isVibrationEnabled}
-              onChange={(e) => setIsVibrationEnabled(e.target.checked)}
-            />
-          </div>
         </div>
       </div>
     </div>

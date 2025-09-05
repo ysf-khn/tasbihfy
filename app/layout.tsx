@@ -38,9 +38,14 @@ export const metadata: Metadata = {
     template: "%s | Dhikr",
   },
   description:
-    "Count your dhikr with a beautiful tasbih. Track your spiritual practice with customizable dhikr phrases and progress tracking.",
+    "Your complete Islamic companion app. Count dhikr with tasbih, get accurate prayer times with Qibla compass, read the Quran, and access a collection of Hisnul Muslim duas.",
   keywords: [
     "dhikr",
+    "quran",
+    "hadith",
+    "dua",
+    "qibla",
+    "kaaba",
     "tasbih",
     "islamic",
     "muslim",

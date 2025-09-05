@@ -20,6 +20,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "daisyui": "^5.0.54",
+    "html-to-image": "^1.11.13",
     "lucide-react": "^0.542.0",
     "next": "15.5.2",
     "prisma": "^6.15.0",

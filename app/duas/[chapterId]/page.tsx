@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   ArrowLeftIcon,
   PlayIcon,
@@ -9,7 +10,10 @@ import {
 } from "@heroicons/react/24/outline";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import { useArabicSettings } from "@/hooks/useArabicSettings";
+import { useQuranSettings } from "@/hooks/useQuranSettings";
 import hisnulMuslim from "@/data/hisnul-muslim-complete.json";
+import { useShareImage } from "@/hooks/useShareImage";
+import ShareableCard from "@/components/ui/ShareableCard";
 
 export default function ChapterPage() {
   const params = useParams();
@@ -17,6 +21,9 @@ export default function ChapterPage() {
   const chapterId = parseInt(params.chapterId as string);
   const chapter = hisnulMuslim.chapters.find((c) => c.id === chapterId);
   const { getArabicClasses } = useArabicSettings();
+  const { getArabicStyles, getTranslationStyles } = useQuranSettings();
+  const { generateAndShare, isGenerating, cardRef } = useShareImage();
+  const [currentDua, setCurrentDua] = useState(chapter?.duas[0] || null);
 
   if (!chapter) {
     return (
@@ -39,19 +46,21 @@ export default function ChapterPage() {
   };
 
   const shareDua = async (dua: any) => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${chapter.title} - ${dua.hisnNumber}`,
-          text: `${dua.arabic}\n\n${dua.translation}`,
-          url: window.location.href,
-        });
-      } catch (err) {
-        console.error("Error sharing:", err);
-      }
-    } else {
-      copyToClipboard(`${dua.arabic}\n\n${dua.translation}`);
-    }
+    // Update the current dua for the ShareableCard
+    setCurrentDua(dua);
+    
+    // Give React a moment to update the DOM
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const reference = `${chapter.title} • ${dua.hisnNumber}`;
+    
+    await generateAndShare({
+      arabicText: dua.arabic,
+      translation: dua.translation,
+      reference,
+      type: 'dua',
+      filename: `dua-${chapter.id}-${dua.id}.png`,
+    });
   };
 
   const startDhikr = (dua: any) => {
@@ -78,7 +87,7 @@ export default function ChapterPage() {
           </button>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="badge badge-primary badge-sm">{chapter.id}</span>
+              <span className="badge badge-primary badge-sm w-8 h-8 rounded-full flex items-center justify-center p-0 text-xs font-bold">{chapter.id}</span>
               <h1 className="text-xl font-bold">{chapter.title}</h1>
             </div>
           </div>
@@ -107,10 +116,17 @@ export default function ChapterPage() {
                     </button>
                     <button
                       onClick={() => shareDua(dua)}
-                      className="btn btn-ghost btn-sm btn-square"
-                      title="Share"
+                      disabled={isGenerating}
+                      className={`btn btn-ghost btn-sm btn-square ${
+                        isGenerating ? "loading" : ""
+                      }`}
+                      title={isGenerating ? "Generating image..." : "Share as image"}
                     >
-                      <ShareIcon className="w-4 h-4" />
+                      {isGenerating ? (
+                        <div className="loading loading-spinner w-4 h-4" />
+                      ) : (
+                        <ShareIcon className="w-4 h-4" />
+                      )}
                     </button>
                     <button
                       onClick={() => startDhikr(dua)}
@@ -127,6 +143,7 @@ export default function ChapterPage() {
                 <div className="mb-4">
                   <p
                     className={`leading-relaxed text-right text-base-content ${getArabicClasses()}`}
+                    style={getArabicStyles()}
                   >
                     {dua.arabic}
                   </p>
@@ -149,7 +166,10 @@ export default function ChapterPage() {
                   <p className="text-sm font-medium text-primary mb-1">
                     Translation:
                   </p>
-                  <p className="text-base text-base-content leading-relaxed">
+                  <p 
+                    className="text-base-content leading-relaxed"
+                    style={getTranslationStyles()}
+                  >
                     {dua.translation}
                   </p>
                 </div>
@@ -165,6 +185,17 @@ export default function ChapterPage() {
             </div>
           ))}
         </div>
+
+        {/* Hidden ShareableCard for image generation */}
+        {currentDua && (
+          <ShareableCard
+            ref={cardRef}
+            arabicText={currentDua.arabic}
+            translation={currentDua.translation}
+            reference={`${chapter.title} • ${currentDua.hisnNumber}`}
+            type="dua"
+          />
+        )}
       </div>
     </div>
   );

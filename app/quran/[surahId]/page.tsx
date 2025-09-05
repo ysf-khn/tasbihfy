@@ -95,6 +95,102 @@ export default function SurahPage() {
   };
 
 
+  // Handle loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-base-200 pb-20">
+        <UnifiedHeader title="Quran" showSignIn={true} />
+
+        <div className="container mx-auto px-4 py-6 max-w-4xl pt-4">
+          {/* Surah Header Skeleton */}
+          <div className="relative mb-6 rounded-xl overflow-hidden shadow-lg h-40">
+            {/* Background Image - Static during loading */}
+            <Image
+              src={kaabaImage}
+              alt="Kaaba"
+              fill
+              className="object-cover"
+              priority
+            />
+
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+
+            {/* Content Skeleton */}
+            <div className="relative z-10 flex items-center justify-between h-full p-6">
+              <div className="flex-1">
+                <div className="h-6 bg-white/30 rounded w-32 mb-2 animate-pulse"></div>
+                <div className="h-4 bg-white/20 rounded w-24 mb-3 animate-pulse"></div>
+                <div className="space-y-1">
+                  <div className="h-3 bg-white/20 rounded w-20 animate-pulse"></div>
+                  <div className="h-3 bg-white/20 rounded w-16 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Toolbar Skeleton */}
+          <div className="flex items-center gap-4 mb-6">
+            <div className="h-8 bg-base-300 rounded w-16 animate-pulse"></div>
+            <div className="flex-1" />
+            <div className="flex gap-2">
+              <div className="h-8 w-24 bg-base-300 rounded animate-pulse"></div>
+              <div className="h-8 w-16 bg-base-300 rounded animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Verses Loading Skeletons */}
+          <div className="space-y-6">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div
+                key={index}
+                className="card bg-base-100 border border-base-200 animate-pulse"
+              >
+                <div className="card-body p-6">
+                  {/* Verse Header Skeleton */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-10 h-8 bg-primary/10 border border-primary/20 rounded-full"></div>
+                    <div className="flex gap-1">
+                      {Array.from({ length: 4 }).map((_, btnIndex) => (
+                        <div
+                          key={btnIndex}
+                          className="w-8 h-8 bg-base-200 rounded animate-pulse"
+                        ></div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Arabic Text Skeleton */}
+                  <div className="mb-4">
+                    <div className="space-y-2">
+                      <div className="h-8 bg-base-200 rounded w-full"></div>
+                      <div className="h-8 bg-base-200 rounded w-5/6"></div>
+                    </div>
+                  </div>
+
+                  {/* Translation Skeletons */}
+                  <div className="space-y-3">
+                    <div>
+                      <div className="h-3 bg-base-200 rounded w-24 mb-2"></div>
+                      <div className="h-4 bg-base-200 rounded w-full"></div>
+                      <div className="h-4 bg-base-200 rounded w-3/4"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Loading Message */}
+          <div className="text-center mt-8">
+            <div className="loading loading-spinner loading-lg text-primary mb-4"></div>
+            <p className="text-base-content/70 text-sm">Loading Surah {surahId}...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Handle error state
   if (error) {
     return (
