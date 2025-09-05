@@ -34,7 +34,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self'",
+            value: "default-src 'self'; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com; script-src 'self'",
           },
         ],
       },

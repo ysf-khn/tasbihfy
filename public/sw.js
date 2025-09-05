@@ -1,18 +1,9 @@
-const CACHE_NAME = 'dhikr-v2';
-const OFFLINE_URL = '/offline';
+const CACHE_NAME = 'dhikr-v3';
 
 // Assets to cache immediately
 const STATIC_ASSETS = [
   '/',
-  '/offline',
-  '/dhikrs',
-  '/icons/icon-72x72.png',
-  '/icons/icon-96x96.png',
-  '/icons/icon-128x128.png',
-  '/icons/icon-144x144.png',
-  '/icons/icon-152x152.png',
   '/icons/icon-192x192.png',
-  '/icons/icon-384x384.png',
   '/icons/icon-512x512.png',
   '/apple-touch-icon.png',
   '/favicon.ico',
@@ -87,8 +78,11 @@ self.addEventListener('fetch', (event) => {
             if (cachedResponse) {
               return cachedResponse;
             }
-            // If not in cache, serve offline page
-            return caches.match(OFFLINE_URL);
+            // If not in cache, serve a basic offline message
+            return new Response(
+              '<html><body><h1>Offline</h1><p>This page is not available offline.</p></body></html>',
+              { headers: { 'Content-Type': 'text/html' } }
+            );
           });
         })
     );

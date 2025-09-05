@@ -182,8 +182,12 @@ export function InstallPrompt() {
       <div className="fixed bottom-4 left-4 right-4 z-50">
         <div className="bg-base-200 border border-base-300 rounded-lg p-4 shadow-lg">
           <div className="flex items-start gap-3">
-            <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-primary-content text-xl">
-              📿
+            <div className="w-12 h-12 rounded-lg overflow-hidden">
+              <img 
+                src="/icons/icon-192x192.png" 
+                alt="Tasbihfy Logo" 
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-base-content">

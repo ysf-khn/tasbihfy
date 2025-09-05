@@ -58,7 +58,7 @@ export default function DuasPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
-                      <span className="badge badge-primary badge-sm">
+                      <span className="w-8 h-8 rounded-full bg-primary text-primary-content text-sm font-medium flex items-center justify-center flex-shrink-0">
                         {chapter.id}
                       </span>
                       <h3 className="font-medium text-base-content">
@@ -67,7 +67,7 @@ export default function DuasPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="badge badge-ghost badge-sm">
+                    <span className="badge badge-ghost badge-sm px-3">
                       {chapter.duas.length} {chapter.duas.length === 1 ? 'dua' : 'duas'}
                     </span>
                   </div>

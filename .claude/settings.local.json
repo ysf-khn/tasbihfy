@@ -30,7 +30,8 @@
       "Read(/C:\\Dev\\dhikr/**)",
       "Read(/C:\\Dev\\dhikr\\app/**)",
       "Bash(magick:*)",
-      "Bash(convert:*)"
+      "Bash(convert:*)",
+      "Read(/C:\\Dev\\dhikr\\app\\duas/**)"
     ],
     "deny": [],
     "ask": []
