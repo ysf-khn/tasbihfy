@@ -38,7 +38,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; connect-src 'self' https://verses.quran.foundation https://www.googletagmanager.com https://www.google-analytics.com; script-src 'self'",
+            value: "default-src 'self'; connect-src 'self' https://verses.quran.foundation https://www.googletagmanager.com https://www.google-analytics.com; media-src 'self' https://verses.quran.foundation; script-src 'self'",
           },
         ],
       },

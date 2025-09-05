@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { getTafsir, getTafsirs } from "@/lib/quran/api";
 import { Tafsir, TafsirResource } from "@/lib/quran/types";
 
@@ -42,6 +42,7 @@ export default function TafsirModal({
     }
   }, [selectedTafsirId, availableTafsirs]);
 
+
   const loadAvailableTafsirs = async () => {
     try {
       setLoadingTafsirs(true);
@@ -77,6 +78,16 @@ export default function TafsirModal({
       setLoading(false);
     }
   };
+
+  const handleTafsirSelection = (tafsirId: number) => {
+    setSelectedTafsirId(tafsirId);
+    // Close dropdown by removing focus
+    if (document.activeElement) {
+      (document.activeElement as HTMLElement).blur();
+    }
+  };
+
+  const selectedTafsir = availableTafsirs.find((t) => t.id === selectedTafsirId);
 
   // Function to sanitize and render HTML content safely
   const renderTafsirHTML = (htmlText: string) => {
@@ -135,19 +146,42 @@ export default function TafsirModal({
                 <p className="text-xs">{tafsirsError}</p>
               </div>
             ) : (
-              <select
-                className="select select-bordered w-full max-w-xs"
-                value={selectedTafsirId}
-                onChange={(e) => setSelectedTafsirId(Number(e.target.value))}
-                disabled={availableTafsirs.length === 0}
-              >
-                {availableTafsirs.map((tafsir) => (
-                  <option key={tafsir.id} value={tafsir.id}>
-                    {tafsir.name} - {tafsir.author_name} ({tafsir.language_name}
-                    )
-                  </option>
-                ))}
-              </select>
+              <div className="dropdown dropdown-bottom w-full max-w-md">
+                <div
+                  tabIndex={availableTafsirs.length === 0 ? -1 : 0}
+                  role="button"
+                  className={`btn btn-outline justify-between w-full ${availableTafsirs.length === 0 ? 'btn-disabled' : ''}`}
+                >
+                  <span className="truncate text-left flex-1">
+                    {selectedTafsir
+                      ? `${selectedTafsir.name}${selectedTafsir.author_name ? ` - ${selectedTafsir.author_name}` : ''}`
+                      : "Select a tafsir..."}
+                  </span>
+                  <ChevronDownIcon className="w-4 h-4 ml-2" />
+                </div>
+                <ul
+                  tabIndex={0}
+                  className="dropdown-content menu bg-base-100 rounded-box z-[101] mt-1 w-full p-2 shadow-lg border border-base-200 max-h-60 overflow-y-auto block"
+                >
+                  {availableTafsirs.map((tafsir) => (
+                    <li key={tafsir.id} className="w-full">
+                      <button
+                        className={`text-left w-full block ${
+                          selectedTafsirId === tafsir.id ? "active" : ""
+                        }`}
+                        onClick={() => handleTafsirSelection(tafsir.id)}
+                      >
+                        <div className="w-full">
+                          <div className="font-medium">{tafsir.name}</div>
+                          <div className="text-xs text-base-content/70">
+                            {tafsir.author_name || 'Unknown Author'} • {tafsir.language_name}
+                          </div>
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
 
