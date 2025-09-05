@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; connect-src 'self' https://verses.quran.foundation https://www.googletagmanager.com https://www.google-analytics.com; media-src 'self' https://verses.quran.foundation; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'",
+            value: "default-src 'self'; img-src 'self' data: blob:; connect-src 'self' blob: https://verses.quran.foundation https://www.googletagmanager.com https://www.google-analytics.com; media-src 'self' https://verses.quran.foundation; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'",
           },
         ],
       },
@@ -38,7 +38,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; connect-src 'self' https://verses.quran.foundation https://www.googletagmanager.com https://www.google-analytics.com; media-src 'self' https://verses.quran.foundation; script-src 'self'",
+            value: "default-src 'self'; img-src 'self' data: blob:; connect-src 'self' blob: https://verses.quran.foundation https://www.googletagmanager.com https://www.google-analytics.com; media-src 'self' https://verses.quran.foundation; script-src 'self'",
           },
         ],
       },
