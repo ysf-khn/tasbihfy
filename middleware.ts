@@ -13,11 +13,11 @@ export function middleware(request: NextRequest) {
   }
   
   // Public paths that don't require authentication
-  const publicPaths = ['/login', '/register', '/', '/prayer', '/quran', '/duas']
+  const publicPaths = ['/login', '/register', '/', '/prayer', '/quran', '/duas', '/settings']
   const isPublicPath = publicPaths.some(path => pathname === path || pathname.startsWith(path))
   
-  // Protected paths that require authentication (settings with account features)
-  const protectedPaths = ['/settings']
+  // Protected paths that require authentication
+  const protectedPaths: string[] = []
   const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path))
   
   // API routes and auth routes are handled elsewhere

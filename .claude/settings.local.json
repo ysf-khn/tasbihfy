@@ -36,7 +36,8 @@
       "Read(/C:\\Dev\\dhikr/**)",
       "Read(/C:\\Dev\\dhikr\\app/**)",
       "Read(/C:\\Dev\\dhikr\\components\\quran/**)",
-      "mcp__context7__resolve-library-id"
+      "mcp__context7__resolve-library-id",
+      "Read(//c/Users/yusuf/OneDrive/Pictures/Screenshots/**)"
     ],
     "deny": [],
     "ask": []

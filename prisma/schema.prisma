@@ -30,6 +30,7 @@ model User {
   dhikrSessions DhikrSession[]
   dailyProgress DailyProgress[]
   prayerLocation PrayerLocation?
+  reminderPreferences ReminderPreferences?
 }
 
 model Account {
@@ -169,4 +170,21 @@ model PrayerTimeCache {
   @@unique([locationQuery, date])
   @@index([date])
   @@index([locationQuery])
+}
+
+model ReminderPreferences {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  reminderEnabled   Boolean   @default(false)
+  reminderTime      String    @default("09:00") // HH:mm format
+  timezone          String    @default("UTC")
+  pushSubscription  Json?     // Store endpoint, p256dh, auth keys
+  lastReminderSent  DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
 }

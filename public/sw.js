@@ -185,24 +185,34 @@ self.addEventListener("sync", (event) => {
   }
 });
 
-// Push notification handling (for future enhancement)
+// Enhanced push notification handling for daily ayah reminders
 self.addEventListener("push", (event) => {
   console.log("[SW] Push notification received");
 
-  if (event.data) {
+  if (!event.data) {
+    console.warn("[SW] Push event received without data");
+    return;
+  }
+
+  try {
     const data = event.data.json();
-    const options = {
+    console.log("[SW] Push notification data:", data);
+
+    // Default notification options
+    let options = {
       body: data.body || "Time for your dhikr practice!",
       icon: "/icons/icon-192x192.png",
       badge: "/icons/icon-72x72.png",
       vibrate: [100, 50, 100],
-      tag: "dhikr-reminder",
+      tag: data.tag || "dhikr-reminder",
       data: {
         dateOfArrival: Date.now(),
-        primaryKey: data.id || "default",
-        url: data.url || "/",
+        primaryKey: data.data?.primaryKey || "default",
+        url: data.data?.url || "/",
+        type: data.data?.type || "generic",
+        ...data.data,
       },
-      actions: [
+      actions: data.actions || [
         {
           action: "open",
           title: "Open App",
@@ -216,22 +226,108 @@ self.addEventListener("push", (event) => {
       ],
     };
 
+    // Customize notification based on type
+    if (data.data?.type === "daily-ayah") {
+      options = {
+        ...options,
+        body: data.body,
+        icon: "/icons/icon-192x192.png",
+        badge: "/icons/icon-72x72.png",
+        vibrate: [200, 100, 200], // Gentle vibration for daily ayah
+        tag: "daily-ayah",
+        requireInteraction: false, // Don't require user interaction
+        silent: false, // Allow notification sound
+        actions: [
+          {
+            action: "read-more",
+            title: "Read More",
+            icon: "/icons/icon-192x192.png",
+          },
+          {
+            action: "dismiss",
+            title: "Dismiss",
+            icon: "/icons/icon-192x192.png",
+          },
+        ],
+      };
+    } else if (data.data?.type === "test-notification") {
+      options = {
+        ...options,
+        body: data.body,
+        tag: "test-notification",
+        vibrate: [100, 50, 100], // Short test vibration
+        requireInteraction: true, // Require interaction for test
+        actions: [
+          {
+            action: "open",
+            title: "Open App",
+            icon: "/icons/icon-192x192.png",
+          },
+        ],
+      };
+    }
+
+    const title = data.title || "Tasbihfy";
+
     event.waitUntil(
-      self.registration.showNotification(
-        data.title || "Dhikr Reminder",
-        options
-      )
+      self.registration.showNotification(title, options).then(() => {
+        console.log("[SW] Notification displayed successfully:", title);
+      }).catch((error) => {
+        console.error("[SW] Failed to display notification:", error);
+      })
+    );
+
+  } catch (error) {
+    console.error("[SW] Error processing push notification:", error);
+    
+    // Fallback notification if JSON parsing fails
+    event.waitUntil(
+      self.registration.showNotification("Tasbihfy", {
+        body: "You have a new notification",
+        icon: "/icons/icon-192x192.png",
+        badge: "/icons/icon-72x72.png",
+        tag: "fallback",
+      })
     );
   }
 });
 
-// Handle notification clicks
+// Enhanced notification click handler
 self.addEventListener("notificationclick", (event) => {
-  console.log("[SW] Notification click received");
+  console.log("[SW] Notification click received:", {
+    action: event.action,
+    tag: event.notification.tag,
+    data: event.notification.data,
+  });
 
   event.notification.close();
 
-  const urlToOpen = event.notification.data?.url || "/";
+  // Handle different notification actions
+  if (event.action === "dismiss") {
+    console.log("[SW] Notification dismissed by user");
+    return;
+  }
+
+  // Determine URL to open based on notification type and action
+  let urlToOpen = "/";
+  
+  if (event.notification.data) {
+    const { type, url, verseKey, chapterId, verseNumber } = event.notification.data;
+    
+    if (type === "daily-ayah") {
+      if (event.action === "read-more" && chapterId && verseNumber) {
+        // Open specific ayah in Quran reader
+        urlToOpen = `/quran/${chapterId}?verse=${verseNumber}`;
+      } else {
+        // Default to main page for ayah notifications
+        urlToOpen = url || "/";
+      }
+    } else {
+      urlToOpen = url || "/";
+    }
+  }
+
+  console.log("[SW] Opening URL:", urlToOpen);
 
   event.waitUntil(
     clients
@@ -241,13 +337,18 @@ self.addEventListener("notificationclick", (event) => {
         for (let i = 0; i < clientList.length; i++) {
           const client = clientList[i];
           if (client.url.includes(self.location.origin) && "focus" in client) {
+            // If app is open, navigate to the desired URL and focus
+            client.navigate && client.navigate(urlToOpen);
             return client.focus();
           }
         }
-        // If app is not open, open it
+        // If app is not open, open it with the desired URL
         if (clients.openWindow) {
           return clients.openWindow(urlToOpen);
         }
+      })
+      .catch((error) => {
+        console.error("[SW] Error handling notification click:", error);
       })
   );
 });

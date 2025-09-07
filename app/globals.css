@@ -62,13 +62,15 @@ body {
 
 /* Arabic font variants with higher specificity */
 .arabic.arabic-naskh {
-  font-family: var(--font-arabic-naskh), 'Noto Naskh Arabic', 'Times New Roman', serif;
+  font-family: var(--font-arabic-naskh), "Noto Naskh Arabic", "Times New Roman",
+    serif;
   line-height: 1.8;
 }
 
 .arabic.arabic-nastaliq {
-  font-family: var(--font-arabic-nastaliq), 'Noto Nastaliq Urdu', 'Times New Roman', serif;
-  line-height: 2.0; /* Nastaliq needs more space */
+  font-family: var(--font-arabic-nastaliq), "Noto Nastaliq Urdu",
+    "Times New Roman", serif;
+  line-height: 2; /* Nastaliq needs more space */
 }
 
 /* Improved Arabic display for counter */
@@ -81,7 +83,8 @@ body {
 
 /* Arabic font utility class */
 .font-arabic {
-  font-family: var(--font-arabic-naskh), 'Noto Naskh Arabic', 'Scheherazade New', 'Times New Roman', serif;
+  font-family: var(--font-arabic-naskh), "Noto Naskh Arabic", "Scheherazade New",
+    "Times New Roman", serif;
   font-feature-settings: "liga" 1, "dlig" 1, "calt" 1;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -90,7 +93,8 @@ body {
 
 /* Quran-specific Arabic styling */
 .quran-arabic {
-  font-family: 'Scheherazade New', 'Noto Naskh Arabic', 'Arabic Typesetting', serif;
+  font-family: "Scheherazade New", "Noto Naskh Arabic", "Arabic Typesetting",
+    serif;
   direction: rtl;
   text-align: right;
   line-height: 2.2;
@@ -141,7 +145,6 @@ body {
   }
 }
 
-
 .shimmer {
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200px 100%;
@@ -159,7 +162,7 @@ body {
   }
 
   .quran-arabic {
-    line-height: 2.0;
+    line-height: 2;
     font-size: clamp(1.125rem, 4vw, 1.5rem);
   }
 }
@@ -210,7 +213,7 @@ body {
 }
 
 .star-8:before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -262,9 +265,9 @@ body {
 }
 
 @layer base {
-  * {
+  /* * {
     @apply border-border outline-ring/50;
-  }
+  } */
   body {
     @apply bg-background text-foreground;
   }
@@ -319,7 +322,7 @@ body {
 .tafsir-content .arabic,
 .tafsir-content [lang="ar"] {
   @apply text-right text-lg leading-loose;
-  font-family: 'Amiri', 'Scheherazade New', serif;
+  font-family: "Amiri", "Scheherazade New", serif;
 }
 
 /* Ensure responsive design */
@@ -327,12 +330,13 @@ body {
   .tafsir-content h1 {
     @apply text-xl;
   }
-  
+
   .tafsir-content h2 {
     @apply text-lg;
   }
-  
+
   .tafsir-content h3 {
     @apply text-base;
   }
 }
+

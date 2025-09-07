@@ -178,6 +178,34 @@ export class GuestStorage {
     localStorage.removeItem(GUEST_SESSIONS_KEY);
   }
 
+  static pruneOldSessions(maxAge: number = 30 * 24 * 60 * 60 * 1000): number {
+    if (typeof window === 'undefined') return 0;
+    
+    try {
+      const sessions = this.getSessions();
+      const now = Date.now();
+      const originalCount = sessions.length;
+      
+      // Remove completed sessions older than maxAge
+      const filtered = sessions.filter(session => {
+        if (!session.completed) return true; // Keep incomplete sessions
+        
+        const lastUpdated = session.lastUpdated || session.startedAt || 0;
+        return now - lastUpdated < maxAge;
+      });
+      
+      if (filtered.length < originalCount) {
+        this.saveSessions(filtered);
+        return originalCount - filtered.length;
+      }
+      
+      return 0;
+    } catch (error) {
+      console.warn('Failed to prune old guest sessions:', error);
+      return 0;
+    }
+  }
+
   static exportGuestData(): { dhikrs: GuestDhikr[]; sessions: GuestSession[] } {
     return {
       dhikrs: this.getDhikrs(),

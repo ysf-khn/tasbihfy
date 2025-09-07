@@ -184,9 +184,9 @@ export function InstallPrompt() {
         <div className="bg-base-200 border border-base-300 rounded-lg p-4 shadow-lg">
           <div className="flex items-start gap-3">
             <div className="w-12 h-12 rounded-lg overflow-hidden">
-              <img 
-                src="/icons/icon-192x192.png" 
-                alt="Tasbihfy Logo" 
+              <img
+                src="/icons/icon-192x192.png"
+                alt="Tasbihfy Logo"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -195,8 +195,7 @@ export function InstallPrompt() {
                 Install Tasbihfy
               </h3>
               <p className="text-sm text-base-content/70 mt-1">
-                Install the app for a better experience with offline access and
-                quick launch.
+                Install the app for a better experience and quick launch.
               </p>
               <div className="flex gap-2 mt-3">
                 <button

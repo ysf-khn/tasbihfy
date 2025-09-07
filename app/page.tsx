@@ -9,10 +9,9 @@ import DhikrCounter from "@/components/counter/DhikrCounter";
 import hisnulMuslim from "@/data/hisnul-muslim-complete.json";
 import HomeDhikrCard from "@/components/dhikr/HomeDhikrCard";
 import CreateDhikrModal from "@/components/dhikr/CreateDhikrModal";
-import ThemeToggle from "@/components/ui/ThemeToggle";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import type { Dhikr, DhikrSession } from "@prisma/client";
-import { GuestStorage, type GuestDhikr } from "@/lib/guestStorage";
+import { GuestStorage } from "@/lib/guestStorage";
 import { PlusIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 

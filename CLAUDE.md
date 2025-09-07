@@ -127,3 +127,4 @@ The PRD document (`dhikr_prd.txt`) contains the original implementation plan and
 
 - DO NOT USE GRADIENTS IN THE APP
 - Do NOT hardcode colors, use daisy ui semantic color system
+- The app and the postgres db are deployed on a Hetzner VPS

@@ -12,6 +12,7 @@ declare global {
 }
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import ArabicTextControls from "@/components/ui/ArabicTextControls";
+import ReminderSettings from "@/components/notifications/ReminderSettings";
 import Link from "next/link";
 import {
   ChevronLeftIcon,
@@ -28,7 +29,7 @@ import type { ComponentType, SVGProps } from "react";
 type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
 type LinkSettingsItem = {
-  type: 'link';
+  type: "link";
   icon: IconType;
   label: string;
   href: string;
@@ -37,7 +38,7 @@ type LinkSettingsItem = {
 };
 
 type ButtonSettingsItem = {
-  type: 'button';
+  type: "button";
   icon: IconType;
   label: string;
   onClick: () => void;
@@ -45,7 +46,7 @@ type ButtonSettingsItem = {
 };
 
 type ToggleSettingsItem = {
-  type: 'toggle';
+  type: "toggle";
   icon: IconType;
   label: string;
   hasToggle: true;
@@ -61,56 +62,49 @@ type SettingsSection = {
 };
 
 export default function SettingsPage() {
-  const [dailyReminder, setDailyReminder] = useState(true);
   const { user } = useAuth();
 
   const handleSignOut = async () => {
     // Track user logout
-    window.gtag?.('event', 'user_logout', {
-      event_category: 'Authentication',
-      event_label: 'User logged out'
+    window.gtag?.("event", "user_logout", {
+      event_category: "Authentication",
+      event_label: "User logged out",
     });
     await signOut();
   };
 
+  // Auth-specific settings sections
+  const authSettingSections: SettingsSection[] = user
+    ? [
+        {
+          title: "GENERAL",
+          items: [
+            {
+              type: "button",
+              icon: HeartIcon,
+              label: "Favorites",
+              hasChevron: true,
+              onClick: () => console.log("Favorites clicked"),
+            },
+            {
+              type: "button",
+              icon: ChartBarIcon,
+              label: "Daily Goal",
+              hasChevron: true,
+              onClick: () => console.log("Daily Goal clicked"),
+            },
+          ],
+        },
+      ]
+    : [];
+
   const settingSections: SettingsSection[] = [
-    {
-      title: "GENERAL",
-      items: [
-        {
-          type: 'button',
-          icon: HeartIcon,
-          label: "Favorites",
-          hasChevron: true,
-          onClick: () => console.log("Favorites clicked"),
-        },
-        {
-          type: 'button',
-          icon: ChartBarIcon,
-          label: "Daily Goal",
-          hasChevron: true,
-          onClick: () => console.log("Daily Goal clicked"),
-        },
-      ],
-    },
-    {
-      title: "NOTIFICATIONS",
-      items: [
-        {
-          type: 'toggle',
-          icon: BellIcon,
-          label: "Daily Reminder",
-          hasToggle: true,
-          toggleValue: dailyReminder,
-          onToggle: setDailyReminder,
-        },
-      ],
-    },
+    ...authSettingSections,
     {
       title: "ABOUT",
       items: [
         {
-          type: 'link',
+          type: "link",
           icon: InformationCircleIcon,
           label: "About Tasbihfy",
           hasChevron: true,
@@ -122,7 +116,7 @@ export default function SettingsPage() {
       title: "SUPPORT",
       items: [
         {
-          type: 'link',
+          type: "link",
           icon: EnvelopeIcon,
           label: "Contact Developer",
           subtitle: "yusuf@tasbihfy.com",
@@ -149,6 +143,14 @@ export default function SettingsPage() {
             <ArabicTextControls />
           </div>
 
+          {/* Notification Settings */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-semibold text-base-content/60 uppercase tracking-wider px-2">
+              NOTIFICATIONS
+            </h3>
+            <ReminderSettings user={user} />
+          </div>
+
           {settingSections.map((section, sectionIndex) => (
             <div key={sectionIndex} className="space-y-4">
               {/* Section Header */}
@@ -160,7 +162,7 @@ export default function SettingsPage() {
               <div className="bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden">
                 {section.items.map((item, itemIndex) => (
                   <div key={itemIndex}>
-                    {item.type === 'link' ? (
+                    {item.type === "link" ? (
                       <Link href={item.href} className="block">
                         <div className="w-full flex items-center justify-between p-6 hover:bg-base-200 transition-colors">
                           {/* Left side: Icon and Label */}
@@ -184,7 +186,7 @@ export default function SettingsPage() {
                           )}
                         </div>
                       </Link>
-                    ) : item.type === 'toggle' ? (
+                    ) : item.type === "toggle" ? (
                       <div className="w-full flex items-center justify-between p-6">
                         {/* Left side: Icon and Label */}
                         <div className="flex items-center gap-4">
@@ -282,9 +284,6 @@ export default function SettingsPage() {
                         <div className="font-semibold text-base-content">
                           Guest User
                         </div>
-                        <div className="text-sm text-base-content/70">
-                          Using local storage only
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -296,7 +295,8 @@ export default function SettingsPage() {
                         Sign In to Save Your Progress
                       </h3>
                       <p className="text-sm text-base-content/70">
-                        Create an account to sync your dhikrs across devices and keep your progress safe.
+                        Create an account to sync your progress across devices
+                        and keep it safe.
                       </p>
                       <Link href="/login" className="btn btn-primary btn-sm">
                         Sign In

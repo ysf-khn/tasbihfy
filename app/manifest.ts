@@ -110,5 +110,22 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     related_applications: [],
     prefer_related_applications: false,
+    // Add protocol handlers for deep linking
+    protocol_handlers: [
+      {
+        protocol: "web+tasbihfy",
+        url: "/?handler=%s",
+      },
+    ],
+    // Add share target for sharing functionality
+    share_target: {
+      action: "/",
+      method: "GET",
+      params: {
+        title: "title",
+        text: "text",
+        url: "url",
+      },
+    },
   };
 }
