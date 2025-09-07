@@ -2,135 +2,140 @@ name: 🚀 Deploy to Production
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch: # Allow manual deployments from GitHub UI
 
 jobs:
   deploy:
     name: Deploy to Hetzner Server
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: 🏁 Start Deployment
-      run: echo "Starting deployment to production server..."
-    
-    - name: 📝 Set Variables
-      id: vars
-      run: echo "SHORT_SHA=${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
-    
-    - name: 📢 Notify Deployment Start
-      env:
-        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-      run: |
-        if [ -n "$DISCORD_WEBHOOK" ]; then
-          curl -X POST "$DISCORD_WEBHOOK" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "embeds": [{
-                "title": "🚀 Deployment Started",
-                "description": "Deploying to production server...",
-                "color": 16776960,
-                "fields": [
-                  {"name": "Repository", "value": "${{ github.repository }}", "inline": true},
-                  {"name": "Branch", "value": "${{ github.ref_name }}", "inline": true},
-                  {"name": "Commit", "value": "[${{ steps.vars.outputs.SHORT_SHA }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})", "inline": true},
-                  {"name": "Author", "value": "${{ github.actor }}", "inline": true}
-                ],
-                "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
-              }]
-            }'
-        fi
-    
-    - name: 🔑 Deploy via SSH
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USERNAME }}
-        key: ${{ secrets.SSH_KEY }}
-        port: ${{ secrets.SSH_PORT }}
-        script: |
-          echo "🚀 Starting deployment at $(date)"
-          cd /var/www/tasbihfy
-          
-          # Pull latest code
-          echo "📥 Pulling latest code..."
-          git pull origin main
-          
-          # Install dependencies
-          echo "📦 Installing dependencies..."
-          npm install
-          
-          # Run database migrations
-          echo "🗄️ Running database migrations..."
-          npx prisma migrate deploy
-          
-          # Build application
-          echo "🏗️ Building application..."
-          npm run build
-          
-          # Restart PM2 process
-          echo "🔄 Restarting application..."
-          pm2 restart tasbihfy --update-env
-          
-          # Health check
-          echo "🩺 Performing health check..."
-          sleep 5
-          if pm2 status tasbihfy | grep -q "online"; then
-            echo "✅ Deployment successful! App is online"
-            echo "🌐 App available at: https://tasbihfy.com"
-          else
-            echo "❌ Deployment failed! App is not online"
-            exit 1
+      - name: 🏁 Start Deployment
+        run: echo "Starting deployment to production server..."
+
+      - name: 📝 Set Variables
+        id: vars
+        run: echo "SHORT_SHA=${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
+
+      - name: 📢 Notify Deployment Start
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          if [ -n "$DISCORD_WEBHOOK" ]; then
+            curl -X POST "$DISCORD_WEBHOOK" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "embeds": [{
+                  "title": "🚀 Deployment Started",
+                  "description": "Deploying to production server...",
+                  "color": 16776960,
+                  "fields": [
+                    {"name": "Repository", "value": "${{ github.repository }}", "inline": true},
+                    {"name": "Branch", "value": "${{ github.ref_name }}", "inline": true},
+                    {"name": "Commit", "value": "[${{ steps.vars.outputs.SHORT_SHA }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})", "inline": true},
+                    {"name": "Author", "value": "${{ github.actor }}", "inline": true}
+                  ],
+                  "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+                }]
+              }'
           fi
-          
-          echo "🎉 Deployment completed at $(date)"
-    
-    - name: ✅ Deployment Complete
-      run: echo "Deployment finished successfully!"
-    
-    - name: 📢 Notify Success
-      if: success()
-      env:
-        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-      run: |
-        if [ -n "$DISCORD_WEBHOOK" ]; then
-          curl -X POST "$DISCORD_WEBHOOK" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "embeds": [{
-                "title": "✅ Deployment Successful",
-                "description": "Production deployment completed successfully!",
-                "color": 65280,
-                "fields": [
-                  {"name": "Repository", "value": "${{ github.repository }}", "inline": true},
-                  {"name": "Commit", "value": "[${{ steps.vars.outputs.SHORT_SHA }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})", "inline": true},
-                  {"name": "Duration", "value": "~2 minutes", "inline": true},
-                  {"name": "🌐 Live Site", "value": "[tasbihfy.com](https://tasbihfy.com)", "inline": false}
-                ],
-                "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
-              }]
-            }'
-        fi
-    
-    - name: 📢 Notify Failure
-      if: failure()
-      env:
-        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-      run: |
-        if [ -n "$DISCORD_WEBHOOK" ]; then
-          curl -X POST "$DISCORD_WEBHOOK" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "embeds": [{
-                "title": "❌ Deployment Failed",
-                "description": "Production deployment encountered an error!",
-                "color": 16711680,
-                "fields": [
-                  {"name": "Repository", "value": "${{ github.repository }}", "inline": true},
-                  {"name": "Commit", "value": "[${{ steps.vars.outputs.SHORT_SHA }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})", "inline": true},
-                  {"name": "🔍 Logs", "value": "[View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})", "inline": false}
-                ],
-                "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
-              }]
-            }'
-        fi
+
+      - name: 🔑 Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            echo "🚀 Starting deployment at $(date)"
+            cd /var/www/tasbihfy
+
+            # Pull latest code
+            echo "📥 Pulling latest code..."
+            git pull origin main
+
+            # Install dependencies
+            echo "📦 Installing dependencies..."
+            npm install
+
+            # Run database migrations
+            echo "🗄️ Running database migrations..."
+            npx prisma migrate deploy
+
+            # Build application
+            echo "🏗️ Building application..."
+            npm run build
+
+            # Restart PM2 process
+            echo "🔄 Restarting application..."
+            pm2 restart tasbihfy --update-env
+
+            # Restart/start reminder cron service
+            echo "📅 Managing reminder cron service..."
+            pm2 restart tasbihfy-push-cron || pm2 start services/reminder-cron.js --name tasbihfy-push-cron
+
+            # Health check
+            echo "🩺 Performing health check..."
+            sleep 5
+            if pm2 status tasbihfy | grep -q "online" && pm2 status tasbihfy-push-cron | grep -q "online"; then
+              echo "✅ Deployment successful! App and cron service are online"
+              echo "🌐 App available at: https://tasbihfy.com"
+            else
+              echo "❌ Deployment failed! Services are not online"
+              pm2 status
+              exit 1
+            fi
+
+            echo "🎉 Deployment completed at $(date)"
+
+      - name: ✅ Deployment Complete
+        run: echo "Deployment finished successfully!"
+
+      - name: 📢 Notify Success
+        if: success()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          if [ -n "$DISCORD_WEBHOOK" ]; then
+            curl -X POST "$DISCORD_WEBHOOK" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "embeds": [{
+                  "title": "✅ Deployment Successful",
+                  "description": "Production deployment completed successfully!",
+                  "color": 65280,
+                  "fields": [
+                    {"name": "Repository", "value": "${{ github.repository }}", "inline": true},
+                    {"name": "Commit", "value": "[${{ steps.vars.outputs.SHORT_SHA }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})", "inline": true},
+                    {"name": "Duration", "value": "~2 minutes", "inline": true},
+                    {"name": "🌐 Live Site", "value": "[tasbihfy.com](https://tasbihfy.com)", "inline": false}
+                  ],
+                  "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+                }]
+              }'
+          fi
+
+      - name: 📢 Notify Failure
+        if: failure()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          if [ -n "$DISCORD_WEBHOOK" ]; then
+            curl -X POST "$DISCORD_WEBHOOK" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "embeds": [{
+                  "title": "❌ Deployment Failed",
+                  "description": "Production deployment encountered an error!",
+                  "color": 16711680,
+                  "fields": [
+                    {"name": "Repository", "value": "${{ github.repository }}", "inline": true},
+                    {"name": "Commit", "value": "[${{ steps.vars.outputs.SHORT_SHA }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})", "inline": true},
+                    {"name": "🔍 Logs", "value": "[View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})", "inline": false}
+                  ],
+                  "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+                }]
+              }'
+          fi

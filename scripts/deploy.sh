@@ -105,20 +105,31 @@ if ! pm2 restart "$APP_NAME" --update-env; then
     exit 1
 fi
 
+# Restart/start reminder cron service
+log_info "📅 Managing reminder cron service..."
+if ! pm2 restart tasbihfy-push-cron --update-env; then
+    log_info "Starting reminder cron service for the first time..."
+    if ! pm2 start services/reminder-cron.js --name tasbihfy-push-cron; then
+        log_error "Failed to start reminder cron service!"
+        exit 1
+    fi
+fi
+
 # Wait for app to start
 log_info "⏳ Waiting for application to start..."
 sleep 5
 
 # Health check
 log_info "🩺 Performing health check..."
-if pm2 status "$APP_NAME" | grep -q "online"; then
-    log_success "✅ Application is running!"
+if pm2 status "$APP_NAME" | grep -q "online" && pm2 status tasbihfy-push-cron | grep -q "online"; then
+    log_success "✅ Application and cron service are running!"
 else
-    log_error "❌ Application failed to start!"
+    log_error "❌ Services failed to start!"
     log_info "📋 PM2 status:"
     pm2 status
     log_info "📋 Recent logs:"
     pm2 logs "$APP_NAME" --lines 10
+    pm2 logs tasbihfy-push-cron --lines 10
     exit 1
 fi
 
@@ -139,9 +150,8 @@ log_success "🎉 Deployment completed successfully!"
 log_info "📊 Deployment Summary:"
 log_info "   Time: $(date)"
 log_info "   Server: $(hostname)"
-log_info "   App Status: $(pm2 status "$APP_NAME" --no-colors | grep "$APP_NAME" | awk '{print $10}')"
-log_info "   Memory Usage: $(pm2 status "$APP_NAME" --no-colors | grep "$APP_NAME" | awk '{print $12}')"
-log_info "   CPU Usage: $(pm2 status "$APP_NAME" --no-colors | grep "$APP_NAME" | awk '{print $13}')"
+log_info "   Main App Status: $(pm2 status "$APP_NAME" --no-colors | grep "$APP_NAME" | awk '{print $10}')"
+log_info "   Cron Service Status: $(pm2 status tasbihfy-push-cron --no-colors | grep tasbihfy-push-cron | awk '{print $10}')"
 log_info "   URL: https://tasbihfy.com"
 
 log_success "🚀 Deployment completed at $(date)"
