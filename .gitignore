@@ -43,6 +43,10 @@ next-env.d.ts
 /app/generated/prisma
 
 DEPLOYMENT.md
+
 CICD_SETUP.md
+
 DAILY_REMINDERS.md
+
+
 LOCAL_TESTING.md
