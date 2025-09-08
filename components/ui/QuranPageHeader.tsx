@@ -1,7 +1,6 @@
 "use client";
 
 import { Bars3Icon } from "@heroicons/react/24/outline";
-import ThemeToggle from "@/components/ui/ThemeToggle";
 
 interface QuranPageHeaderProps {
   onMenuToggle: () => void;
@@ -19,8 +18,6 @@ export default function QuranPageHeader({ onMenuToggle }: QuranPageHeaderProps) 
         <Bars3Icon className="w-5 h-5" />
       </button>
 
-      {/* Theme Toggle */}
-      <ThemeToggle />
     </div>
   );
 }

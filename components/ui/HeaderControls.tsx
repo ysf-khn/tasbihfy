@@ -2,7 +2,6 @@
 
 import { useArabicSettings } from "@/hooks/useArabicSettings";
 import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
-import ThemeToggle from "@/components/ui/ThemeToggle";
 
 export default function HeaderControls() {
   const {
@@ -70,11 +69,6 @@ export default function HeaderControls() {
         </button>
       </div>
 
-      {/* Divider */}
-      <div className="w-px h-6 bg-base-300/50" />
-
-      {/* Theme Toggle */}
-      <ThemeToggle />
     </div>
   );
 }

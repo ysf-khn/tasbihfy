@@ -1,10 +1,8 @@
 "use client";
 
-import ThemeToggle from "@/components/ui/ThemeToggle";
 
 interface PageHeaderProps {
   title?: string;
-  showThemeToggle?: boolean;
   rightContent?: React.ReactNode;
   fixed?: boolean;
   glassmorphism?: boolean;
@@ -12,7 +10,6 @@ interface PageHeaderProps {
 
 export default function PageHeader({ 
   title = "Tasbihfy", 
-  showThemeToggle = true,
   rightContent,
   fixed = false,
   glassmorphism = false
@@ -26,7 +23,7 @@ export default function PageHeader({
   return (
     <div className={`${baseClasses} ${styleClasses} ${positionClasses}`.trim()}>
       <h1 className="text-xl sm:text-2xl font-bold text-base-content">{title}</h1>
-      {rightContent || (showThemeToggle && <ThemeToggle />)}
+      {rightContent}
     </div>
   );
 }

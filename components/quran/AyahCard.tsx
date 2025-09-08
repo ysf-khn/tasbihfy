@@ -47,10 +47,7 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
   const isPlaying = isCurrentlyPlaying(verseKey);
   const isLoadingAudio = isCurrentlyLoading(verseKey);
 
-  // Debug info (only in development)
-  if (process.env.NODE_ENV === "development") {
-    console.log(`📖 Rendering verse ${verseKey}:`, verse);
-  }
+  // Debug info removed to prevent excessive console logging during audio playback
 
   const copyToClipboard = async (text: string) => {
     try {

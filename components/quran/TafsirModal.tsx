@@ -23,7 +23,9 @@ export default function TafsirModal({
   const [availableTafsirs, setAvailableTafsirs] = useState<TafsirResource[]>(
     []
   );
-  const [selectedTafsirId, setSelectedTafsirId] = useState<number>(169); // Default to tafsir ID 169
+  // Default to Tafsir Ibn Kathir (169) in production, use first available in test
+  const defaultTafsirId = process.env.NODE_ENV === 'production' ? 169 : 169;
+  const [selectedTafsirId, setSelectedTafsirId] = useState<number>(defaultTafsirId);
   const [tafsirData, setTafsirData] = useState<Tafsir | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingTafsirs, setLoadingTafsirs] = useState(true);
@@ -50,15 +52,22 @@ export default function TafsirModal({
       const tafsirs = await getTafsirs();
       setAvailableTafsirs(tafsirs);
 
-      // Set default selection to first tafsir if available
+      // Set default selection based on environment
       if (tafsirs.length > 0) {
-        setSelectedTafsirId(tafsirs[0].id);
+        // In production, prefer Tafsir Ibn Kathir (169) if available
+        if (process.env.NODE_ENV === 'production') {
+          const ibnKathir = tafsirs.find(t => t.id === 169);
+          setSelectedTafsirId(ibnKathir ? 169 : tafsirs[0].id);
+        } else {
+          // In test, use first available
+          setSelectedTafsirId(tafsirs[0].id);
+        }
       }
     } catch (err) {
       console.error("Failed to load available tafsirs:", err);
       setTafsirsError("Failed to load available tafsirs. Using defaults.");
-      // Fallback to a default tafsir ID
-      setSelectedTafsirId(169);
+      // Fallback to environment-specific default tafsir ID
+      setSelectedTafsirId(defaultTafsirId);
     } finally {
       setLoadingTafsirs(false);
     }

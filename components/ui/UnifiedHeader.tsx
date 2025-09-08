@@ -4,7 +4,6 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
-import ThemeToggle from "@/components/ui/ThemeToggle";
 import UnifiedSettingsDrawer from "@/components/ui/UnifiedSettingsDrawer";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -60,8 +59,6 @@ export default function UnifiedHeader({
               <AdjustmentsHorizontalIcon className="w-5 h-5" />
             </button>
 
-            {/* Theme Toggle */}
-            <ThemeToggle />
           </div>
         </div>
       </div>

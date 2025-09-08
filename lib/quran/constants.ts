@@ -991,7 +991,7 @@ export const SURAH_METADATA = [
 // Default settings
 export const DEFAULT_QURAN_SETTINGS = {
   translationLanguages: ["english"],
-  selectedTranslations: [85], // Default to Sahih International (Haleem)
+  selectedTranslations: process.env.NODE_ENV === 'production' ? [20] : [85], // Production: Saheeh International, Test: Haleem
   arabicFontSize: 18,
   translationFontSize: 16,
   showTransliteration: true,

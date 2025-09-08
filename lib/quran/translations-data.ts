@@ -154,6 +154,32 @@ export function getPopularTranslations(): { [language: string]: number[] } {
  * Get default translation IDs for common languages
  */
 export function getDefaultTranslations(): { [language: string]: number | null } {
+  // In production, use Saheeh International (20) as default for English
+  if (process.env.NODE_ENV === 'production') {
+    const defaults: { [language: string]: number | null } = {
+      english: 20, // Saheeh International
+    };
+    
+    // Get defaults for other languages from popular translations
+    const popular = getPopularTranslations();
+    Object.keys(popular).forEach((language) => {
+      if (language !== 'english') {
+        defaults[language] = popular[language][0] || null;
+      }
+    });
+    
+    // Fallback to first available translation if no popular one found
+    const grouped = getGroupedTranslations();
+    Object.keys(grouped).forEach((language) => {
+      if (!defaults[language] && grouped[language].length > 0) {
+        defaults[language] = grouped[language][0].id;
+      }
+    });
+    
+    return defaults;
+  }
+  
+  // In test/development, use the existing logic
   const popular = getPopularTranslations();
   const defaults: { [language: string]: number | null } = {};
   

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "@/lib/auth-client";
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 
 // Declare gtag type for Google Analytics tracking
 declare global {
@@ -41,10 +42,10 @@ export default function LoginPage() {
       });
       console.log("[Login] Signin result:", result);
       // Track successful login
-      window.gtag?.('event', 'user_login', {
-        event_category: 'Authentication',
-        event_label: 'Email login successful',
-        method: 'email'
+      window.gtag?.("event", "user_login", {
+        event_category: "Authentication",
+        event_label: "Email login successful",
+        method: "email",
       });
       router.push("/");
     } catch (err: any) {
@@ -61,24 +62,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="card bg-base-100 shadow-2xl border border-base-300">
-      <div className="card-body p-8">
-        <div className="text-center mb-8 space-y-4">
-          <div>
-            <h1 className="text-4xl font-bold text-primary">
-              Assalamu Alaikum
-            </h1>
-            <p className="text-lg text-base-content/80 mt-2">
-              Welcome back to your dhikr journey
-            </p>
-          </div>
-          <div className="alert alert-info">
-            <SparklesIcon className="w-5 h-5" />
-            <span className="text-sm">Continue your remembrance of Allah</span>
-          </div>
-        </div>
+    <div className="w-full">
+      <div className="text-center mb-6 space-y-2">
+        <h1 className="text-3xl font-bold text-primary">
+          Assalamu Alaikum
+        </h1>
+        <p className="text-base text-base-content/80">
+          Welcome back to Tasbihfy!
+        </p>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-4 mb-6">
+        <GoogleSignInButton mode="signin" callbackURL="/" />
+      </div>
+
+      <div className="divider text-sm opacity-60">OR</div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
           <div className="form-control">
             <label className="label">
               <span className="label-text flex items-center gap-2">
@@ -90,7 +90,7 @@ export default function LoginPage() {
               <input
                 type="email"
                 placeholder="Enter your email"
-                className="input input-bordered w-full pl-10 focus:input-primary transition-colors"
+                className="input input-bordered rounded-xl w-full pl-10 focus:input-primary transition-colors"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -110,7 +110,7 @@ export default function LoginPage() {
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
-                className="input input-bordered w-full pl-10 pr-10 focus:input-primary transition-colors"
+                className="input input-bordered rounded-xl w-full pl-10 pr-10 focus:input-primary transition-colors"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -131,7 +131,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="alert alert-error shadow-lg">
+            <div className="alert alert-error rounded-xl shadow-lg">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="stroke-current shrink-0 h-6 w-6"
@@ -154,28 +154,25 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className={`btn btn-primary btn-lg w-full shadow-lg hover:shadow-xl transition-all duration-200 ${
+            className={`btn btn-primary rounded-xl w-full transition-all duration-200 ${
               isLoading ? "loading" : ""
             }`}
             disabled={isLoading}
           >
-            {isLoading ? "Signing in..." : "Begin Your Dhikr Journey"}
+            {isLoading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
-        <div className="divider opacity-50">OR</div>
-
-        <div className="text-center space-y-2">
-          <p className="text-sm text-base-content/70">New to dhikr counting?</p>
+        <div className="text-center space-y-3 mt-6">
+          <p className="text-sm text-base-content/70">New to Tasbihfy?</p>
           <Link
             href="/register"
-            className="btn btn-outline btn-primary shadow-lg hover:shadow-xl transition-all duration-200"
+            className="btn btn-outline btn-primary rounded-xl w-full transition-all duration-200"
           >
             <SparklesIcon className="w-4 h-4" />
             Create Account
           </Link>
         </div>
-      </div>
     </div>
   );
 }

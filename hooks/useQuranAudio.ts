@@ -141,6 +141,10 @@ export function useQuranAudio(): AudioState & AudioControls {
     if (!audioRef.current) return;
 
     try {
+      // Check if it's the same audio that's already loaded (before setting loading)
+      const currentSrc = audioRef.current.src;
+      
+      // Set loading state immediately for new verse requests
       setState(prev => ({ 
         ...prev, 
         isLoading: true, 
@@ -148,17 +152,31 @@ export function useQuranAudio(): AudioState & AudioControls {
         currentVerseKey: verseKey
       }));
 
-      // Get audio URL
+      // Get audio URL (this is the slow operation)
       const audioUrl = await getAyahAudioUrl(settings.selectedRecitationId || 7, verseKey);
       
       if (!audioUrl) {
         throw new Error('Audio not available for this verse');
       }
 
-      // If it's the same URL and audio, just resume
-      if (state.currentAudioUrl === audioUrl && !audioRef.current.ended) {
+      // Check if it's the same audio that's already loaded
+      const isSameAudio = currentSrc === audioUrl && !audioRef.current.ended;
+      
+      if (isSameAudio) {
+        // Just resume existing audio - clear loading state
+        setState(prev => ({ 
+          ...prev, 
+          isLoading: false,
+          error: null,
+          currentVerseKey: verseKey
+        }));
         await audioRef.current.play();
         return;
+      }
+
+      // Always stop current audio before starting new one
+      if (!audioRef.current.paused) {
+        audioRef.current.pause();
       }
 
       // Load new audio
@@ -167,6 +185,7 @@ export function useQuranAudio(): AudioState & AudioControls {
         ...prev, 
         currentAudioUrl: audioUrl,
         currentVerseKey: verseKey
+        // isLoading stays true until canplay event
       }));
 
       await audioRef.current.play();
@@ -180,7 +199,7 @@ export function useQuranAudio(): AudioState & AudioControls {
         error: error instanceof Error ? error.message : 'Failed to play audio'
       }));
     }
-  }, [settings.selectedRecitationId, state.currentAudioUrl]);
+  }, [settings.selectedRecitationId]);
 
   const pauseAyah = useCallback(() => {
     if (audioRef.current && !audioRef.current.paused) {
@@ -204,11 +223,14 @@ export function useQuranAudio(): AudioState & AudioControls {
   }, []);
 
   const togglePlayPause = useCallback(async (verseKey: string) => {
+    // If it's the same verse and currently playing, just pause
     if (state.currentVerseKey === verseKey && state.isPlaying) {
       pauseAyah();
-    } else {
-      await playAyah(verseKey);
+      return; // Important: return after pause to prevent falling through
     }
+    
+    // For all other cases (new verse, same verse but paused), just play
+    await playAyah(verseKey);
   }, [state.currentVerseKey, state.isPlaying, playAyah, pauseAyah]);
 
   const seekTo = useCallback((time: number) => {
