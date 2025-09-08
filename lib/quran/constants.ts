@@ -1,6 +1,36 @@
 // Quran API constants and configurations
 
-export const QURAN_API_BASE = "https://api.quran.com/api/v4";
+// Quran text scripts metadata
+export const QURAN_SCRIPTS = {
+  indopak: {
+    id: "indopak",
+    name: "Indopak",
+    description: "Commonly used in South Asia",
+    apiEndpoint: "indopak",
+    fieldName: "text_indopak",
+  },
+  uthmani: {
+    id: "uthmani",
+    name: "Uthmani",
+    description: "Traditional Uthmani script with full diacritical marks",
+    apiEndpoint: "uthmani",
+    fieldName: "text_uthmani",
+  },
+  uthmani_simple: {
+    id: "uthmani_simple",
+    name: "Uthmani Simple",
+    description: "Simplified Uthmani script for easier reading",
+    apiEndpoint: "uthmani_simple",
+    fieldName: "text_uthmani_simple",
+  },
+  imlaei: {
+    id: "imlaei",
+    name: "Imlaei Simple",
+    description: "Simple script without special characters",
+    apiEndpoint: "imlaei",
+    fieldName: "text_imlaei",
+  },
+} as const;
 
 // Default translations to use when no user preference is set
 export const DEFAULT_TRANSLATIONS = {
@@ -27,8 +57,8 @@ export const TRANSLATION_RESOURCES = {
 // Default tafsir IDs (fallback values)
 export const DEFAULT_TAFSIR_IDS = {
   english: 1, // Common English tafsir ID
-  arabic: 2,  // Common Arabic tafsir ID
-  urdu: 3,    // Common Urdu tafsir ID
+  arabic: 2, // Common Arabic tafsir ID
+  urdu: 3, // Common Urdu tafsir ID
 } as const;
 
 // Available tafsir resources (deprecated - kept for backward compatibility)
@@ -991,7 +1021,8 @@ export const SURAH_METADATA = [
 // Default settings
 export const DEFAULT_QURAN_SETTINGS = {
   translationLanguages: ["english"],
-  selectedTranslations: process.env.NODE_ENV === 'production' ? [20] : [85], // Production: Saheeh International, Test: Haleem
+  selectedTranslations: process.env.NODE_ENV === "production" ? [20] : [85], // Production: Saheeh International, Test: Haleem
+  selectedScript: "uthmani" as const, // Default to Uthmani script
   arabicFontSize: 18,
   translationFontSize: 16,
   showTransliteration: true,

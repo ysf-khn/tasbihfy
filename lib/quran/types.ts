@@ -27,6 +27,9 @@ export interface ChapterApiResponse {
   };
 }
 
+// Quran text script types
+export type QuranScript = 'indopak' | 'uthmani' | 'uthmani_simple' | 'imlaei';
+
 export interface Verse {
   id: number;
   verse_key: string;
@@ -38,6 +41,8 @@ export interface Verse {
   text_uthmani: string;
   text_simple: string;
   text_imlaei?: string;
+  text_indopak?: string;
+  text_uthmani_simple?: string;
 }
 
 export interface Translation {
@@ -99,6 +104,7 @@ export interface TafsirResource {
 export interface QuranSettings {
   translationLanguages: readonly string[] | string[];
   selectedTranslations: readonly number[] | number[]; // New: array of translation IDs
+  selectedScript?: QuranScript; // New: selected Quran text script
   arabicFontSize: number;
   translationFontSize: number;
   showTransliteration: boolean;

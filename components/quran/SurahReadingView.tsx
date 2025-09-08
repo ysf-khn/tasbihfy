@@ -8,7 +8,7 @@ interface SurahReadingViewProps {
 }
 
 export default function SurahReadingView({ surahData }: SurahReadingViewProps) {
-  const { getArabicStyles } = useQuranSettings();
+  const { getArabicStyles, getScriptFieldName } = useQuranSettings();
 
   return (
     <div className="reading-view">
@@ -35,19 +35,30 @@ export default function SurahReadingView({ surahData }: SurahReadingViewProps) {
               direction: 'rtl',
             }}
           >
-            {surahData.verses.map((verse, index) => (
-              <span key={verse.verse_key || `${surahData.id}-${verse.verse_number}`}>
-                {verse.text_uthmani || verse.text_simple}
-                {/* Add verse number marker */}
-                <span className="verse-marker inline-flex items-center justify-center mx-1">
-                  <span className="text-primary font-bold text-sm bg-primary/10 rounded-full px-2 py-0.5">
-                    {verse.verse_number}
+            {surahData.verses.map((verse, index) => {
+              // Get the appropriate text based on selected script
+              const scriptFieldName = getScriptFieldName();
+              let arabicText = (verse as any)[scriptFieldName];
+              
+              // Fallback to other available text fields
+              if (!arabicText) {
+                arabicText = verse.text_uthmani || verse.text_simple || verse.text_imlaei || (verse as any).text_indopak || (verse as any).text_uthmani_simple;
+              }
+              
+              return (
+                <span key={verse.verse_key || `${surahData.id}-${verse.verse_number}`}>
+                  {arabicText}
+                  {/* Add verse number marker */}
+                  <span className="verse-marker inline-flex items-center justify-center mx-1">
+                    <span className="text-primary font-bold text-sm bg-primary/10 rounded-full px-2 py-0.5">
+                      {verse.verse_number}
+                    </span>
                   </span>
+                  {/* Add space between verses except for the last one */}
+                  {index < surahData.verses.length - 1 && ' '}
                 </span>
-                {/* Add space between verses except for the last one */}
-                {index < surahData.verses.length - 1 && ' '}
-              </span>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

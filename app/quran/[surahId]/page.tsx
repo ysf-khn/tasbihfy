@@ -44,18 +44,18 @@ export default function SurahPage() {
   const { settings } = useQuranSettings();
   const translationIds = Array.from(settings.selectedTranslations || []);
   
-  // Use different hooks based on active tab
+  // Use different hooks based on active tab - only fetch what's needed
   const { 
     surahData: translationData, 
     loading: translationLoading, 
     error: translationError 
-  } = useQuranSurah(surahId, activeTab === 'translation' ? translationIds : []);
+  } = useQuranSurah(surahId, activeTab === 'translation' ? translationIds : [], activeTab === 'translation');
   
   const { 
     surahData: arabicData, 
     loading: arabicLoading, 
     error: arabicError 
-  } = useQuranSurahArabicOnly(surahId);
+  } = useQuranSurahArabicOnly(surahId, activeTab === 'reading');
   
   const { updateLastRead } = useLastRead();
 

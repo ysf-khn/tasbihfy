@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { QuranSettings } from '@/lib/quran/types';
-import { DEFAULT_QURAN_SETTINGS } from '@/lib/quran/constants';
+import { QuranSettings, QuranScript } from '@/lib/quran/types';
+import { DEFAULT_QURAN_SETTINGS, QURAN_SCRIPTS } from '@/lib/quran/constants';
 import { getDefaultTranslations, getTranslationById } from '@/lib/quran/translations-data';
 
 export function useQuranSettings() {
@@ -106,6 +106,21 @@ export function useQuranSettings() {
   // Get translation IDs for API calls
   const getSelectedTranslationIds = () => settings.selectedTranslations || [];
 
+  // Get selected script
+  const getSelectedScript = (): QuranScript => settings.selectedScript || DEFAULT_QURAN_SETTINGS.selectedScript;
+  
+  // Get script configuration
+  const getScriptConfig = () => {
+    const script = getSelectedScript();
+    return QURAN_SCRIPTS[script];
+  };
+  
+  // Get the appropriate text field name for the selected script
+  const getScriptFieldName = () => {
+    const config = getScriptConfig();
+    return config.fieldName;
+  };
+
   return {
     settings,
     isLoading,
@@ -121,5 +136,8 @@ export function useQuranSettings() {
     shouldAutoPlayNext,
     getSelectedTranslations,
     getSelectedTranslationIds,
+    getSelectedScript,
+    getScriptConfig,
+    getScriptFieldName,
   };
 }

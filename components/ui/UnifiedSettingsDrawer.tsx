@@ -22,9 +22,9 @@ import {
 } from "@heroicons/react/24/outline";
 import TranslationSelector from "@/components/quran/TranslationSelector";
 import { useQuranSettings } from "@/hooks/useQuranSettings";
-import { AUDIO_RECITERS } from "@/lib/quran/constants";
+import { AUDIO_RECITERS, QURAN_SCRIPTS } from "@/lib/quran/constants";
 import { getRecitations } from "@/lib/quran/recitations-data";
-import { Recitation } from "@/lib/quran/types";
+import { Recitation, QuranScript } from "@/lib/quran/types";
 
 interface UnifiedSettingsDrawerProps {
   isOpen: boolean;
@@ -56,6 +56,7 @@ export default function UnifiedSettingsDrawer({
     resetSettings,
     getArabicStyles,
     getTranslationStyles,
+    getSelectedScript,
   } = useQuranSettings();
 
   const isDuasPage = currentPath.startsWith("/duas");
@@ -181,6 +182,65 @@ export default function UnifiedSettingsDrawer({
               >
                 <PlusIcon className="w-4 h-4" />
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quran Script Selection - Only show for Quran pages */}
+      {!isDuasPage && (
+        <div className="space-y-4 mb-6">
+          <h3 className="font-semibold text-base-content flex items-center gap-2">
+            <BookOpenIcon className="w-5 h-5" />
+            Quran Text Script
+          </h3>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-base-content/70">
+              Select your preferred Arabic script
+            </label>
+            <select
+              className="select select-bordered w-full"
+              value={settings.selectedScript || 'uthmani'}
+              onChange={(e) => updateSettings({ selectedScript: e.target.value as QuranScript })}
+            >
+              {Object.entries(QURAN_SCRIPTS).map(([key, script]) => (
+                <option key={key} value={key}>
+                  {script.name} - {script.description}
+                </option>
+              ))}
+            </select>
+            
+            {/* Script Preview */}
+            <div className="mt-3">
+              <p className="text-xs text-base-content/60 mb-2">Preview:</p>
+              <div className="p-3 bg-base-200 rounded-lg">
+                {settings.selectedScript === 'indopak' && (
+                  <p className="text-center font-arabic-naskh text-lg" dir="rtl">
+                    بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+                  </p>
+                )}
+                {settings.selectedScript === 'uthmani' && (
+                  <p className="text-center font-arabic-naskh text-lg" dir="rtl">
+                    بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ
+                  </p>
+                )}
+                {settings.selectedScript === 'uthmani_simple' && (
+                  <p className="text-center font-arabic-naskh text-lg" dir="rtl">
+                    بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                  </p>
+                )}
+                {settings.selectedScript === 'imlaei' && (
+                  <p className="text-center font-arabic-naskh text-lg" dir="rtl">
+                    بسم الله الرحمن الرحيم
+                  </p>
+                )}
+                {!settings.selectedScript && (
+                  <p className="text-center font-arabic-naskh text-lg" dir="rtl">
+                    بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>

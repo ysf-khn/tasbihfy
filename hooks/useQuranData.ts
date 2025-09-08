@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSurahList, getSurahData, getSurahArabicOnly } from '@/lib/quran/api';
-import { Surah, SurahData } from '@/lib/quran/types';
+import { Surah, SurahData, QuranScript } from '@/lib/quran/types';
 import { TRANSLATION_RESOURCES } from '@/lib/quran/constants';
+import { useQuranSettings } from './useQuranSettings';
 
 // Cache management
 const CACHE_KEY_PREFIX = 'quran_hook_cache_';
@@ -99,15 +100,24 @@ export function useQuranSurahList() {
   };
 }
 
-export function useQuranSurah(surahId: number, translationIds: number[] = []) {
+export function useQuranSurah(surahId: number, translationIds: number[] = [], enabled: boolean = true) {
   const [surahData, setSurahData] = useState<SurahData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Get selected script from settings
+  const { getSelectedScript } = useQuranSettings();
+  const selectedScript = getSelectedScript();
 
-  // Create stable dependency for translation IDs
+  // Create stable dependency for translation IDs and script
   const translationIdsKey = translationIds.join(',');
   
   const loadSurah = useCallback(async () => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+    
     if (process.env.NODE_ENV === 'development') {
       console.log(`🔄 useQuranSurah: Loading surah ${surahId} with translation IDs:`, translationIds);
     }
@@ -124,12 +134,12 @@ export function useQuranSurah(surahId: number, translationIds: number[] = []) {
       setLoading(true);
       setError(null);
 
-      // Generate cache key based on surah and translation IDs
+      // Generate cache key based on surah, translation IDs, and script
       if (process.env.NODE_ENV === 'development') {
-        console.log(`📋 useQuranSurah: Translation IDs:`, translationIds);
+        console.log(`📋 useQuranSurah: Translation IDs:`, translationIds, 'Script:', selectedScript);
       }
       
-      const cacheKey = `surah_${surahId}_${translationIdsKey}`;
+      const cacheKey = `surah_${surahId}_${translationIdsKey}_${selectedScript}`;
       
       // Try cache first
       const cached = getCachedData<SurahData>(cacheKey);
@@ -143,9 +153,9 @@ export function useQuranSurah(surahId: number, translationIds: number[] = []) {
       }
 
       if (process.env.NODE_ENV === 'development') {
-        console.log(`📡 useQuranSurah: Fetching surah ${surahId} from API with translation IDs:`, translationIds);
+        console.log(`📡 useQuranSurah: Fetching surah ${surahId} from API with translation IDs:`, translationIds, 'and script:', selectedScript);
       }
-      const data = await getSurahData(surahId, translationIds);
+      const data = await getSurahData(surahId, translationIds, selectedScript);
       if (process.env.NODE_ENV === 'development') {
         console.log(`✅ useQuranSurah: API response for surah ${surahId}:`, {
           verses: data.verses?.length || 0,
@@ -163,11 +173,13 @@ export function useQuranSurah(surahId: number, translationIds: number[] = []) {
     } finally {
       setLoading(false);
     }
-  }, [surahId, translationIdsKey]);
+  }, [surahId, translationIdsKey, selectedScript, enabled]);
 
   useEffect(() => {
-    loadSurah();
-  }, [loadSurah]);
+    if (enabled) {
+      loadSurah();
+    }
+  }, [loadSurah, enabled]);
 
   return {
     surahData,
@@ -177,14 +189,23 @@ export function useQuranSurah(surahId: number, translationIds: number[] = []) {
   };
 }
 
-export function useQuranSurahArabicOnly(surahId: number) {
+export function useQuranSurahArabicOnly(surahId: number, enabled: boolean = true) {
   const [surahData, setSurahData] = useState<SurahData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  // Get selected script from settings
+  const { getSelectedScript } = useQuranSettings();
+  const selectedScript = getSelectedScript();
+  
   const loadSurah = useCallback(async () => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+    
     if (process.env.NODE_ENV === 'development') {
-      console.log(`🔄 useQuranSurahArabicOnly: Loading surah ${surahId} (Arabic only)`);
+      console.log(`🔄 useQuranSurahArabicOnly: Loading surah ${surahId} (Arabic only) with script: ${selectedScript}`);
     }
     
     if (!surahId || surahId < 1 || surahId > 114) {
@@ -199,7 +220,7 @@ export function useQuranSurahArabicOnly(surahId: number) {
       setLoading(true);
       setError(null);
       
-      const cacheKey = `surah_arabic_${surahId}`;
+      const cacheKey = `surah_arabic_${surahId}_${selectedScript}`;
       
       // Try cache first
       const cached = getCachedData<SurahData>(cacheKey);
@@ -213,9 +234,9 @@ export function useQuranSurahArabicOnly(surahId: number) {
       }
 
       if (process.env.NODE_ENV === 'development') {
-        console.log(`📡 useQuranSurahArabicOnly: Fetching surah ${surahId} from API (Arabic only)`);
+        console.log(`📡 useQuranSurahArabicOnly: Fetching surah ${surahId} from API (Arabic only) with script: ${selectedScript}`);
       }
-      const data = await getSurahArabicOnly(surahId);
+      const data = await getSurahArabicOnly(surahId, selectedScript);
       if (process.env.NODE_ENV === 'development') {
         console.log(`✅ useQuranSurahArabicOnly: API response for surah ${surahId}:`, {
           verses: data.verses?.length || 0,
@@ -233,11 +254,13 @@ export function useQuranSurahArabicOnly(surahId: number) {
     } finally {
       setLoading(false);
     }
-  }, [surahId]);
+  }, [surahId, selectedScript, enabled]);
 
   useEffect(() => {
-    loadSurah();
-  }, [loadSurah]);
+    if (enabled) {
+      loadSurah();
+    }
+  }, [loadSurah, enabled]);
 
   return {
     surahData,

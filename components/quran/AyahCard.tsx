@@ -33,8 +33,8 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
 
   const verseKey = `${surahData.id}:${verse.verse_number}`;
 
-  // Settings for font styling
-  const { getArabicStyles, getTranslationStyles } = useQuranSettings();
+  // Settings for font styling and script selection
+  const { getArabicStyles, getTranslationStyles, getScriptFieldName, getSelectedScript } = useQuranSettings();
 
   // Audio functionality
   const {
@@ -59,7 +59,15 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
   };
 
   const shareVerse = async () => {
-    const arabicText = verse.text_uthmani || verse.text_simple || "";
+    // Get the appropriate text based on selected script
+    const scriptFieldName = getScriptFieldName();
+    let arabicText = (verse as any)[scriptFieldName];
+    
+    // Fallback to other available text fields
+    if (!arabicText) {
+      arabicText = verse.text_uthmani || verse.text_simple || verse.text_imlaei || (verse as any).text_indopak || (verse as any).text_uthmani_simple || "";
+    }
+    
     const translation = verse.translations?.[0]?.text || "";
     const cleanTranslation = cleanTranslationText(translation);
     const reference = `Quran ${verseKey} • ${surahData.name_simple}`;
@@ -207,7 +215,14 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
             </button>
 
             <button
-              onClick={() => copyToClipboard(verse.text_uthmani)}
+              onClick={() => {
+                const scriptFieldName = getScriptFieldName();
+                let arabicText = (verse as any)[scriptFieldName];
+                if (!arabicText) {
+                  arabicText = verse.text_uthmani || verse.text_simple || verse.text_imlaei || (verse as any).text_indopak || (verse as any).text_uthmani_simple || "";
+                }
+                copyToClipboard(arabicText);
+              }}
               className="btn btn-ghost btn-sm btn-square"
               title="Copy Arabic"
             >
@@ -269,23 +284,47 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
 
         {/* Arabic Text */}
         <div className="mb-4">
-          {verse.text_uthmani || verse.text_simple ? (
-            <p 
-              className="quran-arabic text-base-content verse-card"
-              style={getArabicStyles()}
-            >
-              {verse.text_uthmani || verse.text_simple}
-            </p>
-          ) : (
-            <div className="text-center py-8 bg-base-200 rounded-lg">
-              <p className="text-error text-sm">❌ Arabic text not available</p>
-              {process.env.NODE_ENV === "development" && (
-                <p className="text-xs text-base-content/60 mt-2">
-                  Check API response fields or network connection
+          {(() => {
+            // Get the appropriate text based on selected script
+            const scriptFieldName = getScriptFieldName();
+            const selectedScript = getSelectedScript();
+            
+            // Try to get text from the script-specific field first
+            let arabicText = (verse as any)[scriptFieldName];
+            
+            // Fallback to other available text fields
+            if (!arabicText) {
+              arabicText = verse.text_uthmani || verse.text_simple || verse.text_imlaei || (verse as any).text_indopak || (verse as any).text_uthmani_simple;
+            }
+            
+            if (arabicText) {
+              return (
+                <p 
+                  className="quran-arabic text-base-content verse-card"
+                  style={getArabicStyles()}
+                  dir="rtl"
+                >
+                  {arabicText}
                 </p>
-              )}
-            </div>
-          )}
+              );
+            } else {
+              return (
+                <div className="text-center py-8 bg-base-200 rounded-lg">
+                  <p className="text-error text-sm">❌ Arabic text not available for script: {selectedScript}</p>
+                  {process.env.NODE_ENV === "development" && (
+                    <>
+                      <p className="text-xs text-base-content/60 mt-2">
+                        Looking for field: {scriptFieldName}
+                      </p>
+                      <p className="text-xs text-base-content/60">
+                        Available fields: {Object.keys(verse).filter(k => k.startsWith('text_')).join(', ')}
+                      </p>
+                    </>
+                  )}
+                </div>
+              );
+            }
+          })()}
         </div>
 
         {/* Translations */}
