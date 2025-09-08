@@ -1,18 +1,17 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { 
+import { useState, useEffect, useRef } from "react";
+import {
   PlayIcon,
   PauseIcon,
   ForwardIcon,
   BackwardIcon,
   XMarkIcon,
   SpeakerWaveIcon,
-  SpeakerXMarkIcon
-} from '@heroicons/react/24/outline';
-import { VerseWithTranslations } from '@/lib/quran/types';
-import { getAudioUrl, getAyahRecitation, getRecitations } from '@/lib/quran/api';
-import { AUDIO_RECITERS } from '@/lib/quran/constants';
+  SpeakerXMarkIcon,
+} from "@heroicons/react/24/outline";
+import { VerseWithTranslations } from "@/lib/quran/types";
+import { AUDIO_RECITERS } from "@/lib/quran/constants";
 
 interface AudioPlayerProps {
   surahId: number;
@@ -20,7 +19,11 @@ interface AudioPlayerProps {
   onStop: () => void;
 }
 
-export default function AudioPlayer({ surahId, verses, onStop }: AudioPlayerProps) {
+export default function AudioPlayer({
+  surahId,
+  verses,
+  onStop,
+}: AudioPlayerProps) {
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,7 +31,7 @@ export default function AudioPlayer({ surahId, verses, onStop }: AudioPlayerProp
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
-  const [selectedReciter, setSelectedReciter] = useState('mishari-al-afasy');
+  const [selectedReciter, setSelectedReciter] = useState("mishari-al-afasy");
   const [error, setError] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -37,12 +40,12 @@ export default function AudioPlayer({ surahId, verses, onStop }: AudioPlayerProp
   useEffect(() => {
     // Load reciter preference
     try {
-      const savedReciter = localStorage.getItem('quran_selected_reciter');
+      const savedReciter = localStorage.getItem("quran_selected_reciter");
       if (savedReciter) {
         setSelectedReciter(savedReciter);
       }
     } catch (error) {
-      console.error('Failed to load reciter preference:', error);
+      console.error("Failed to load reciter preference:", error);
     }
   }, []);
 
@@ -65,26 +68,26 @@ export default function AudioPlayer({ surahId, verses, onStop }: AudioPlayerProp
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
     const handleEnded = () => handleNext();
     const handleError = (e: any) => {
-      console.error('Audio error:', e);
-      setError('Failed to load audio. Please try again.');
+      console.error("Audio error:", e);
+      setError("Failed to load audio. Please try again.");
       setIsLoading(false);
       setIsPlaying(false);
     };
 
-    audio.addEventListener('loadstart', handleLoadStart);
-    audio.addEventListener('canplay', handleCanPlay);
-    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-    audio.addEventListener('timeupdate', handleTimeUpdate);
-    audio.addEventListener('ended', handleEnded);
-    audio.addEventListener('error', handleError);
+    audio.addEventListener("loadstart", handleLoadStart);
+    audio.addEventListener("canplay", handleCanPlay);
+    audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+    audio.addEventListener("timeupdate", handleTimeUpdate);
+    audio.addEventListener("ended", handleEnded);
+    audio.addEventListener("error", handleError);
 
     return () => {
-      audio.removeEventListener('loadstart', handleLoadStart);
-      audio.removeEventListener('canplay', handleCanPlay);
-      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      audio.removeEventListener('timeupdate', handleTimeUpdate);
-      audio.removeEventListener('ended', handleEnded);
-      audio.removeEventListener('error', handleError);
+      audio.removeEventListener("loadstart", handleLoadStart);
+      audio.removeEventListener("canplay", handleCanPlay);
+      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      audio.removeEventListener("timeupdate", handleTimeUpdate);
+      audio.removeEventListener("ended", handleEnded);
+      audio.removeEventListener("error", handleError);
     };
   }, [currentVerseIndex]);
 
@@ -92,15 +95,11 @@ export default function AudioPlayer({ surahId, verses, onStop }: AudioPlayerProp
     if (!audioRef.current || !verses[currentVerseIndex]) return;
 
     const verse = verses[currentVerseIndex];
-    const audioUrl = getAudioUrl(surahId, verse.verse_number, selectedReciter);
-    
-    audioRef.current.src = audioUrl;
-    audioRef.current.volume = isMuted ? 0 : volume;
-    
+
     if (isPlaying) {
       audioRef.current.play().catch((error) => {
-        console.error('Failed to play audio:', error);
-        setError('Failed to play audio');
+        console.error("Failed to play audio:", error);
+        setError("Failed to play audio");
         setIsPlaying(false);
       });
     }
@@ -119,8 +118,8 @@ export default function AudioPlayer({ surahId, verses, onStop }: AudioPlayerProp
         setError(null);
       }
     } catch (error) {
-      console.error('Play/pause error:', error);
-      setError('Failed to play audio');
+      console.error("Play/pause error:", error);
+      setError("Failed to play audio");
       setIsPlaying(false);
     }
   };
@@ -147,7 +146,7 @@ export default function AudioPlayer({ surahId, verses, onStop }: AudioPlayerProp
     const clickX = e.clientX - rect.left;
     const width = rect.width;
     const newTime = (clickX / width) * duration;
-    
+
     audioRef.current.currentTime = newTime;
   };
 
@@ -168,16 +167,16 @@ export default function AudioPlayer({ surahId, verses, onStop }: AudioPlayerProp
   const handleReciterChange = (newReciter: string) => {
     setSelectedReciter(newReciter);
     try {
-      localStorage.setItem('quran_selected_reciter', newReciter);
+      localStorage.setItem("quran_selected_reciter", newReciter);
     } catch (error) {
-      console.error('Failed to save reciter preference:', error);
+      console.error("Failed to save reciter preference:", error);
     }
   };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const currentVerse = verses[currentVerseIndex];
@@ -186,7 +185,7 @@ export default function AudioPlayer({ surahId, verses, onStop }: AudioPlayerProp
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 bg-base-100 border-t border-base-200 shadow-lg">
       <audio ref={audioRef} preload="metadata" />
-      
+
       {/* Error Display */}
       {error && (
         <div className="px-4 py-2 bg-error/10 text-error text-sm text-center">
@@ -197,12 +196,12 @@ export default function AudioPlayer({ surahId, verses, onStop }: AudioPlayerProp
       <div className="container mx-auto px-4 py-3">
         {/* Progress Bar */}
         <div className="mb-3">
-          <div 
+          <div
             ref={progressRef}
             className="w-full h-1 bg-base-300 rounded-full cursor-pointer"
             onClick={handleProgressClick}
           >
-            <div 
+            <div
               className="h-full bg-primary rounded-full transition-all duration-200"
               style={{ width: `${progressPercentage}%` }}
             />
@@ -220,7 +219,10 @@ export default function AudioPlayer({ surahId, verses, onStop }: AudioPlayerProp
               Verse {currentVerse?.verse_number} of {verses.length}
             </div>
             <div className="text-xs text-base-content/60">
-              {AUDIO_RECITERS[selectedReciter as keyof typeof AUDIO_RECITERS]?.name}
+              {
+                AUDIO_RECITERS[selectedReciter as keyof typeof AUDIO_RECITERS]
+                  ?.name
+              }
             </div>
           </div>
 
@@ -269,7 +271,7 @@ export default function AudioPlayer({ surahId, verses, onStop }: AudioPlayerProp
                 <SpeakerWaveIcon className="w-4 h-4" />
               )}
             </button>
-            
+
             <input
               type="range"
               min="0"
@@ -295,10 +297,7 @@ export default function AudioPlayer({ surahId, verses, onStop }: AudioPlayerProp
           </select>
 
           {/* Close Button */}
-          <button
-            onClick={onStop}
-            className="btn btn-ghost btn-sm btn-square"
-          >
+          <button onClick={onStop} className="btn btn-ghost btn-sm btn-square">
             <XMarkIcon className="w-4 h-4" />
           </button>
         </div>

@@ -1,24 +1,22 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import kaabaImage from "@/public/kaaba.jpeg";
 import {
   ArrowLeftIcon,
-  Cog6ToothIcon,
-  CogIcon,
-  PlayIcon,
-  PauseIcon,
-  BookOpenIcon,
   BookmarkIcon as BookmarkIconOutline,
+  BookOpenIcon,
+  LanguageIcon,
 } from "@heroicons/react/24/outline";
 import { BookmarkIcon as BookmarkIconSolid } from "@heroicons/react/24/solid";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import QuranNavigationDrawer from "@/components/ui/QuranNavigationDrawer";
 import AyahCard from "@/components/quran/AyahCard";
+import SurahReadingView from "@/components/quran/SurahReadingView";
 import AudioPlayer from "@/components/quran/AudioPlayer";
-import { useQuranSurah, useLastRead } from "@/hooks/useQuranData";
+import { useQuranSurah, useQuranSurahArabicOnly, useLastRead } from "@/hooks/useQuranData";
 import { useQuranSettings } from "@/hooks/useQuranSettings";
 
 export default function SurahPage() {
@@ -26,19 +24,45 @@ export default function SurahPage() {
   const router = useRouter();
   const surahId = parseInt(params.surahId as string);
 
-  // Hooks
-  const { settings } = useQuranSettings();
-  const translationIds = Array.from(settings.selectedTranslations || []);
-  const { surahData, loading, error } = useQuranSurah(surahId, translationIds);
-  const { updateLastRead } = useLastRead();
-
   // Local state
+  const [activeTab, setActiveTab] = useState<'translation' | 'reading'>(() => {
+    // Persist tab preference
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('quran_view_tab');
+      return saved === 'reading' ? 'reading' : 'translation';
+    }
+    return 'translation';
+  });
   const [showNavDrawer, setShowNavDrawer] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showDebug, setShowDebug] = useState(
     process.env.NODE_ENV === "development"
   );
+
+  // Hooks
+  const { settings } = useQuranSettings();
+  const translationIds = Array.from(settings.selectedTranslations || []);
+  
+  // Use different hooks based on active tab
+  const { 
+    surahData: translationData, 
+    loading: translationLoading, 
+    error: translationError 
+  } = useQuranSurah(surahId, activeTab === 'translation' ? translationIds : []);
+  
+  const { 
+    surahData: arabicData, 
+    loading: arabicLoading, 
+    error: arabicError 
+  } = useQuranSurahArabicOnly(surahId);
+  
+  const { updateLastRead } = useLastRead();
+
+  // Determine which data to use based on active tab
+  const surahData = activeTab === 'translation' ? translationData : arabicData;
+  const loading = activeTab === 'translation' ? translationLoading : arabicLoading;
+  const error = activeTab === 'translation' ? translationError : arabicError;
 
   const checkBookmark = useCallback(() => {
     try {
@@ -60,6 +84,13 @@ export default function SurahPage() {
       checkBookmark();
     }
   }, [surahId, surahData, updateLastRead, checkBookmark]);
+
+  // Save tab preference
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('quran_view_tab', activeTab);
+    }
+  }, [activeTab]);
 
   const toggleBookmark = () => {
     try {
@@ -93,7 +124,6 @@ export default function SurahPage() {
     setIsPlaying(!isPlaying);
     // Audio playback will be handled by AudioPlayer component
   };
-
 
   // Handle loading state
   if (loading) {
@@ -184,7 +214,9 @@ export default function SurahPage() {
           {/* Loading Message */}
           <div className="text-center mt-8">
             <div className="loading loading-spinner loading-lg text-primary mb-4"></div>
-            <p className="text-base-content/70 text-sm">Loading Surah {surahId}...</p>
+            <p className="text-base-content/70 text-sm">
+              Loading Surah {surahId}...
+            </p>
           </div>
         </div>
       </div>
@@ -302,6 +334,34 @@ export default function SurahPage() {
           </div>
         </div>
 
+        {/* Tabs */}
+        <div className="flex justify-center mb-6">
+          <div className="tabs tabs-boxed bg-base-200 p-1">
+            <button
+              className={`tab gap-2 ${
+                activeTab === 'translation' 
+                  ? 'tab-active bg-base-100 shadow-sm' 
+                  : 'hover:bg-base-300'
+              }`}
+              onClick={() => setActiveTab('translation')}
+            >
+              <LanguageIcon className="w-4 h-4" />
+              Translation
+            </button>
+            <button
+              className={`tab gap-2 ${
+                activeTab === 'reading' 
+                  ? 'tab-active bg-base-100 shadow-sm' 
+                  : 'hover:bg-base-300'
+              }`}
+              onClick={() => setActiveTab('reading')}
+            >
+              <BookOpenIcon className="w-4 h-4" />
+              Reading
+            </button>
+          </div>
+        </div>
+
         {/* Action Toolbar */}
         <div className="flex items-center gap-4 mb-6">
           <button
@@ -332,7 +392,7 @@ export default function SurahPage() {
               </span>
             </button>
 
-            <button
+            {/* <button
               onClick={toggleAudio}
               className={`btn btn-sm ${
                 isPlaying ? "btn-secondary" : "btn-ghost"
@@ -347,12 +407,12 @@ export default function SurahPage() {
               <span className="hidden sm:inline ml-2">
                 {isPlaying ? "Pause" : "Play"}
               </span>
-            </button>
+            </button> */}
           </div>
         </div>
 
-        {/* Bismillah (if applicable) */}
-        {surahData.bismillah_pre && surahData.id !== 1 && (
+        {/* Bismillah (if applicable) - Only show in Translation tab */}
+        {activeTab === 'translation' && surahData.bismillah_pre && surahData.id !== 1 && (
           <div className="card bg-base-100 border border-base-200 mb-6">
             <div className="card-body p-6 text-center">
               <p className="text-2xl font-arabic text-primary leading-relaxed">
@@ -430,30 +490,54 @@ export default function SurahPage() {
           </div>
         )}
 
-        {/* Verses */}
-        <div className="space-y-6">
-          {surahData.verses && surahData.verses.length > 0 ? (
-            surahData.verses.map((verse) => (
-              <AyahCard
-                key={verse.id || `${surahId}-${verse.verse_number}`}
-                verse={verse}
-                surahData={surahData}
-              />
-            ))
-          ) : (
-            <div className="text-center py-8">
-              <div className="alert alert-warning max-w-md mx-auto">
-                <p>No verses found for this Surah.</p>
-                {showDebug && (
-                  <p className="text-xs mt-2">
-                    This might indicate an API issue or missing field
-                    parameters.
-                  </p>
-                )}
-              </div>
+        {/* Content based on active tab */}
+        {activeTab === 'translation' ? (
+          <>
+            {/* Translation View - Verses with translations */}
+            <div className="space-y-6">
+              {surahData.verses && surahData.verses.length > 0 ? (
+                surahData.verses.map((verse) => (
+                  <AyahCard
+                    key={verse.id || `${surahId}-${verse.verse_number}`}
+                    verse={verse}
+                    surahData={surahData}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <div className="alert alert-warning max-w-md mx-auto">
+                    <p>No verses found for this Surah.</p>
+                    {showDebug && (
+                      <p className="text-xs mt-2">
+                        This might indicate an API issue or missing field
+                        parameters.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <>
+            {/* Reading View - Arabic only */}
+            {surahData.verses && surahData.verses.length > 0 ? (
+              <SurahReadingView surahData={surahData} />
+            ) : (
+              <div className="text-center py-8">
+                <div className="alert alert-warning max-w-md mx-auto">
+                  <p>No verses found for this Surah.</p>
+                  {showDebug && (
+                    <p className="text-xs mt-2">
+                      This might indicate an API issue or missing field
+                      parameters.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        )}
 
         {/* Navigation */}
         <div className="flex justify-between mt-8">
@@ -485,7 +569,6 @@ export default function SurahPage() {
         onClose={() => setShowNavDrawer(false)}
         onSettingsClick={() => {}}
       />
-
 
       {/* Audio Player */}
       {isPlaying && (

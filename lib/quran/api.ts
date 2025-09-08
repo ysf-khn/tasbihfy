@@ -144,6 +144,62 @@ export async function getSurahList(): Promise<Surah[]> {
 }
 
 /**
+ * Get surah data with Arabic text only (no translations)
+ */
+export async function getSurahArabicOnly(surahId: number): Promise<SurahData> {
+  console.log(`🔄 Loading Surah ${surahId} (Arabic only)`);
+
+  const cacheKey = getCacheKey("surah_arabic", surahId);
+  const cached = getFromCache<SurahData>(cacheKey);
+
+  if (cached) return cached;
+
+  try {
+    // Get chapter metadata from local constants
+    const chapterMetadata = SURAH_METADATA.find((s) => s.id === surahId);
+    if (!chapterMetadata) {
+      throw new Error(`Surah ${surahId} not found in metadata`);
+    }
+
+    // Fetch verses WITHOUT translations for better performance
+    const requiredFields =
+      "text_uthmani,text_simple,text_imlaei,verse_key,verse_number";
+    const versesUrl = `${QURAN_API_BASE}/verses/by_chapter/${surahId}?fields=${requiredFields}&per_page=${chapterMetadata.total_verses}&words=false`;
+    
+    console.log(`📡 Fetching Arabic-only verses for Surah ${surahId}`);
+    const versesResponse = await fetchFromProxy(versesUrl);
+    const versesData = await versesResponse.json();
+    
+    console.log(`✅ Arabic verses loaded: ${versesData.verses?.length || 0} verses`);
+
+    // Build surah data using local metadata and API verses
+    const surahData: SurahData = {
+      id: chapterMetadata.id,
+      revelation_place: chapterMetadata.type === "meccan" ? "mecca" : "medina",
+      revelation_order: surahId,
+      bismillah_pre: surahId !== 1 && surahId !== 9,
+      name_simple: chapterMetadata.name,
+      name_complex: chapterMetadata.transliteration,
+      name_arabic: chapterMetadata.name,
+      verses_count: chapterMetadata.total_verses,
+      pages: [1],
+      translated_name: { name: chapterMetadata.translation },
+      verses: versesData.verses || [],
+    };
+
+    setCache(cacheKey, surahData, CACHE_DURATION.SURAH_DATA);
+    return surahData;
+  } catch (error) {
+    console.error(`❌ Failed to fetch Arabic text for surah ${surahId}:`, error);
+    throw new Error(
+      `Unable to load Surah ${surahId} Arabic text. Error: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+/**
  * Get surah data with verses and translations
  */
 export async function getSurahData(
@@ -408,24 +464,6 @@ export async function searchVersesLegacy(
   } catch (error) {
     console.error("Failed to search verses:", error);
     throw new Error("Search failed. Please try again.");
-  }
-}
-
-/**
- * Get audio URL for verse or surah
- */
-export function getAudioUrl(
-  surahId: number,
-  verseNumber?: number,
-  reciter: string = "mishari-al-afasy"
-): string {
-  const paddedSurahId = surahId.toString().padStart(3, "0");
-
-  if (verseNumber) {
-    const paddedVerseNumber = verseNumber.toString().padStart(3, "0");
-    return `https://everyayah.com/data/${reciter}/${paddedSurahId}${paddedVerseNumber}.mp3`;
-  } else {
-    return `https://server8.mp3quran.net/afs/${paddedSurahId}.mp3`;
   }
 }
 

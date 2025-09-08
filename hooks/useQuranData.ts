@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getSurahList, getSurahData } from '@/lib/quran/api';
+import { getSurahList, getSurahData, getSurahArabicOnly } from '@/lib/quran/api';
 import { Surah, SurahData } from '@/lib/quran/types';
 import { TRANSLATION_RESOURCES } from '@/lib/quran/constants';
 
@@ -164,6 +164,76 @@ export function useQuranSurah(surahId: number, translationIds: number[] = []) {
       setLoading(false);
     }
   }, [surahId, translationIdsKey]);
+
+  useEffect(() => {
+    loadSurah();
+  }, [loadSurah]);
+
+  return {
+    surahData,
+    loading,
+    error,
+    refetch: loadSurah,
+  };
+}
+
+export function useQuranSurahArabicOnly(surahId: number) {
+  const [surahData, setSurahData] = useState<SurahData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  const loadSurah = useCallback(async () => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔄 useQuranSurahArabicOnly: Loading surah ${surahId} (Arabic only)`);
+    }
+    
+    if (!surahId || surahId < 1 || surahId > 114) {
+      const errorMsg = `Invalid Surah ID: ${surahId}`;
+      console.error('❌ useQuranSurahArabicOnly:', errorMsg);
+      setError(errorMsg);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const cacheKey = `surah_arabic_${surahId}`;
+      
+      // Try cache first
+      const cached = getCachedData<SurahData>(cacheKey);
+      if (cached) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`✅ useQuranSurahArabicOnly: Using cached data for surah ${surahId}`);
+        }
+        setSurahData(cached);
+        setLoading(false);
+        return;
+      }
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`📡 useQuranSurahArabicOnly: Fetching surah ${surahId} from API (Arabic only)`);
+      }
+      const data = await getSurahArabicOnly(surahId);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`✅ useQuranSurahArabicOnly: API response for surah ${surahId}:`, {
+          verses: data.verses?.length || 0,
+          name: data.name_simple
+        });
+      }
+      
+      setSurahData(data);
+      setCachedData(cacheKey, data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : `Failed to load Surah ${surahId}`;
+      console.error(`❌ useQuranSurahArabicOnly: Error loading surah ${surahId}:`, err);
+      setError(errorMessage);
+      setSurahData(null); // Clear any existing data
+    } finally {
+      setLoading(false);
+    }
+  }, [surahId]);
 
   useEffect(() => {
     loadSurah();
