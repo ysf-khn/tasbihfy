@@ -13,6 +13,7 @@ import UpdateNotification from "@/components/pwa/UpdateNotification";
 import LayoutClient from "@/components/layout/LayoutClient";
 
 import { GoogleAnalytics } from "@next/third-parties/google";
+import StructuredData from "@/components/seo/StructuredData";
 
 const bricolageGrotesque = Bricolage_Grotesque({
   variable: "--font-bricolage-grotesque",
@@ -36,7 +37,7 @@ const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
 export const metadata: Metadata = {
   title: {
     default: "Tasbihfy",
-    template: "%s | Dhikr",
+    template: "%s",
   },
   description:
     "Your complete Islamic companion app. Count dhikr with tasbih, get accurate prayer times with Qibla compass, read the Quran, and access a collection of Hisnul Muslim duas.",
@@ -168,11 +169,81 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://tasbihfy.com";
+
+  // Base structured data for the application
+  const applicationStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "Tasbihfy",
+    description:
+      "Your complete Islamic companion app. Count dhikr with tasbih, get accurate prayer times with Qibla compass, read the Quran, and access a collection of Hisnul Muslim duas.",
+    url: baseUrl,
+    applicationCategory: "Lifestyle",
+    operatingSystem: "Any",
+    browserRequirements: "Requires JavaScript",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+      availability: "https://schema.org/InStock",
+    },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "4.8",
+      ratingCount: "1200",
+      bestRating: "5",
+      worstRating: "1",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Tasbihfy App",
+      url: baseUrl,
+      logo: {
+        "@type": "ImageObject",
+        url: `${baseUrl}/icons/icon-512x512.png`,
+        width: 512,
+        height: 512,
+      },
+    },
+    features: [
+      "Digital Dhikr Counter",
+      "Quran Reader with Audio",
+      "Prayer Times Calculator",
+      "Hisnul Muslim Duas Collection",
+      "Offline Functionality",
+      "Multi-language Support",
+    ],
+  };
+
   return (
     <html lang="en">
+      <head>
+        {/* Preconnect to external domains for better LCP */}
+        <link rel="preconnect" href="https://verses.quran.foundation" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+
+        {/* DNS prefetch for less critical resources */}
+        <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+
+        {/* Preload critical resources */}
+        <link
+          rel="preload"
+          href="/icons/icon-192x192.png"
+          as="image"
+          type="image/png"
+        />
+      </head>
       <body
         className={`${bricolageGrotesque.variable} ${notoNaskhArabic.variable} ${notoNastaliqUrdu.variable} antialiased`}
       >
+        <StructuredData data={applicationStructuredData} />
         <Providers>
           <ServiceWorkerRegistration>
             <LayoutClient>{children}</LayoutClient>

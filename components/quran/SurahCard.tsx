@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Surah } from '@/lib/quran/types';
+import { generateSurahSlug } from '@/lib/url-utils';
 
 interface SurahCardProps {
   surah: Surah;
@@ -9,7 +10,7 @@ interface SurahCardProps {
 
 export default function SurahCard({ surah }: SurahCardProps) {
   return (
-    <Link href={`/quran/${surah.id}`} className="block group">
+    <Link href={`/quran/${generateSurahSlug(surah.id)}`} className="block group">
       <div className="flex items-center px-2 py-4 hover:bg-base-100/50 transition-all duration-200">
         {/* 8-pointed Star with Surah Number */}
         <div className="relative w-6 h-6 flex-shrink-0 mr-4">

@@ -38,7 +38,7 @@ export default function BottomNav() {
     },
     {
       name: "Prayer",
-      path: "/prayer",
+      path: "/prayer-times",
       icon: ClockIcon,
       activeIcon: ClockIconSolid,
     },

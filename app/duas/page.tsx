@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
+import { duaCategories, createSlug } from "@/lib/url-utils";
 
 // Declare gtag type for Google Analytics tracking
 declare global {
@@ -118,12 +119,16 @@ export default function DuasPage() {
 
         {/* Chapter List */}
         <div className="space-y-2">
-          {filteredChapters.map((chapter) => (
-            <Link
-              key={chapter.id}
-              href={`/duas/${chapter.id}`}
-              className="block"
-            >
+          {filteredChapters.map((chapter) => {
+            const category = duaCategories[chapter.id as keyof typeof duaCategories] || "general";
+            const duaSlug = createSlug(chapter.title);
+
+            return (
+              <Link
+                key={chapter.id}
+                href={`/duas/${category}/${duaSlug}`}
+                className="block"
+              >
               <div className="card bg-base-100 border border-base-200 hover:border-primary/50 hover:shadow-md transition-all duration-200">
                 <div className="card-body p-4">
                   <div className="flex items-center justify-between">
@@ -147,7 +152,8 @@ export default function DuasPage() {
                 </div>
               </div>
             </Link>
-          ))}
+            );
+          })}
         </div>
 
         {filteredChapters.length === 0 && !loading && (

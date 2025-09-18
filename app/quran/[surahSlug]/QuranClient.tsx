@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { generateSurahSlug } from "@/lib/url-utils";
 import Image from "next/image";
 import kaabaImage from "@/public/kaaba.jpeg";
 import {
@@ -30,10 +31,12 @@ declare global {
   }
 }
 
-export default function SurahPage() {
-  const params = useParams();
+interface QuranClientProps {
+  surahId: number;
+}
+
+export default function QuranClient({ surahId }: QuranClientProps) {
   const router = useRouter();
-  const surahId = parseInt(params.surahId as string);
 
   // Local state
   const [activeTab, setActiveTab] = useState<"translation" | "reading">(() => {
@@ -626,7 +629,7 @@ export default function SurahPage() {
         {/* Navigation */}
         <div className="flex justify-between mt-8">
           <button
-            onClick={() => surahId > 1 && router.push(`/quran/${surahId - 1}`)}
+            onClick={() => surahId > 1 && router.push(`/quran/${generateSurahSlug(surahId - 1)}`)}
             disabled={surahId <= 1}
             className="btn btn-outline"
           >
@@ -636,7 +639,7 @@ export default function SurahPage() {
 
           <button
             onClick={() =>
-              surahId < 114 && router.push(`/quran/${surahId + 1}`)
+              surahId < 114 && router.push(`/quran/${generateSurahSlug(surahId + 1)}`)
             }
             disabled={surahId >= 114}
             className="btn btn-outline"
