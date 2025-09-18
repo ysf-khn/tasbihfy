@@ -31,7 +31,8 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
   const [showDebug, setShowDebug] = useState(false);
   const { generateAndShare, isGenerating, cardRef } = useShareImage();
 
-  const verseKey = `${surahData.id}:${verse.verse_number}`;
+  // Use the API's verse_key directly, or construct it as fallback
+  const verseKey = verse.verse_key || `${surahData.id}:${verse.verse_number || verse.id}`;
 
   // Settings for font styling and script selection
   const { getArabicStyles, getTranslationStyles, getScriptFieldName, getSelectedScript } = useQuranSettings();

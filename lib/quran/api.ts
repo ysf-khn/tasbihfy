@@ -43,7 +43,8 @@ function getCacheKey(prefix: string, id?: string | number): string {
 }
 
 /**
- * Fetch translations for a specific verse
+ * Fetch translations for a specific verse (DEPRECATED - use batch API instead)
+ * Kept for backward compatibility with getVerse function
  */
 async function fetchTranslationsForVerse(
   verseKey: string,
@@ -168,23 +169,27 @@ export async function getSurahArabicOnly(
 
     // Fetch verses using the script-specific endpoint via our proxy
     const scriptConfig = QURAN_SCRIPTS[script];
-    const versesUrl = `/api/quran/verses/${scriptConfig.apiEndpoint}?chapter_number=${surahId}`;
-    
-    console.log(`📡 Fetching Arabic-only verses for Surah ${surahId} with script: ${script}`);
+
+    // Add fields parameter to ensure all Arabic text variations are included
+    const fieldsParam = 'text_uthmani,text_uthmani_simple,text_indopak,text_imlaei,text_imlaei_simple';
+    const versesUrl = `/api/quran/verses/${scriptConfig.apiEndpoint}?chapter_number=${surahId}&fields=${fieldsParam}`;
+
+    console.log(`📡 Fetching Arabic-only verses for Surah ${surahId} with script: ${script}, fields: ${fieldsParam}`);
     const versesResponse = await fetchFromProxy(versesUrl);
     const versesData = await versesResponse.json();
     
     // The script endpoints already return the text in the correct field name
     // No mapping needed - the API returns text_indopak, text_uthmani, etc. directly
     
-    // Add verse_number field from id for compatibility
+    // Add verse_number field from verse_key or id for compatibility
     if (versesData.verses) {
       versesData.verses = versesData.verses.map((verse: any) => ({
         ...verse,
-        verse_number: verse.id  // Map id to verse_number
+        // Extract verse number from verse_key (e.g., "2:1" -> 1) or use id as fallback
+        verse_number: verse.verse_key ? parseInt(verse.verse_key.split(':')[1]) : verse.id
       }));
     }
-    
+
     console.log(`✅ Arabic verses loaded: ${versesData.verses?.length || 0} verses`);
 
     // Build surah data using local metadata and API verses
@@ -257,41 +262,29 @@ export async function getSurahData(
       throw new Error(`Surah ${surahId} not found in metadata`);
     }
 
-    // Fetch verses with selected script - but since script endpoints don't support translations directly,
-    // we'll need to fetch Arabic text and translations separately
-    const scriptConfig = QURAN_SCRIPTS[script];
-    const versesUrl = `/api/quran/verses/${scriptConfig.apiEndpoint}?chapter_number=${surahId}`;
-    console.log(`📡 Fetching verses with script ${script}:`, versesUrl);
+    // Use the optimized batch API - fetch all translations in ONE request
+    // Using by_chapter endpoint which supports both script and translations parameters
+    const translationsParam = translationIds && translationIds.length > 0 ? translationIds.join(',') : '';
+
+    // Add fields parameter to ensure all Arabic text variations are included
+    const fieldsParam = 'text_uthmani,text_uthmani_simple,text_indopak,text_imlaei,text_imlaei_simple';
+    const versesUrl = `/api/quran/verses/by_chapter/${surahId}?per_page=286&fields=${fieldsParam}${translationsParam ? `&translations=${translationsParam}` : ''}`;
+
+    console.log(`📡 Fetching surah ${surahId} with batch API (script: ${script}, translations: ${translationsParam}, fields: ${fieldsParam}):`, versesUrl);
 
     const versesResponse = await fetchFromProxy(versesUrl);
     const versesData = await versesResponse.json();
-    // The script endpoints already return the text in the correct field name
-    // No mapping needed - the API returns text_indopak, text_uthmani, etc. directly
-    
-    // Add verse_number field from id for compatibility
+
+    // Add verse_number field from verse_key or id for compatibility
     if (versesData.verses) {
       versesData.verses = versesData.verses.map((verse: any) => ({
         ...verse,
-        verse_number: verse.id  // Map id to verse_number
+        // Extract verse number from verse_key (e.g., "2:1" -> 1) or use id as fallback
+        verse_number: verse.verse_key ? parseInt(verse.verse_key.split(':')[1]) : verse.id
       }));
     }
-    
-    // Now fetch translations separately if needed
-    if (translationIds && translationIds.length > 0) {
-      console.log(`📡 Fetching translations separately for chapter ${surahId}`);
-      // Fetch all translations in parallel for better performance
-      const translationPromises = versesData.verses.map((verse: any) => 
-        fetchTranslationsForVerse(verse.verse_key, translationIds)
-      );
-      const allTranslations = await Promise.all(translationPromises);
-      
-      // Map the translations back to verses
-      versesData.verses = versesData.verses.map((verse: any, index: number) => ({
-        ...verse,
-        translations: allTranslations[index]
-      }));
-    }
-    console.log(`✅ Verses data loaded:`, versesData);
+
+    console.log(`✅ Verses data loaded using batch API:`, versesData);
     console.log(`📊 Total verses received:`, versesData.verses?.length || 0);
 
     // Validate we have the expected data
@@ -310,19 +303,16 @@ export async function getSurahData(
       // If we got translations, log details
       if (firstVerse.translations && firstVerse.translations.length > 0) {
         console.log(
-          `🌐 Translation sample:`,
+          `🌐 Translation sample from batch API:`,
           firstVerse.translations.map((t: any) => ({
             resource_id: t.resource_id,
             textPreview: t.text?.substring(0, 50) + "...",
           }))
         );
-      } else {
+      } else if (translationIds && translationIds.length > 0) {
         console.warn(
-          `⚠️ No translations found in verses response for IDs: ${translationIds.join(
-            ","
-          )}`
+          `⚠️ No translations found in batch API response for IDs: ${translationIds.join(",")}`
         );
-        console.log(`ℹ️ Will need to fetch translations separately`);
       }
     }
 
@@ -386,7 +376,10 @@ export async function getVerse(
     // Fetch verse with script via our proxy
     const verseKey = `${surahId}:${verseNumber}`;
     const scriptConfig = QURAN_SCRIPTS[script];
-    const url = `/api/quran/verses/${scriptConfig.apiEndpoint}?verse_key=${verseKey}`;
+
+    // Add fields parameter to ensure all Arabic text variations are included
+    const fieldsParam = 'text_uthmani,text_uthmani_simple,text_indopak,text_imlaei,text_imlaei_simple';
+    const url = `/api/quran/verses/${scriptConfig.apiEndpoint}?verse_key=${verseKey}&fields=${fieldsParam}`;
     const response = await fetchFromProxy(url);
     const data = await response.json();
 
@@ -394,9 +387,9 @@ export async function getVerse(
     // The script endpoints already return the text in the correct field name
     // No mapping needed - the API returns text_indopak, text_uthmani, etc. directly
     
-    // Add verse_number field from id for compatibility
-    if (verse && verse.id && !verse.verse_number) {
-      verse.verse_number = verse.id;
+    // Add verse_number field from verse_key or id for compatibility
+    if (verse && !verse.verse_number) {
+      verse.verse_number = verse.verse_key ? parseInt(verse.verse_key.split(':')[1]) : verse.id;
     }
     
     // Fetch translations separately

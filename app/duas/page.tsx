@@ -1,15 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
-import hisnulMuslim from "@/data/hisnul-muslim-complete.json";
+
+// Declare gtag type for Google Analytics tracking
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void;
+  }
+}
+
+// Type for the hisnul muslim data
+type HisnulMuslimData = {
+  chapters: Array<{
+    id: number;
+    title: string;
+    arabicTitle: string;
+    duas: Array<{
+      arabic: string;
+      translation: string;
+      transliteration: string;
+    }>;
+  }>;
+};
 
 export default function DuasPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [hisnulMuslim, setHisnulMuslim] = useState<HisnulMuslimData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const filteredChapters = hisnulMuslim.chapters.filter((chapter) => {
+  // Track page view with Google Analytics
+  useEffect(() => {
+    window.gtag?.("event", "view_duas_list", {
+      event_category: "engagement",
+      event_label: "duas_page_view",
+    });
+  }, []);
+
+  // Load data dynamically
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Dynamic import to reduce initial bundle size
+        const data = await import("@/data/hisnul-muslim-complete.json");
+        setHisnulMuslim(data.default);
+      } catch (error) {
+        console.error("Failed to load Hisnul Muslim data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const filteredChapters = hisnulMuslim?.chapters.filter((chapter) => {
     if (!searchTerm) return true;
 
     const searchLower = searchTerm.toLowerCase();
@@ -23,7 +70,27 @@ export default function DuasPage() {
           dua.transliteration.toLowerCase().includes(searchLower)
       )
     );
-  });
+  }) || [];
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-base-200">
+        <UnifiedHeader title="Duas" showSignIn={true} />
+        <div className="container mx-auto px-4 py-6 max-w-2xl">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-center mb-2">Hisnul Muslim</h1>
+            <p className="text-center text-base-content/70 mb-4">
+              Fortress of the Muslim
+            </p>
+          </div>
+          <div className="flex justify-center items-center py-12">
+            <div className="loading loading-spinner loading-lg text-primary"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -83,7 +150,7 @@ export default function DuasPage() {
           ))}
         </div>
 
-        {filteredChapters.length === 0 && (
+        {filteredChapters.length === 0 && !loading && (
           <div className="text-center py-8">
             <p className="text-base-content/50">
               No duas found matching your search.

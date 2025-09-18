@@ -111,17 +111,17 @@ export function useQuranSurah(surahId: number, translationIds: number[] = [], en
 
   // Create stable dependency for translation IDs and script
   const translationIdsKey = translationIds.join(',');
-  
+
   const loadSurah = useCallback(async () => {
     if (!enabled) {
       setLoading(false);
       return;
     }
-    
+
     if (process.env.NODE_ENV === 'development') {
-      console.log(`🔄 useQuranSurah: Loading surah ${surahId} with translation IDs:`, translationIds);
+      console.log(`🔄 useQuranSurah: Loading surah ${surahId} with translation IDs:`, translationIds, 'enabled:', enabled);
     }
-    
+
     if (!surahId || surahId < 1 || surahId > 114) {
       const errorMsg = `Invalid Surah ID: ${surahId}`;
       console.error('❌ useQuranSurah:', errorMsg);
@@ -138,9 +138,9 @@ export function useQuranSurah(surahId: number, translationIds: number[] = [], en
       if (process.env.NODE_ENV === 'development') {
         console.log(`📋 useQuranSurah: Translation IDs:`, translationIds, 'Script:', selectedScript);
       }
-      
+
       const cacheKey = `surah_${surahId}_${translationIdsKey}_${selectedScript}`;
-      
+
       // Try cache first
       const cached = getCachedData<SurahData>(cacheKey);
       if (cached) {
@@ -153,16 +153,17 @@ export function useQuranSurah(surahId: number, translationIds: number[] = [], en
       }
 
       if (process.env.NODE_ENV === 'development') {
-        console.log(`📡 useQuranSurah: Fetching surah ${surahId} from API with translation IDs:`, translationIds, 'and script:', selectedScript);
+        console.log(`📡 useQuranSurah: Fetching surah ${surahId} from API with BATCH OPTIMIZATION - translation IDs:`, translationIds, 'and script:', selectedScript);
       }
       const data = await getSurahData(surahId, translationIds, selectedScript);
       if (process.env.NODE_ENV === 'development') {
-        console.log(`✅ useQuranSurah: API response for surah ${surahId}:`, {
+        console.log(`✅ useQuranSurah: BATCH API response for surah ${surahId}:`, {
           verses: data.verses?.length || 0,
-          name: data.name_simple
+          name: data.name_simple,
+          firstVerseHasTranslations: data.verses?.[0]?.translations?.length || 0
         });
       }
-      
+
       setSurahData(data);
       setCachedData(cacheKey, data);
     } catch (err) {
@@ -178,6 +179,9 @@ export function useQuranSurah(surahId: number, translationIds: number[] = [], en
   useEffect(() => {
     if (enabled) {
       loadSurah();
+    } else {
+      // When disabled, clear loading state immediately
+      setLoading(false);
     }
   }, [loadSurah, enabled]);
 

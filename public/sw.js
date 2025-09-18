@@ -1,4 +1,4 @@
-const CACHE_NAME = "dhikr-v9.1";
+const CACHE_NAME = "dhikr-v9.2";
 
 // Assets to cache immediately
 const STATIC_ASSETS = [
@@ -176,6 +176,16 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
+// Handle messages from client (for update notifications)
+self.addEventListener("message", (event) => {
+  console.log("[SW] Message received:", event.data);
+
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    console.log("[SW] Skipping waiting and taking control");
+    self.skipWaiting();
+  }
+});
+
 // Background sync for dhikr sessions (when available)
 self.addEventListener("sync", (event) => {
   console.log("[SW] Background sync event:", event.tag);
@@ -270,16 +280,18 @@ self.addEventListener("push", (event) => {
     const title = data.title || "Tasbihfy";
 
     event.waitUntil(
-      self.registration.showNotification(title, options).then(() => {
-        console.log("[SW] Notification displayed successfully:", title);
-      }).catch((error) => {
-        console.error("[SW] Failed to display notification:", error);
-      })
+      self.registration
+        .showNotification(title, options)
+        .then(() => {
+          console.log("[SW] Notification displayed successfully:", title);
+        })
+        .catch((error) => {
+          console.error("[SW] Failed to display notification:", error);
+        })
     );
-
   } catch (error) {
     console.error("[SW] Error processing push notification:", error);
-    
+
     // Fallback notification if JSON parsing fails
     event.waitUntil(
       self.registration.showNotification("Tasbihfy", {
@@ -310,10 +322,11 @@ self.addEventListener("notificationclick", (event) => {
 
   // Determine URL to open based on notification type and action
   let urlToOpen = "/";
-  
+
   if (event.notification.data) {
-    const { type, url, verseKey, chapterId, verseNumber } = event.notification.data;
-    
+    const { type, url, verseKey, chapterId, verseNumber } =
+      event.notification.data;
+
     if (type === "daily-ayah") {
       if (event.action === "read-more" && chapterId && verseNumber) {
         // Open specific ayah in Quran reader

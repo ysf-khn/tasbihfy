@@ -9,6 +9,7 @@ import { Providers } from "./providers";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import ServiceWorkerRegistration from "@/components/pwa/ServiceWorkerRegistration";
+import UpdateNotification from "@/components/pwa/UpdateNotification";
 import LayoutClient from "@/components/layout/LayoutClient";
 
 import { GoogleAnalytics } from "@next/third-parties/google";
@@ -173,10 +174,12 @@ export default function RootLayout({
         className={`${bricolageGrotesque.variable} ${notoNaskhArabic.variable} ${notoNastaliqUrdu.variable} antialiased`}
       >
         <Providers>
-          <ServiceWorkerRegistration />
-          <LayoutClient>{children}</LayoutClient>
-          <OfflineIndicator />
-          <InstallPrompt />
+          <ServiceWorkerRegistration>
+            <LayoutClient>{children}</LayoutClient>
+            <OfflineIndicator />
+            <InstallPrompt />
+            <UpdateNotification />
+          </ServiceWorkerRegistration>
         </Providers>
       </body>
       <GoogleAnalytics gaId="G-70LYJPKZN7" />

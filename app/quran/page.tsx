@@ -1,11 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { BookOpenIcon } from "@heroicons/react/24/outline";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import SurahCard from "@/components/quran/SurahCard";
 import { useQuranSurahList, useLastRead } from "@/hooks/useQuranData";
+
+// Declare gtag type for Google Analytics tracking
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void;
+  }
+}
 
 export default function QuranPage() {
   const { surahs, loading, error: surahsError } = useQuranSurahList();
@@ -14,6 +21,14 @@ export default function QuranPage() {
   const [showDebug, setShowDebug] = useState(
     process.env.NODE_ENV === "development"
   );
+
+  // Track page view with Google Analytics
+  useEffect(() => {
+    window.gtag?.("event", "view_quran_list", {
+      event_category: "engagement",
+      event_label: "quran_page_view",
+    });
+  }, []);
 
   if (loading) {
     return (
