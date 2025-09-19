@@ -11,6 +11,7 @@ import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import ServiceWorkerRegistration from "@/components/pwa/ServiceWorkerRegistration";
 import UpdateNotification from "@/components/pwa/UpdateNotification";
 import LayoutClient from "@/components/layout/LayoutClient";
+import ThemeInitializer from "@/components/ui/ThemeInitializer";
 
 import { GoogleAnalytics } from "@next/third-parties/google";
 import StructuredData from "@/components/seo/StructuredData";
@@ -217,7 +218,7 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Preconnect to external domains for better LCP */}
         <link rel="preconnect" href="https://verses.quran.foundation" />
@@ -244,6 +245,7 @@ export default function RootLayout({
         className={`${bricolageGrotesque.variable} ${notoNaskhArabic.variable} ${notoNastaliqUrdu.variable} antialiased`}
       >
         <StructuredData data={applicationStructuredData} />
+        <ThemeInitializer />
         <Providers>
           <ServiceWorkerRegistration>
             <LayoutClient>{children}</LayoutClient>

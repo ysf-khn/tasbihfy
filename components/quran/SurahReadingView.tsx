@@ -2,6 +2,7 @@
 
 import { SurahData } from "@/lib/quran/types";
 import { useQuranSettings } from "@/hooks/useQuranSettings";
+import { toArabicNumerals } from "@/lib/utils";
 
 interface SurahReadingViewProps {
   surahData: SurahData;
@@ -27,12 +28,15 @@ export default function SurahReadingView({ surahData }: SurahReadingViewProps) {
       {/* Continuous Arabic Text */}
       <div className="card bg-base-100 border border-base-200">
         <div className="card-body p-8 md:p-12">
-          <div 
-            className="quran-arabic text-base-content leading-loose text-justify"
+          <div
+            className="quran-arabic text-base-content leading-loose"
             style={{
               ...getArabicStyles(),
               lineHeight: '2.5',
               direction: 'rtl',
+              textAlign: 'justify',
+              textAlignLast: 'center',
+              wordSpacing: '0.1em',
             }}
           >
             {surahData.verses.map((verse, index) => {
@@ -51,7 +55,7 @@ export default function SurahReadingView({ surahData }: SurahReadingViewProps) {
                   {/* Add verse number marker */}
                   <span className="verse-marker inline-flex items-center justify-center mx-1">
                     <span className="text-primary font-bold text-sm bg-primary/10 rounded-full px-2 py-0.5">
-                      {verse.verse_number}
+                      {toArabicNumerals(verse.verse_number)}
                     </span>
                   </span>
                   {/* Add space between verses except for the last one */}

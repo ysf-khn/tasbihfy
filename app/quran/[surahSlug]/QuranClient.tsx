@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { generateSurahSlug } from "@/lib/url-utils";
+import { getSurahInfo } from "@/data/surah-names";
 import Image from "next/image";
 import kaabaImage from "@/public/kaaba.jpeg";
 import {
@@ -628,25 +629,34 @@ export default function QuranClient({ surahId }: QuranClientProps) {
 
         {/* Navigation */}
         <div className="flex justify-between mt-8">
-          <button
-            onClick={() => surahId > 1 && router.push(`/quran/${generateSurahSlug(surahId - 1)}`)}
-            disabled={surahId <= 1}
-            className="btn btn-outline"
-          >
-            <ArrowLeftIcon className="w-4 h-4 mr-2" />
-            Previous Surah
-          </button>
+          {(() => {
+            const previousSurah = surahId > 1 ? getSurahInfo(surahId - 1) : null;
+            const nextSurah = surahId < 114 ? getSurahInfo(surahId + 1) : null;
 
-          <button
-            onClick={() =>
-              surahId < 114 && router.push(`/quran/${generateSurahSlug(surahId + 1)}`)
-            }
-            disabled={surahId >= 114}
-            className="btn btn-outline"
-          >
-            Next Surah
-            <ArrowLeftIcon className="w-4 h-4 ml-2 rotate-180" />
-          </button>
+            return (
+              <>
+                <button
+                  onClick={() => surahId > 1 && router.push(`/quran/${generateSurahSlug(surahId - 1)}`)}
+                  disabled={surahId <= 1}
+                  className="btn btn-outline"
+                >
+                  <ArrowLeftIcon className="w-4 h-4 mr-2" />
+                  {previousSurah ? previousSurah.name : "Previous Surah"}
+                </button>
+
+                <button
+                  onClick={() =>
+                    surahId < 114 && router.push(`/quran/${generateSurahSlug(surahId + 1)}`)
+                  }
+                  disabled={surahId >= 114}
+                  className="btn btn-outline"
+                >
+                  {nextSurah ? nextSurah.name : "Next Surah"}
+                  <ArrowLeftIcon className="w-4 h-4 ml-2 rotate-180" />
+                </button>
+              </>
+            );
+          })()}
         </div>
       </div>
 

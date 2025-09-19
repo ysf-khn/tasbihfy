@@ -5,28 +5,24 @@ export const QURAN_SCRIPTS = {
   indopak: {
     id: "indopak",
     name: "Indopak",
-    description: "Commonly used in South Asia",
     apiEndpoint: "indopak",
     fieldName: "text_indopak",
   },
   uthmani: {
     id: "uthmani",
     name: "Uthmani",
-    description: "Traditional Uthmani script with full diacritical marks",
     apiEndpoint: "uthmani",
     fieldName: "text_uthmani",
   },
   uthmani_simple: {
     id: "uthmani_simple",
     name: "Uthmani Simple",
-    description: "Simplified Uthmani script for easier reading",
     apiEndpoint: "uthmani_simple",
     fieldName: "text_uthmani_simple",
   },
   imlaei: {
     id: "imlaei",
     name: "Imlaei Simple",
-    description: "Simple script without special characters",
     apiEndpoint: "imlaei",
     fieldName: "text_imlaei",
   },

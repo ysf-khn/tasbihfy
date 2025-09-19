@@ -194,49 +194,68 @@ export default function UnifiedSettingsDrawer({
             <BookOpenIcon className="w-5 h-5" />
             Quran Text Script
           </h3>
-          
+
           <div className="space-y-2">
             <label className="text-sm font-medium text-base-content/70">
               Select your preferred Arabic script
             </label>
             <select
               className="select select-bordered w-full"
-              value={settings.selectedScript || 'uthmani'}
-              onChange={(e) => updateSettings({ selectedScript: e.target.value as QuranScript })}
+              value={settings.selectedScript || "uthmani"}
+              onChange={(e) =>
+                updateSettings({
+                  selectedScript: e.target.value as QuranScript,
+                })
+              }
             >
               {Object.entries(QURAN_SCRIPTS).map(([key, script]) => (
                 <option key={key} value={key}>
-                  {script.name} - {script.description}
+                  {script.name}
                 </option>
               ))}
             </select>
-            
+
             {/* Script Preview */}
             <div className="mt-3">
               <p className="text-xs text-base-content/60 mb-2">Preview:</p>
               <div className="p-3 bg-base-200 rounded-lg">
-                {settings.selectedScript === 'indopak' && (
-                  <p className="text-center font-arabic-naskh text-lg" dir="rtl">
+                {settings.selectedScript === "indopak" && (
+                  <p
+                    className="text-center font-arabic-naskh text-lg"
+                    dir="rtl"
+                  >
                     بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
                   </p>
                 )}
-                {settings.selectedScript === 'uthmani' && (
-                  <p className="text-center font-arabic-naskh text-lg" dir="rtl">
+                {settings.selectedScript === "uthmani" && (
+                  <p
+                    className="text-center font-arabic-naskh text-lg"
+                    dir="rtl"
+                  >
                     بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ
                   </p>
                 )}
-                {settings.selectedScript === 'uthmani_simple' && (
-                  <p className="text-center font-arabic-naskh text-lg" dir="rtl">
+                {settings.selectedScript === "uthmani_simple" && (
+                  <p
+                    className="text-center font-arabic-naskh text-lg"
+                    dir="rtl"
+                  >
                     بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
                   </p>
                 )}
-                {settings.selectedScript === 'imlaei' && (
-                  <p className="text-center font-arabic-naskh text-lg" dir="rtl">
+                {settings.selectedScript === "imlaei" && (
+                  <p
+                    className="text-center font-arabic-naskh text-lg"
+                    dir="rtl"
+                  >
                     بسم الله الرحمن الرحيم
                   </p>
                 )}
                 {!settings.selectedScript && (
-                  <p className="text-center font-arabic-naskh text-lg" dir="rtl">
+                  <p
+                    className="text-center font-arabic-naskh text-lg"
+                    dir="rtl"
+                  >
                     بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ
                   </p>
                 )}
@@ -486,7 +505,7 @@ export default function UnifiedSettingsDrawer({
 
   return (
     <Drawer open={isOpen} onOpenChange={onClose}>
-      <DrawerContent className="max-w-md mx-auto">
+      <DrawerContent className="w-full sm:max-w-md mx-auto">
         <DrawerHeader>
           <div className="flex items-center justify-between">
             <DrawerTitle className="flex items-center gap-2">
@@ -537,7 +556,7 @@ export default function UnifiedSettingsDrawer({
         </DrawerHeader>
 
         {/* Content */}
-        <div className="px-4 pb-4 overflow-y-auto max-h-[60vh]">
+        <div className="px-4 pb-4 max-h-[60vh] overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="loading loading-spinner loading-md text-primary"></div>

@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
+import {
+  AdjustmentsHorizontalIcon,
+  SunIcon,
+  MoonIcon
+} from "@heroicons/react/24/outline";
 import UnifiedSettingsDrawer from "@/components/ui/UnifiedSettingsDrawer";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -49,6 +53,19 @@ export default function UnifiedHeader({
                 <button className="btn btn-primary btn-sm">Sign In</button>
               </Link>
             )}
+
+            {/* Theme Toggle Button */}
+            <label className="btn btn-ghost btn-sm btn-square swap swap-rotate" title="Toggle theme">
+              <input
+                type="checkbox"
+                data-toggle-theme="dark,light"
+                data-act-class="swap-active"
+              />
+              {/* sun icon */}
+              <SunIcon className="swap-on w-5 h-5" />
+              {/* moon icon */}
+              <MoonIcon className="swap-off w-5 h-5" />
+            </label>
 
             {/* Settings Button */}
             <button
