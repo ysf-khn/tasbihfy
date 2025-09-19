@@ -1,8 +1,10 @@
 // Service Worker with enhanced caching strategies and version management
 // This file is used as a template - the actual sw.js is generated at build time
 
-const SW_VERSION = "ad6be12-1758303911409";
-const BUILD_TIME = "2025-09-19T17:45:11.409Z";
+const SW_VERSION = "WILL_BE_REPLACED_AT_BUILD";
+const BUILD_TIME = "WILL_BE_REPLACED_AT_BUILD";
+
+// PRECACHE_MANIFEST_PLACEHOLDER
 
 // Cache names with versioning
 const CACHE_NAMES = {

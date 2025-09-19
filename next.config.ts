@@ -51,7 +51,11 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate',
+            value: 'max-age=0, must-revalidate',
+          },
+          {
+            key: 'Service-Worker-Allowed',
+            value: '/',
           },
           {
             key: 'Content-Security-Policy',
