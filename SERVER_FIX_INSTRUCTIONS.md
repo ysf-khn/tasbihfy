@@ -20,30 +20,25 @@ ls -la public/sw.js
 rm -f public/sw.js
 ```
 
-### 3. Update Nginx Configuration
-Add this to your nginx site configuration to ensure `/sw.js` is ALWAYS proxied to Next.js:
+### 3. Update Nginx Configuration (SIMPLIFIED)
+Since we now have an explicit route handler, nginx just needs to proxy all requests to Next.js:
 
 ```nginx
 # In /etc/nginx/sites-available/tasbihfy
 server {
     # ... existing configuration ...
 
-    # CRITICAL: Force /sw.js to be handled by Next.js, not served statically
-    # Use regex to match with or without query parameters
-    location ~ ^/sw\.js {
-        proxy_pass http://localhost:3000$request_uri;
+    # Make sure ALL requests go to Next.js (including sw.js)
+    location / {
+        proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
-
-        # Disable all caching for service worker
-        add_header Cache-Control "no-cache, no-store, max-age=0, must-revalidate";
-        add_header Pragma "no-cache";
-        add_header Expires "0";
-        add_header Service-Worker-Allowed "/";
-        proxy_cache off;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
     # Also handle the API route directly
