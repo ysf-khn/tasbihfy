@@ -10,6 +10,7 @@ import hisnulMuslim from "@/data/hisnul-muslim-complete.json";
 import HomeDhikrCard from "@/components/dhikr/HomeDhikrCard";
 import CreateDhikrModal from "@/components/dhikr/CreateDhikrModal";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
+import NightlyRecitationsCard from "@/components/nightly/NightlyRecitationsCard";
 import type { Dhikr, DhikrSession } from "@prisma/client";
 import { GuestStorage } from "@/lib/guestStorage";
 import { PlusIcon, SparklesIcon } from "@heroicons/react/24/outline";
@@ -333,6 +334,9 @@ function HomeContent() {
       <div>
         {/* Content */}
         <div className="p-4 sm:p-6 space-y-6 pb-24">
+          {/* Nightly Recitations Card - Shows only after sunset */}
+          <NightlyRecitationsCard />
+
           {/* Favorites Section */}
           {favoritesDhikrs.length > 0 && (
             <div className="space-y-3 sm:space-y-4">

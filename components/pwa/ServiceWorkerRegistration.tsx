@@ -9,9 +9,10 @@ type UpdateContextType = {
   newVersion: string | null
   triggerUpdate: () => void
   dismissUpdate: () => void
-  checkForUpdates: () => Promise<void>
+  checkForUpdates: (isManualCheck?: boolean) => Promise<void>
   lastUpdateCheck: Date | null
   updateError: string | null
+  isManualCheck: boolean
 }
 
 const UpdateContext = createContext<UpdateContextType | null>(null)
@@ -36,6 +37,7 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
   const [lastUpdateCheck, setLastUpdateCheck] = useState<Date | null>(null)
   const [updateError, setUpdateError] = useState<string | null>(null)
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null)
+  const [isManualCheck, setIsManualCheck] = useState(false)
 
   // Get version from active service worker
   const getServiceWorkerVersion = useCallback(async (worker: ServiceWorker): Promise<string | null> => {
@@ -58,10 +60,11 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
   }, [])
 
   // Check for updates manually
-  const checkForUpdates = useCallback(async () => {
+  const checkForUpdates = useCallback(async (isManual = false) => {
     if (!registration) return
 
     try {
+      setIsManualCheck(isManual)
       setUpdateProgress('checking')
       setUpdateError(null)
       setLastUpdateCheck(new Date())
@@ -89,6 +92,8 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
       console.error('[SW] Update check failed:', error)
       setUpdateError(error instanceof Error ? error.message : 'Update check failed')
       setUpdateProgress('error')
+    } finally {
+      setIsManualCheck(false)
     }
   }, [registration, currentVersion, getServiceWorkerVersion])
 
@@ -184,13 +189,13 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
 
     // Initial check after registration
     const initialCheckTimer = setTimeout(() => {
-      checkForUpdates()
+      checkForUpdates(false) // Automatic check
     }, 5000) // Check 5 seconds after page load
 
     // Set up periodic checks
     const interval = updateAvailable ? IMMEDIATE_UPDATE_CHECK_INTERVAL : UPDATE_CHECK_INTERVAL
     const intervalId = setInterval(() => {
-      checkForUpdates()
+      checkForUpdates(false) // Automatic check
     }, interval)
 
     // Check on visibility change (when tab becomes visible)
@@ -198,7 +203,7 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
       if (document.visibilityState === 'visible' && lastUpdateCheck) {
         const timeSinceLastCheck = Date.now() - lastUpdateCheck.getTime()
         if (timeSinceLastCheck > UPDATE_CHECK_INTERVAL) {
-          checkForUpdates()
+          checkForUpdates(false) // Automatic check
         }
       }
     }
@@ -210,7 +215,7 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
       clearInterval(intervalId)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [registration, updateAvailable, lastUpdateCheck, checkForUpdates])
+  }, [registration, updateAvailable])
 
   const triggerUpdate = () => {
     if (waitingWorker) {
@@ -243,6 +248,7 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
     checkForUpdates,
     lastUpdateCheck,
     updateError,
+    isManualCheck,
   }
 
   return (

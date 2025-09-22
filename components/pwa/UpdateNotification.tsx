@@ -14,6 +14,7 @@ export default function UpdateNotification() {
     checkForUpdates,
     lastUpdateCheck,
     updateError,
+    isManualCheck,
   } = useServiceWorkerUpdate()
 
   const [showDetails, setShowDetails] = useState(false)
@@ -78,7 +79,7 @@ export default function UpdateNotification() {
             </div>
           </div>
           <button
-            onClick={() => checkForUpdates()}
+            onClick={() => checkForUpdates(true)}
             className="btn btn-ghost btn-xs"
           >
             Retry
@@ -88,8 +89,8 @@ export default function UpdateNotification() {
     )
   }
 
-  // Show loading state
-  if (updateProgress === 'checking') {
+  // Show loading state (only for manual checks)
+  if (updateProgress === 'checking' && isManualCheck) {
     return (
       <div className="toast toast-bottom toast-center z-50">
         <div className="alert shadow-lg">

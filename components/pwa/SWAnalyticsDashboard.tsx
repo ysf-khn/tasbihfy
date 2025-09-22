@@ -172,7 +172,7 @@ export default function SWAnalyticsDashboard() {
                     <span>{lastUpdateCheck.toLocaleTimeString()}</span>
                   </div>
                   <button
-                    onClick={checkForUpdates}
+                    onClick={() => checkForUpdates(true)}
                     className="btn btn-xs btn-ghost w-full"
                   >
                     Check for Updates

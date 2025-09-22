@@ -23,20 +23,10 @@ export async function getAccessToken(): Promise<string> {
   console.log("🔄 getAccessToken: Fetching new token");
 
   try {
-    const clientId =
-      process.env.NODE_ENV === "production"
-        ? process.env.QURAN_API_CLIENT_ID_PROD
-        : process.env.QURAN_API_CLIENT_ID_TEST;
-
-    const clientSecret =
-      process.env.NODE_ENV === "production"
-        ? process.env.QURAN_API_CLIENT_SECRET_PROD
-        : process.env.QURAN_API_CLIENT_SECRET_TEST;
-
-    const authUrl =
-      process.env.NODE_ENV === "production"
-        ? process.env.QURAN_API_AUTH_URL_PROD
-        : process.env.QURAN_API_AUTH_URL_TEST;
+    // TEMPORARY: Force production credentials for testing nightly recitations
+    const clientId = process.env.QURAN_API_CLIENT_ID_PROD;
+    const clientSecret = process.env.QURAN_API_CLIENT_SECRET_PROD;
+    const authUrl = process.env.QURAN_API_AUTH_URL_PROD;
 
     if (!clientId || !clientSecret || !authUrl) {
       throw new Error("Missing Quran API credentials in environment variables");
@@ -107,10 +97,8 @@ export async function getAccessToken(): Promise<string> {
  * Get the client ID for API requests
  */
 export function getClientId(): string {
-  const clientId =
-    process.env.NODE_ENV === "production"
-      ? process.env.QURAN_API_CLIENT_ID_PROD
-      : process.env.QURAN_API_CLIENT_ID_TEST;
+  // TEMPORARY: Force production client ID for testing nightly recitations
+  const clientId = process.env.QURAN_API_CLIENT_ID_PROD;
 
   if (!clientId) {
     throw new Error("Missing Quran API client ID in environment variables");
@@ -123,9 +111,8 @@ export function getClientId(): string {
  * Get the base API URL for content (not OAuth)
  */
 export function getApiUrl(): string {
-  return process.env.NODE_ENV === "production"
-    ? "https://apis.quran.foundation/content/api/v4"
-    : "https://apis-prelive.quran.foundation/content/api/v4";
+  // TEMPORARY: Force production API URL for testing nightly recitations
+  return "https://apis.quran.foundation/content/api/v4";
 }
 
 /**

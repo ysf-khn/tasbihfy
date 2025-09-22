@@ -12,8 +12,10 @@ interface LayoutClientProps {
 export default function LayoutClient({ children }: LayoutClientProps) {
   const pathname = usePathname();
   
-  // Hide bottom nav on auth pages
+  // Hide bottom nav on auth pages and nightly recitations
   const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/register");
+  const isNightlyRecitations = pathname.startsWith("/nightly-recitations");
+  const hideBottomNav = isAuthPage || isNightlyRecitations;
   
   // Run localStorage cleanup on app initialization
   useEffect(() => {
@@ -38,10 +40,10 @@ export default function LayoutClient({ children }: LayoutClientProps) {
   
   return (
     <>
-      <div className={isAuthPage ? "" : "pb-20"}>
+      <div className={hideBottomNav ? "" : "pb-20"}>
         {children}
       </div>
-      {!isAuthPage && <BottomNav />}
+      {!hideBottomNav && <BottomNav />}
     </>
   );
 }

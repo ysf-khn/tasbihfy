@@ -6,6 +6,7 @@ import { BookOpenIcon } from "@heroicons/react/24/outline";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import SurahCard from "@/components/quran/SurahCard";
 import { useQuranSurahList, useLastRead } from "@/hooks/useQuranData";
+import { generateSurahSlug } from "@/lib/url-utils";
 
 // Declare gtag type for Google Analytics tracking
 declare global {
@@ -123,7 +124,7 @@ export default function QuranClient() {
                     </p>
                   </div>
                   <Link
-                    href={`/quran/${lastRead.surahId}`}
+                    href={`/quran/${generateSurahSlug(lastRead.surahId)}`}
                     className="btn btn-primary btn-sm"
                   >
                     Continue
@@ -149,7 +150,7 @@ export default function QuranClient() {
             ].map((surah) => (
               <Link
                 key={surah.id}
-                href={`/quran/${surah.id}`}
+                href={`/quran/${generateSurahSlug(surah.id)}`}
                 className="badge badge-lg badge-neutral hover:badge-primary transition-all duration-200 px-3 py-2"
               >
                 {surah.name}
