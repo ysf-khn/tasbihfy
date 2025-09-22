@@ -23,10 +23,17 @@ export async function getAccessToken(): Promise<string> {
   console.log("🔄 getAccessToken: Fetching new token");
 
   try {
-    // TEMPORARY: Force production credentials for testing nightly recitations
-    const clientId = process.env.QURAN_API_CLIENT_ID_PROD;
-    const clientSecret = process.env.QURAN_API_CLIENT_SECRET_PROD;
-    const authUrl = process.env.QURAN_API_AUTH_URL_PROD;
+    // Use appropriate credentials based on environment
+    const isDev = process.env.NODE_ENV === "development";
+    const clientId = isDev
+      ? process.env.QURAN_API_CLIENT_ID
+      : process.env.QURAN_API_CLIENT_ID_PROD;
+    const clientSecret = isDev
+      ? process.env.QURAN_API_CLIENT_SECRET
+      : process.env.QURAN_API_CLIENT_SECRET_PROD;
+    const authUrl = isDev
+      ? process.env.QURAN_API_AUTH_URL
+      : process.env.QURAN_API_AUTH_URL_PROD;
 
     if (!clientId || !clientSecret || !authUrl) {
       throw new Error("Missing Quran API credentials in environment variables");
@@ -40,17 +47,14 @@ export async function getAccessToken(): Promise<string> {
     // Create basic auth header
     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
 
-    const response = await fetch(
-      `${authUrl}/oauth2/token`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${auth}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: "grant_type=client_credentials&scope=content",
-      }
-    );
+    const response = await fetch(`${authUrl}/oauth2/token`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: "grant_type=client_credentials&scope=content",
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -97,8 +101,11 @@ export async function getAccessToken(): Promise<string> {
  * Get the client ID for API requests
  */
 export function getClientId(): string {
-  // TEMPORARY: Force production client ID for testing nightly recitations
-  const clientId = process.env.QURAN_API_CLIENT_ID_PROD;
+  // Use appropriate client ID based on environment
+  const isDev = process.env.NODE_ENV === "development";
+  const clientId = isDev
+    ? process.env.QURAN_API_CLIENT_ID
+    : process.env.QURAN_API_CLIENT_ID_PROD;
 
   if (!clientId) {
     throw new Error("Missing Quran API client ID in environment variables");
@@ -111,8 +118,12 @@ export function getClientId(): string {
  * Get the base API URL for content (not OAuth)
  */
 export function getApiUrl(): string {
-  // TEMPORARY: Force production API URL for testing nightly recitations
-  return "https://apis.quran.foundation/content/api/v4";
+  // Use appropriate API URL based on environment
+  const isDev = process.env.NODE_ENV === "development";
+  return isDev
+    ? process.env.QURAN_API_URL ||
+        "https://apis-prelive.quran.foundation/api/content/v4"
+    : "https://apis.quran.foundation/content/api/v4";
 }
 
 /**
