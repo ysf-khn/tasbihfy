@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic'; // Ensure this route is never cached
 export const runtime = 'nodejs'; // Use Node.js runtime for file system access
@@ -50,13 +51,42 @@ self.addEventListener('activate', () => {
       `const BUILD_TIME = "${buildTime}";`
     );
 
-    // Add a comment showing this is dynamically generated
-    swContent = `// Dynamically generated at ${buildTime}
-// Version: ${version}
-// This service worker is dynamically generated on each request
-// to ensure updates are always detected
+    // Generate random bytes to ensure byte-for-byte difference
+    const randomHash = crypto.randomBytes(16).toString('hex');
 
-${swContent}`;
+    // Add a comment showing this is dynamically generated
+    swContent = `// Dynamically generated service worker
+// Build Time: ${buildTime}
+// Version: ${version}
+// Unique Hash: ${randomHash}
+// This ensures the service worker is always different from cached versions
+// Random Padding: ${crypto.randomBytes(32).toString('base64')}
+
+${swContent}
+
+// 24-Hour Self-Destruct Timer
+// This ensures even stuck service workers will eventually update
+(function() {
+  const INSTALL_TIME = ${Date.now()};
+  const MAX_AGE_HOURS = 24;
+  const MAX_AGE_MS = MAX_AGE_HOURS * 60 * 60 * 1000;
+
+  // Check age periodically
+  setInterval(() => {
+    const age = Date.now() - INSTALL_TIME;
+    if (age > MAX_AGE_MS) {
+      console.log('[SW] Service worker is older than 24 hours, self-destructing...');
+      self.registration.unregister().then(() => {
+        // Notify all clients to reload
+        self.clients.matchAll({ type: 'window' }).then(clients => {
+          clients.forEach(client => {
+            client.postMessage({ type: 'RELOAD_PAGE' });
+          });
+        });
+      });
+    }
+  }, 60 * 60 * 1000); // Check every hour
+})();`;
 
     // Return the service worker with proper headers
     return new NextResponse(swContent, {

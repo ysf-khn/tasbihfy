@@ -95,9 +95,28 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
     }
   }, [registration, currentVersion, getServiceWorkerVersion])
 
-  // Register service worker
+  // Register service worker and listen for messages
   useEffect(() => {
     if ('serviceWorker' in navigator) {
+      // Listen for messages from service worker
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        console.log('[App] Received message from SW:', event.data)
+
+        if (event.data?.type === 'RELOAD_PAGE') {
+          console.log('[App] Service worker requested reload - updating...')
+          // Add small delay to ensure SW is fully unregistered
+          setTimeout(() => {
+            window.location.reload()
+          }, 500)
+        }
+
+        if (event.data?.type === 'SW_UPDATE_AVAILABLE') {
+          console.log('[App] Update available:', event.data)
+          setUpdateAvailable(true)
+          setNewVersion(event.data.newVersion)
+        }
+      })
+
       registerServiceWorker()
     }
   }, [])

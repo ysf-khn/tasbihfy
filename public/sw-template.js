@@ -4,6 +4,66 @@
 const SW_VERSION = "WILL_BE_REPLACED_AT_BUILD";
 const BUILD_TIME = "WILL_BE_REPLACED_AT_BUILD";
 
+// CRITICAL: Self-update check - MUST be first!
+// This checks if a newer version exists and forces update
+(async function checkForUpdate() {
+  // Skip check for template or development versions
+  if (SW_VERSION.includes('WILL_BE_REPLACED') || SW_VERSION === 'dev') {
+    return;
+  }
+
+  try {
+    // Add delay to let SW fully initialize
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Fetch the current SW with cache bypass
+    const response = await fetch('/sw.js?v=' + Date.now(), {
+      cache: 'no-store',
+      method: 'GET'
+    });
+
+    if (!response.ok) return;
+
+    const text = await response.text();
+
+    // Extract version from fetched SW
+    const versionMatch = text.match(/const SW_VERSION = "([^"]+)"/);
+
+    if (versionMatch && versionMatch[1] !== SW_VERSION) {
+      console.log('[SW] 🔄 New version detected!');
+      console.log('[SW] Current:', SW_VERSION);
+      console.log('[SW] Latest:', versionMatch[1]);
+
+      // Unregister this SW and notify clients
+      console.log('[SW] Unregistering old service worker...');
+
+      // Notify all clients about the update
+      const clients = await self.clients.matchAll({ type: 'window' });
+      clients.forEach(client => {
+        client.postMessage({
+          type: 'SW_UPDATE_AVAILABLE',
+          oldVersion: SW_VERSION,
+          newVersion: versionMatch[1]
+        });
+      });
+
+      // Give clients time to prepare, then unregister
+      setTimeout(async () => {
+        await self.registration.unregister();
+        console.log('[SW] Old service worker unregistered');
+
+        // Tell clients to reload
+        const clientsList = await self.clients.matchAll({ type: 'window' });
+        clientsList.forEach(client => {
+          client.postMessage({ type: 'RELOAD_PAGE' });
+        });
+      }, 1000);
+    }
+  } catch (error) {
+    console.log('[SW] Update check failed:', error);
+  }
+})();
+
 // PRECACHE_MANIFEST_PLACEHOLDER
 
 // Cache names with versioning
