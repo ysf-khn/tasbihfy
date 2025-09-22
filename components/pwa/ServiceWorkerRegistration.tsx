@@ -103,11 +103,11 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
         console.log('[App] Received message from SW:', event.data)
 
         if (event.data?.type === 'RELOAD_PAGE') {
-          console.log('[App] Service worker requested reload - updating...')
-          // Add small delay to ensure SW is fully unregistered
-          setTimeout(() => {
-            window.location.reload()
-          }, 500)
+          console.log('[App] Service worker requested reload')
+          // Don't auto-reload anymore to prevent loops
+          // Instead, show update notification to user
+          setUpdateAvailable(true)
+          setNewVersion('latest')
         }
 
         if (event.data?.type === 'SW_UPDATE_AVAILABLE') {
@@ -123,24 +123,6 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
 
   async function registerServiceWorker() {
     try {
-      // First, check if there's an old service worker and force unregister it
-      const existingRegistrations = await navigator.serviceWorker.getRegistrations()
-      for (const registration of existingRegistrations) {
-        // Check if it's our old stuck service worker
-        if (registration.active) {
-          const activeVersion = await getServiceWorkerVersion(registration.active)
-          if (activeVersion && activeVersion.startsWith('018849a')) {
-            console.log('[SW] Found old stuck service worker, unregistering:', activeVersion)
-            await registration.unregister()
-            // Force reload after unregistering old SW
-            setTimeout(() => {
-              window.location.reload()
-            }, 100)
-            return
-          }
-        }
-      }
-
       // Add cache-busting timestamp to force fresh fetch
       const timestamp = Date.now()
       const swUrl = `/sw.js?v=${timestamp}&cb=${Math.random().toString(36).substring(7)}`
@@ -210,8 +192,10 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
         if (!refreshing) {
           refreshing = true
           // Show a notification that the app is updating
-          console.log('[SW] Controller changed, reloading page...')
-          window.location.reload()
+          console.log('[SW] Controller changed, new version active')
+          // Don't auto-reload, let user decide when to refresh
+          setUpdateAvailable(false)
+          setUpdateProgress('idle')
         }
       })
 
@@ -226,15 +210,15 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
   useEffect(() => {
     if (!registration) return
 
-    // Check for updates more aggressively
+    // Check for updates after initial load
     const timer = setTimeout(() => {
       checkForUpdates(false) // Automatic check on app launch
-    }, 1000)
+    }, 5000) // Wait 5 seconds after registration
 
-    // Also check for updates every 5 minutes
+    // Check for updates every 30 minutes (less aggressive)
     const intervalId = setInterval(() => {
       checkForUpdates(false)
-    }, 5 * 60 * 1000)
+    }, 30 * 60 * 1000)
 
     return () => {
       clearTimeout(timer)

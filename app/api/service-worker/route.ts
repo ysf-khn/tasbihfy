@@ -65,69 +65,43 @@ self.addEventListener('activate', () => {
 
 ${swContent}
 
-// Aggressive Update Mechanism - Immediate Old Version Detection
-// This ensures old service workers are immediately replaced
-(async function() {
+// Self-Update Mechanism - Balanced Approach
+// Ensures service workers update properly without causing loops
+(function() {
   const INSTALL_TIME = ${Date.now()};
   const THIS_VERSION = "${version}";
-  const MAX_AGE_HOURS = 2; // Reduced from 24 to 2 hours
+  const MAX_AGE_HOURS = 24; // Service worker max age
   const MAX_AGE_MS = MAX_AGE_HOURS * 60 * 60 * 1000;
 
-  // Check if this is an old version (018849a) and immediately unregister
+  // Only unregister if this is a known problematic version
   if (THIS_VERSION.startsWith('018849a')) {
-    console.log('[SW] Old stuck version detected, immediately unregistering...');
-    await self.registration.unregister();
-    // Notify all clients to reload
-    const clients = await self.clients.matchAll({ type: 'window' });
-    clients.forEach(client => {
-      client.postMessage({ type: 'RELOAD_PAGE' });
-    });
+    console.log('[SW] Old stuck version detected, will unregister...');
+    // Give time for the page to stabilize before unregistering
+    setTimeout(async () => {
+      await self.registration.unregister();
+      // Don't auto-reload, let the page handle it
+      const clients = await self.clients.matchAll({ type: 'window' });
+      clients.forEach(client => {
+        client.postMessage({ type: 'SW_UPDATE_AVAILABLE', newVersion: 'latest' });
+      });
+    }, 5000);
     return;
   }
 
-  // Check for updates every 30 seconds for the first 5 minutes
-  let checkCount = 0;
-  const earlyCheckInterval = setInterval(async () => {
-    checkCount++;
-    if (checkCount > 10) { // Stop after 10 checks (5 minutes)
-      clearInterval(earlyCheckInterval);
-      return;
-    }
-
-    try {
-      const response = await fetch('/sw.js?check=' + Date.now(), {
-        cache: 'no-store'
-      });
-      const text = await response.text();
-      const versionMatch = text.match(/const SW_VERSION = "([^"]+)"/);
-
-      if (versionMatch && versionMatch[1] !== THIS_VERSION) {
-        console.log('[SW] Newer version detected during early check:', versionMatch[1]);
-        await self.registration.unregister();
-        const clients = await self.clients.matchAll({ type: 'window' });
-        clients.forEach(client => {
-          client.postMessage({ type: 'RELOAD_PAGE' });
-        });
-      }
-    } catch (e) {
-      console.log('[SW] Early update check failed:', e);
-    }
-  }, 30000); // Every 30 seconds
-
-  // Regular age-based check every 30 minutes
+  // Age-based check only - no aggressive update checking
+  // This prevents the constant reload loop
   setInterval(() => {
     const age = Date.now() - INSTALL_TIME;
     if (age > MAX_AGE_MS) {
-      console.log('[SW] Service worker is older than 2 hours, self-destructing...');
-      self.registration.unregister().then(() => {
-        self.clients.matchAll({ type: 'window' }).then(clients => {
-          clients.forEach(client => {
-            client.postMessage({ type: 'RELOAD_PAGE' });
-          });
+      console.log('[SW] Service worker exceeded max age, requesting update...');
+      // Don't unregister, just notify clients an update is needed
+      self.clients.matchAll({ type: 'window' }).then(clients => {
+        clients.forEach(client => {
+          client.postMessage({ type: 'SW_UPDATE_AVAILABLE', newVersion: 'latest' });
         });
       });
     }
-  }, 30 * 60 * 1000); // Check every 30 minutes
+  }, 60 * 60 * 1000); // Check every hour (not every 30 minutes)
 })();`;
 
     // Return the service worker with proper headers
