@@ -123,11 +123,9 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
 
   async function registerServiceWorker() {
     try {
-      // Add cache-busting timestamp to force fresh fetch
-      const timestamp = Date.now()
-      const swUrl = `/sw.js?v=${timestamp}&cb=${Math.random().toString(36).substring(7)}`
-
-      const reg = await navigator.serviceWorker.register(swUrl, {
+      // Register without query parameters to avoid routing issues
+      // The dynamic API route already ensures fresh content
+      const reg = await navigator.serviceWorker.register('/sw.js', {
         scope: '/',
         updateViaCache: 'none', // Always check for updates
       })

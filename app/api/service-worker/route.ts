@@ -7,7 +7,9 @@ export const dynamic = 'force-dynamic'; // Ensure this route is never cached
 export const runtime = 'nodejs'; // Use Node.js runtime for file system access
 export const revalidate = 0; // Never cache this route
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Handle requests with or without query parameters
+  // The query params are ignored, but we accept them to avoid 404s
   try {
     // Generate a unique version based on current timestamp and git commit (if available)
     const timestamp = Date.now();

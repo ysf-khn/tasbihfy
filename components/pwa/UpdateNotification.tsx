@@ -57,8 +57,8 @@ export default function UpdateNotification() {
   // Show error state
   if (updateError) {
     return (
-      <div className="toast toast-bottom toast-center z-50">
-        <div className="alert alert-error shadow-lg">
+      <div className="fixed bottom-4 left-4 right-4 z-50 flex justify-center">
+        <div className="alert alert-error shadow-lg max-w-md w-full sm:w-auto">
           <div className="flex items-center gap-3">
             <svg
               className="h-5 w-5"
@@ -92,8 +92,8 @@ export default function UpdateNotification() {
   // Show loading state (only for manual checks)
   if (updateProgress === 'checking' && isManualCheck) {
     return (
-      <div className="toast toast-bottom toast-center z-50">
-        <div className="alert shadow-lg">
+      <div className="fixed bottom-4 left-4 right-4 z-50 flex justify-center">
+        <div className="alert shadow-lg max-w-md w-full sm:w-auto">
           <div className="flex items-center gap-3">
             <span className="loading loading-spinner loading-sm"></span>
             <p className="text-sm">Checking for updates...</p>
@@ -106,8 +106,8 @@ export default function UpdateNotification() {
   // Show downloading state
   if (updateProgress === 'downloading') {
     return (
-      <div className="toast toast-bottom toast-center z-50">
-        <div className="alert alert-info shadow-lg">
+      <div className="fixed bottom-4 left-4 right-4 z-50 flex justify-center">
+        <div className="alert alert-info shadow-lg max-w-md w-full sm:w-auto">
           <div className="flex items-center gap-3">
             <span className="loading loading-spinner loading-sm"></span>
             <div>
@@ -123,7 +123,7 @@ export default function UpdateNotification() {
   // Show update available notification
   return (
     <div className="toast toast-bottom toast-center z-50">
-      <div className="alert alert-info shadow-lg max-w-md">
+      <div className="alert alert-info shadow-lg max-w-md w-full sm:w-auto">
         <div className="w-full">
           <div className="flex items-start gap-3">
             <svg

@@ -29,8 +29,9 @@ server {
     # ... existing configuration ...
 
     # CRITICAL: Force /sw.js to be handled by Next.js, not served statically
-    location = /sw.js {
-        proxy_pass http://localhost:3000/sw.js;
+    # Use regex to match with or without query parameters
+    location ~ ^/sw\.js {
+        proxy_pass http://localhost:3000$request_uri;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -41,6 +42,7 @@ server {
         add_header Cache-Control "no-cache, no-store, max-age=0, must-revalidate";
         add_header Pragma "no-cache";
         add_header Expires "0";
+        add_header Service-Worker-Allowed "/";
         proxy_cache off;
     }
 
