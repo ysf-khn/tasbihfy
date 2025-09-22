@@ -243,6 +243,8 @@ export default function RootLayout({
           as="image"
           type="image/png"
         />
+        {/* Temporary: Force unregister old service worker - REMOVE after users update */}
+        <script src="/unregister-old-sw.js" async></script>
       </head>
       <body
         className={`${bricolageGrotesque.variable} ${notoNaskhArabic.variable} ${notoNastaliqUrdu.variable} antialiased`}

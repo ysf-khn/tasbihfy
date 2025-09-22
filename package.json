@@ -4,9 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/generate-sw.js && next build --turbopack",
-    "start": "next start",
-    "build:sw": "node scripts/generate-sw.js"
+    "build": "next build --turbopack",
+    "start": "next start"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

@@ -123,7 +123,29 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
 
   async function registerServiceWorker() {
     try {
-      const reg = await navigator.serviceWorker.register('/sw.js', {
+      // First, check if there's an old service worker and force unregister it
+      const existingRegistrations = await navigator.serviceWorker.getRegistrations()
+      for (const registration of existingRegistrations) {
+        // Check if it's our old stuck service worker
+        if (registration.active) {
+          const activeVersion = await getServiceWorkerVersion(registration.active)
+          if (activeVersion && activeVersion.startsWith('018849a')) {
+            console.log('[SW] Found old stuck service worker, unregistering:', activeVersion)
+            await registration.unregister()
+            // Force reload after unregistering old SW
+            setTimeout(() => {
+              window.location.reload()
+            }, 100)
+            return
+          }
+        }
+      }
+
+      // Add cache-busting timestamp to force fresh fetch
+      const timestamp = Date.now()
+      const swUrl = `/sw.js?v=${timestamp}&cb=${Math.random().toString(36).substring(7)}`
+
+      const reg = await navigator.serviceWorker.register(swUrl, {
         scope: '/',
         updateViaCache: 'none', // Always check for updates
       })
@@ -204,12 +226,20 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
   useEffect(() => {
     if (!registration) return
 
-    // Check for updates 3 seconds after registration
+    // Check for updates more aggressively
     const timer = setTimeout(() => {
       checkForUpdates(false) // Automatic check on app launch
-    }, 3000)
+    }, 1000)
 
-    return () => clearTimeout(timer)
+    // Also check for updates every 5 minutes
+    const intervalId = setInterval(() => {
+      checkForUpdates(false)
+    }, 5 * 60 * 1000)
+
+    return () => {
+      clearTimeout(timer)
+      clearInterval(intervalId)
+    }
   }, [registration]) // Only run once when registration is available
 
   const triggerUpdate = () => {
