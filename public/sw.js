@@ -1,8 +1,8 @@
 // Service Worker with enhanced caching strategies and version management
 // This file is used as a template - the actual sw.js is generated at build time
 
-const SW_VERSION = "WILL_BE_REPLACED_AT_BUILD";
-const BUILD_TIME = "WILL_BE_REPLACED_AT_BUILD";
+const SW_VERSION = "018849a-1758569345872";
+const BUILD_TIME = "2025-09-22T19:29:05.872Z";
 
 // PRECACHE_MANIFEST_PLACEHOLDER
 
@@ -34,9 +34,15 @@ const MAX_CACHE_SIZE = {
   QURAN_AUDIO: 114,
 };
 
-// Essential routes to precache - REMOVED to prevent HTML caching
+// Essential routes to precache
 const PRECACHE_ROUTES = [
-  // No longer precaching HTML pages
+  '/',
+  '/dhikrs',
+  '/quran',
+  '/duas',
+  '/prayer',
+  '/settings',
+  '/daily',
 ];
 
 // Static assets to cache immediately
@@ -290,18 +296,9 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   const { pathname } = url;
 
-  // Handle navigation requests (HTML pages) - NEVER CACHE, ALWAYS FETCH FRESH
+  // Handle navigation requests (HTML pages)
   if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request, {
-        cache: 'no-store', // Never use browser cache
-        credentials: 'same-origin'
-      }).catch(() => {
-        // Only if completely offline, try to return the home page from cache
-        console.log('[SW] Offline - returning cached home page');
-        return caches.match('/');
-      })
-    );
+    event.respondWith(networkFirst(event.request, CACHE_NAMES.RUNTIME));
     return;
   }
 

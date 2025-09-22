@@ -153,6 +153,9 @@ export const metadata: Metadata = {
     "msapplication-TileImage": "/icons/icon-144x144.png",
     "msapplication-tap-highlight": "no",
     "theme-color": "#57c5b6",
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0",
   },
 };
 
