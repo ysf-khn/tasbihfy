@@ -18,15 +18,15 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['@heroicons/react', 'lucide-react'],
   },
 
-  // No longer need rewrites since we have an explicit route handler for /sw.js
-  // async rewrites() {
-  //   return [
-  //     {
-  //       source: '/sw.js',
-  //       destination: '/api/service-worker',
-  //     },
-  //   ];
-  // },
+  // Rewrite rules for dynamic service worker
+  async rewrites() {
+    return [
+      {
+        source: '/sw.js',
+        destination: '/api/service-worker',
+      },
+    ];
+  },
 
   // Enable security headers
   async headers() {
