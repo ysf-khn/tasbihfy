@@ -51,7 +51,15 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Cache-Control',
-            value: 'max-age=0, must-revalidate',
+            value: 'no-cache, no-store, max-age=0, must-revalidate',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
           },
           {
             key: 'Service-Worker-Allowed',
@@ -60,6 +68,24 @@ const nextConfig: NextConfig = {
           {
             key: 'Content-Security-Policy',
             value: "default-src 'self'; img-src 'self' data: blob:; connect-src 'self' data: blob: https://verses.quran.foundation https://www.googletagmanager.com https://www.google-analytics.com; media-src 'self' https://verses.quran.foundation; script-src 'self'",
+          },
+        ],
+      },
+      // Headers for dynamic service worker endpoint
+      {
+        source: '/api/service-worker',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, max-age=0, must-revalidate',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
           },
         ],
       },

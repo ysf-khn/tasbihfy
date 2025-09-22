@@ -25,8 +25,6 @@ export function useServiceWorkerUpdate() {
   return context
 }
 
-const UPDATE_CHECK_INTERVAL = 60 * 60 * 1000 // Check every hour
-const IMMEDIATE_UPDATE_CHECK_INTERVAL = 5 * 60 * 1000 // Check every 5 minutes when update is available
 
 export default function ServiceWorkerRegistration({ children }: { children?: React.ReactNode }) {
   const [updateAvailable, setUpdateAvailable] = useState(false)
@@ -106,7 +104,7 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
 
   async function registerServiceWorker() {
     try {
-      const reg = await navigator.serviceWorker.register('/sw.js', {
+      const reg = await navigator.serviceWorker.register('/api/service-worker', {
         scope: '/',
         updateViaCache: 'none', // Always check for updates
       })
@@ -183,39 +181,17 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
     }
   }
 
-  // Set up periodic update checks
+  // Check for updates once on app launch
   useEffect(() => {
     if (!registration) return
 
-    // Initial check after registration
-    const initialCheckTimer = setTimeout(() => {
-      checkForUpdates(false) // Automatic check
-    }, 5000) // Check 5 seconds after page load
+    // Check for updates 3 seconds after registration
+    const timer = setTimeout(() => {
+      checkForUpdates(false) // Automatic check on app launch
+    }, 3000)
 
-    // Set up periodic checks
-    const interval = updateAvailable ? IMMEDIATE_UPDATE_CHECK_INTERVAL : UPDATE_CHECK_INTERVAL
-    const intervalId = setInterval(() => {
-      checkForUpdates(false) // Automatic check
-    }, interval)
-
-    // Check on visibility change (when tab becomes visible)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && lastUpdateCheck) {
-        const timeSinceLastCheck = Date.now() - lastUpdateCheck.getTime()
-        if (timeSinceLastCheck > UPDATE_CHECK_INTERVAL) {
-          checkForUpdates(false) // Automatic check
-        }
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      clearTimeout(initialCheckTimer)
-      clearInterval(intervalId)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [registration, updateAvailable])
+    return () => clearTimeout(timer)
+  }, [registration]) // Only run once when registration is available
 
   const triggerUpdate = () => {
     if (waitingWorker) {

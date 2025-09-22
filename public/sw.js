@@ -1,8 +1,8 @@
 // Service Worker with enhanced caching strategies and version management
 // This file is used as a template - the actual sw.js is generated at build time
 
-const SW_VERSION = "0c33207-1758564900392";
-const BUILD_TIME = "2025-09-22T18:15:00.392Z";
+const SW_VERSION = "50e76da-1758568230116";
+const BUILD_TIME = "2025-09-22T19:10:30.116Z";
 
 // PRECACHE_MANIFEST_PLACEHOLDER
 
