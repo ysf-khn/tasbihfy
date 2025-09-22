@@ -15,9 +15,30 @@ export async function GET() {
     const version = `${gitCommit.slice(0, 7)}-${timestamp}`;
     const buildTime = new Date().toISOString();
 
-    // Read the service worker file from public directory
-    const swPath = path.join(process.cwd(), 'public', 'sw.js');
-    let swContent = fs.readFileSync(swPath, 'utf-8');
+    // Read the service worker template from public directory
+    const swTemplatePath = path.join(process.cwd(), 'public', 'sw-template.js');
+    let swContent: string;
+
+    // Try to read the template, fallback to a basic SW if not found
+    try {
+      swContent = fs.readFileSync(swTemplatePath, 'utf-8');
+    } catch {
+      // If template doesn't exist, create a basic service worker
+      swContent = `
+const SW_VERSION = "TEMPLATE_VERSION";
+const BUILD_TIME = "TEMPLATE_TIME";
+
+self.addEventListener('install', () => {
+  console.log('[SW] Installing version:', SW_VERSION);
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', () => {
+  console.log('[SW] Activating version:', SW_VERSION);
+  self.clients.claim();
+});
+`;
+    }
 
     // Replace the version and build time placeholders
     swContent = swContent.replace(
@@ -30,7 +51,12 @@ export async function GET() {
     );
 
     // Add a comment showing this is dynamically generated
-    swContent = `// Dynamically generated at ${buildTime}\n// Version: ${version}\n\n${swContent}`;
+    swContent = `// Dynamically generated at ${buildTime}
+// Version: ${version}
+// This service worker is dynamically generated on each request
+// to ensure updates are always detected
+
+${swContent}`;
 
     // Return the service worker with proper headers
     return new NextResponse(swContent, {

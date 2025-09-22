@@ -104,7 +104,7 @@ export default function ServiceWorkerRegistration({ children }: { children?: Rea
 
   async function registerServiceWorker() {
     try {
-      const reg = await navigator.serviceWorker.register('/api/service-worker', {
+      const reg = await navigator.serviceWorker.register('/sw.js', {
         scope: '/',
         updateViaCache: 'none', // Always check for updates
       })

@@ -18,6 +18,16 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['@heroicons/react', 'lucide-react'],
   },
 
+  // Rewrite rules for dynamic service worker
+  async rewrites() {
+    return [
+      {
+        source: '/sw.js',
+        destination: '/api/service-worker',
+      },
+    ];
+  },
+
   // Enable security headers
   async headers() {
     return [
