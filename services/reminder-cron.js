@@ -12,7 +12,7 @@ const db = new PrismaClient();
 const vapidDetails = {
   publicKey: process.env.VAPID_PUBLIC_KEY,
   privateKey: process.env.VAPID_PRIVATE_KEY,
-  subject: process.env.VAPID_EMAIL || "mailto:yusuf@tasbihfy.com",
+  subject: process.env.VAPID_EMAIL || "mailto:yusufmohd72@gmail.com",
 };
 
 // Initialize web-push with VAPID details
@@ -21,9 +21,11 @@ let vapidConfigured = false;
 function ensureVapidConfigured() {
   if (!vapidConfigured) {
     if (!vapidDetails.publicKey || !vapidDetails.privateKey) {
-      throw new Error("VAPID keys are required. Please set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY environment variables.");
+      throw new Error(
+        "VAPID keys are required. Please set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY environment variables."
+      );
     }
-    
+
     webpush.setVapidDetails(
       vapidDetails.subject,
       vapidDetails.publicKey,
@@ -40,30 +42,35 @@ async function getRandomAyah() {
     const config = {
       method: "GET",
       headers: {
-        "Accept": "application/json",
+        Accept: "application/json",
         "x-auth-token": process.env.QURAN_API_AUTH_TOKEN || "",
         "x-client-id": process.env.QURAN_API_CLIENT_ID || "",
       },
     };
 
     // Use translation ID 20 for English (Saheeh International)
-    const url = "/api/quran/verses/random?translations=20&language=en&words=false";
-    
+    const url =
+      "/api/quran/verses/random?translations=20&language=en&words=false";
+
     const response = await fetch(`http://localhost:3000${url}`, config);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
-    if (!data.verse || !data.verse.translations || data.verse.translations.length === 0) {
+
+    if (
+      !data.verse ||
+      !data.verse.translations ||
+      data.verse.translations.length === 0
+    ) {
       throw new Error("No translation found in the response");
     }
 
     const verse = data.verse;
     const translation = verse.translations[0];
-    
+
     return {
       verseKey: verse.verse_key,
       arabicText: verse.text_uthmani,
@@ -74,15 +81,15 @@ async function getRandomAyah() {
       title: `Daily Ayah: ${verse.verse_key}`,
       body: translation.text,
     };
-    
   } catch (error) {
     console.error("❌ Failed to fetch random ayah:", error);
-    
+
     // Fallback ayah
     return {
       verseKey: "2:255",
       arabicText: "ٱللَّهُ لَآ إِلَـٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ",
-      translation: "Allah - there is no deity except Him, the Ever-Living, the Self-Sustaining.",
+      translation:
+        "Allah - there is no deity except Him, the Ever-Living, the Self-Sustaining.",
       chapterId: 2,
       verseNumber: 255,
       translationSource: "The Clear Quran",
@@ -98,11 +105,11 @@ function getCurrentTimeInTimezone(timezone) {
     const now = new Date();
     const options = {
       timeZone: timezone,
-      hour: '2-digit',
-      minute: '2-digit',
+      hour: "2-digit",
+      minute: "2-digit",
       hour12: false,
     };
-    return now.toLocaleTimeString('en-US', options);
+    return now.toLocaleTimeString("en-US", options);
   } catch (error) {
     console.error(`❌ Invalid timezone: ${timezone}`, error);
     return new Date().toTimeString().slice(0, 5); // Fallback to UTC
@@ -127,20 +134,19 @@ function isToday(date) {
 async function sendPushNotification(subscription, payload) {
   try {
     ensureVapidConfigured();
-    
+
     await webpush.sendNotification(subscription, JSON.stringify(payload));
     console.log("✅ Push notification sent successfully");
     return true;
-    
   } catch (error) {
     console.error("❌ Failed to send push notification:", error);
-    
+
     // Handle specific web-push errors
     if (error.statusCode === 410) {
       console.log("⚠️ Push subscription expired or invalid");
       return false; // Subscription should be removed from database
     }
-    
+
     return false;
   }
 }
@@ -175,7 +181,7 @@ async function sendAyahNotification(subscription, ayah) {
     ],
     vibrate: [200, 100, 200], // Gentle vibration pattern
   };
-  
+
   return sendPushNotification(subscription, payload);
 }
 
@@ -204,44 +210,53 @@ async function getUsersForReminder() {
       return [];
     }
 
-    console.log(`📱 Found ${reminderPreferences.length} users with reminders enabled`);
+    console.log(
+      `📱 Found ${reminderPreferences.length} users with reminders enabled`
+    );
 
     // Filter users who should receive reminder now
     const eligibleUsers = [];
-    
+
     for (const pref of reminderPreferences) {
       // Skip if reminder already sent today
       if (isToday(pref.lastReminderSent)) {
-        console.log(`⏩ Skipping user ${pref.userId}: reminder already sent today`);
+        console.log(
+          `⏩ Skipping user ${pref.userId}: reminder already sent today`
+        );
         continue;
       }
 
       // Check if current time matches user's reminder time in their timezone
       const currentTimeInUserTz = getCurrentTimeInTimezone(pref.timezone);
-      
+
       if (isTimeMatch(currentTimeInUserTz, pref.reminderTime)) {
         // Validate push subscription
-        if (pref.pushSubscription && 
-            typeof pref.pushSubscription.endpoint === "string" &&
-            pref.pushSubscription.keys &&
-            typeof pref.pushSubscription.keys.p256dh === "string" &&
-            typeof pref.pushSubscription.keys.auth === "string") {
+        if (
+          pref.pushSubscription &&
+          typeof pref.pushSubscription.endpoint === "string" &&
+          pref.pushSubscription.keys &&
+          typeof pref.pushSubscription.keys.p256dh === "string" &&
+          typeof pref.pushSubscription.keys.auth === "string"
+        ) {
           eligibleUsers.push({
             userId: pref.userId,
             pushSubscription: pref.pushSubscription,
             timezone: pref.timezone,
             reminderTime: pref.reminderTime,
           });
-          console.log(`✅ User ${pref.userId} eligible for reminder (${pref.reminderTime} in ${pref.timezone})`);
+          console.log(
+            `✅ User ${pref.userId} eligible for reminder (${pref.reminderTime} in ${pref.timezone})`
+          );
         } else {
           console.log(`⚠️ User ${pref.userId} has invalid push subscription`);
         }
       }
     }
 
-    console.log(`🎯 Found ${eligibleUsers.length} users eligible for reminders right now`);
+    console.log(
+      `🎯 Found ${eligibleUsers.length} users eligible for reminders right now`
+    );
     return eligibleUsers;
-
   } catch (error) {
     console.error("❌ Error getting users for reminder:", error);
     return [];
@@ -254,7 +269,7 @@ async function sendDailyReminders() {
     console.log("📅 Starting daily reminder process...");
 
     const eligibleUsers = await getUsersForReminder();
-    
+
     if (eligibleUsers.length === 0) {
       console.log("ℹ️ No users eligible for reminders at this time");
       return;
@@ -262,7 +277,12 @@ async function sendDailyReminders() {
 
     // Get random ayah for today's reminders
     const ayah = await getRandomAyah();
-    console.log(`📖 Using ayah: ${ayah.verseKey} - "${ayah.translation.substring(0, 50)}..."`);
+    console.log(
+      `📖 Using ayah: ${ayah.verseKey} - "${ayah.translation.substring(
+        0,
+        50
+      )}..."`
+    );
 
     let successful = 0;
     let failed = 0;
@@ -278,12 +298,14 @@ async function sendDailyReminders() {
           failed++;
           expiredUserIds.push(user.userId);
         }
-        
+
         // Add small delay between notifications to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
+        await new Promise((resolve) => setTimeout(resolve, 100));
       } catch (error) {
-        console.error(`❌ Failed to send notification to user ${user.userId}:`, error);
+        console.error(
+          `❌ Failed to send notification to user ${user.userId}:`,
+          error
+        );
         failed++;
         expiredUserIds.push(user.userId);
       }
@@ -293,34 +315,39 @@ async function sendDailyReminders() {
 
     // Update lastReminderSent for successful notifications
     const successfulUserIds = eligibleUsers
-      .filter(user => !expiredUserIds.includes(user.userId))
-      .map(user => user.userId);
+      .filter((user) => !expiredUserIds.includes(user.userId))
+      .map((user) => user.userId);
 
     if (successfulUserIds.length > 0) {
       await db.reminderPreferences.updateMany({
         where: { userId: { in: successfulUserIds } },
         data: { lastReminderSent: new Date() },
       });
-      console.log(`✅ Updated lastReminderSent for ${successfulUserIds.length} users`);
+      console.log(
+        `✅ Updated lastReminderSent for ${successfulUserIds.length} users`
+      );
     }
 
     // Handle expired subscriptions
     if (expiredUserIds.length > 0) {
-      console.log(`🧹 Cleaning up ${expiredUserIds.length} expired subscriptions`);
-      
+      console.log(
+        `🧹 Cleaning up ${expiredUserIds.length} expired subscriptions`
+      );
+
       await db.reminderPreferences.updateMany({
         where: { userId: { in: expiredUserIds } },
-        data: { 
+        data: {
           pushSubscription: null,
           reminderEnabled: false,
         },
       });
-      
-      console.log(`✅ Cleaned up expired subscriptions for ${expiredUserIds.length} users`);
+
+      console.log(
+        `✅ Cleaned up expired subscriptions for ${expiredUserIds.length} users`
+      );
     }
 
     console.log("🎉 Daily reminder process completed successfully");
-
   } catch (error) {
     console.error("❌ Error in daily reminder process:", error);
   }
@@ -334,13 +361,17 @@ function startReminderCron() {
   // Format: "minute hour day month day-of-week"
   const cronPattern = "*/5 * * * *"; // Every 5 minutes
 
-  const task = cron.schedule(cronPattern, async () => {
-    console.log(`⏰ Cron job triggered at ${new Date().toISOString()}`);
-    await sendDailyReminders();
-  }, {
-    scheduled: false, // Don't start immediately
-    timezone: "UTC", // Run cron in UTC, handle timezones in logic
-  });
+  const task = cron.schedule(
+    cronPattern,
+    async () => {
+      console.log(`⏰ Cron job triggered at ${new Date().toISOString()}`);
+      await sendDailyReminders();
+    },
+    {
+      scheduled: false, // Don't start immediately
+      timezone: "UTC", // Run cron in UTC, handle timezones in logic
+    }
+  );
 
   // Start the cron job
   task.start();

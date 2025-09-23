@@ -8,7 +8,7 @@ import type { AyahForNotification } from "./random-ayah";
 const vapidDetails = {
   publicKey: process.env.VAPID_PUBLIC_KEY!,
   privateKey: process.env.VAPID_PRIVATE_KEY!,
-  subject: process.env.VAPID_EMAIL || "mailto:yusuf@tasbihfy.com",
+  subject: process.env.VAPID_EMAIL || "mailto:yusufmohd72@gmail.com",
 };
 
 // Initialize web-push with VAPID details
@@ -17,9 +17,11 @@ let vapidConfigured = false;
 function ensureVapidConfigured() {
   if (!vapidConfigured) {
     if (!vapidDetails.publicKey || !vapidDetails.privateKey) {
-      throw new Error("VAPID keys are required. Please set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY environment variables.");
+      throw new Error(
+        "VAPID keys are required. Please set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY environment variables."
+      );
     }
-    
+
     webpush.setVapidDetails(
       vapidDetails.subject,
       vapidDetails.publicKey,
@@ -64,39 +66,38 @@ export async function sendPushNotification(
 ): Promise<boolean> {
   try {
     ensureVapidConfigured();
-    
+
     console.log("🔄 Sending push notification...", {
       endpoint: subscription.endpoint.substring(0, 50) + "...",
       title: payload.title,
     });
-    
+
     const result = await webpush.sendNotification(
       subscription,
       JSON.stringify(payload)
     );
-    
+
     console.log("✅ Push notification sent successfully");
     return true;
-    
   } catch (error: any) {
     console.error("❌ Failed to send push notification:", error);
-    
+
     // Handle specific web-push errors
     if (error.statusCode === 410) {
       console.log("⚠️ Push subscription expired or invalid");
       return false; // Subscription should be removed from database
     }
-    
+
     if (error.statusCode === 413) {
       console.log("⚠️ Payload too large");
       return false;
     }
-    
+
     if (error.statusCode === 429) {
       console.log("⚠️ Rate limited by push service");
       return false;
     }
-    
+
     return false;
   }
 }
@@ -136,7 +137,7 @@ export async function sendAyahNotification(
     ],
     vibrate: [200, 100, 200], // Gentle vibration pattern
   };
-  
+
   return sendPushNotification(subscription, payload);
 }
 
@@ -167,14 +168,16 @@ export async function sendTestNotification(
     ],
     vibrate: [100, 50, 100], // Short test vibration
   };
-  
+
   return sendPushNotification(subscription, payload);
 }
 
 /**
  * Validate push subscription
  */
-export function validatePushSubscription(subscription: any): subscription is PushSubscription {
+export function validatePushSubscription(
+  subscription: any
+): subscription is PushSubscription {
   return !!(
     subscription &&
     typeof subscription.endpoint === "string" &&
@@ -211,13 +214,15 @@ export async function sendBatchNotifications(
     failed: 0,
     expiredSubscriptions: [] as PushSubscription[],
   };
-  
-  console.log(`🔄 Sending batch notifications to ${subscriptions.length} subscriptions...`);
-  
+
+  console.log(
+    `🔄 Sending batch notifications to ${subscriptions.length} subscriptions...`
+  );
+
   // Process subscriptions in batches
   for (let i = 0; i < subscriptions.length; i += batchSize) {
     const batch = subscriptions.slice(i, i + batchSize);
-    
+
     const batchPromises = batch.map(async (subscription) => {
       try {
         const success = await sendAyahNotification(subscription, ayah);
@@ -233,15 +238,15 @@ export async function sendBatchNotifications(
         results.expiredSubscriptions.push(subscription);
       }
     });
-    
+
     await Promise.all(batchPromises);
-    
+
     // Add delay between batches to avoid rate limiting
     if (i + batchSize < subscriptions.length) {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // 1 second delay
     }
   }
-  
+
   console.log(`✅ Batch notifications completed:`, results);
   return results;
 }
