@@ -18,16 +18,6 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['@heroicons/react', 'lucide-react'],
   },
 
-  // Rewrite rules for dynamic service worker
-  async rewrites() {
-    return [
-      {
-        source: '/sw.js',
-        destination: '/api/service-worker',
-      },
-    ];
-  },
-
   // Enable security headers
   async headers() {
     return [
@@ -61,41 +51,11 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Cache-Control',
-            value: 'no-cache, no-store, max-age=0, must-revalidate',
-          },
-          {
-            key: 'Pragma',
-            value: 'no-cache',
-          },
-          {
-            key: 'Expires',
-            value: '0',
-          },
-          {
-            key: 'Service-Worker-Allowed',
-            value: '/',
+            value: 'no-cache, no-store, must-revalidate',
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; img-src 'self' data: blob:; connect-src 'self' data: blob: https://verses.quran.foundation https://www.googletagmanager.com https://www.google-analytics.com; media-src 'self' https://verses.quran.foundation; script-src 'self'",
-          },
-        ],
-      },
-      // Headers for dynamic service worker endpoint
-      {
-        source: '/api/service-worker',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-cache, no-store, max-age=0, must-revalidate',
-          },
-          {
-            key: 'Pragma',
-            value: 'no-cache',
-          },
-          {
-            key: 'Expires',
-            value: '0',
+            value: "default-src 'self'; script-src 'self'",
           },
         ],
       },

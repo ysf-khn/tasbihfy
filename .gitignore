@@ -51,6 +51,3 @@ DAILY_REMINDERS.md
 
 LOCAL_TESTING.md
 
-# Service Worker files (dynamically generated)
-/public/sw.js
-/public/sw-version.json

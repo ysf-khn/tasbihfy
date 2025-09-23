@@ -2,17 +2,24 @@
 
 import { useState, useEffect } from 'react'
 import { useSWAnalytics } from '@/lib/sw-analytics'
-import { useServiceWorkerUpdate } from './ServiceWorkerRegistration'
 
 export default function SWAnalyticsDashboard() {
   const { metrics, summary, updateCacheSize, resetMetrics } = useSWAnalytics()
-  const { currentVersion, lastUpdateCheck, checkForUpdates } = useServiceWorkerUpdate()
   const [isOpen, setIsOpen] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [swVersion, setSWVersion] = useState<string | null>(null)
 
   useEffect(() => {
     if (isOpen) {
       handleRefresh()
+      // Get SW version if available
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then(reg => {
+          if (reg?.active) {
+            setSWVersion('active')
+          }
+        })
+      }
     }
   }, [isOpen])
 
@@ -33,6 +40,14 @@ export default function SWAnalyticsDashboard() {
   const formatTime = (ms: number): string => {
     if (ms < 1000) return `${Math.round(ms)}ms`
     return `${(ms / 1000).toFixed(2)}s`
+  }
+
+  const handleCheckUpdates = () => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration().then(reg => {
+        reg?.update()
+      })
+    }
   }
 
   if (!metrics || !summary) {
@@ -89,9 +104,9 @@ export default function SWAnalyticsDashboard() {
                 </button>
               </div>
             </div>
-            {currentVersion && (
-              <p className="text-xs opacity-70 mt-1 font-mono">
-                v{currentVersion.slice(0, 12)}
+            {swVersion && (
+              <p className="text-xs opacity-70 mt-1">
+                Service Worker: {swVersion}
               </p>
             )}
           </div>
@@ -163,23 +178,15 @@ export default function SWAnalyticsDashboard() {
             </div>
 
             {/* Update Information */}
-            {lastUpdateCheck && (
-              <div className="space-y-2">
-                <h4 className="text-xs font-semibold opacity-70">Update Status</h4>
-                <div className="space-y-1 text-xs">
-                  <div className="flex justify-between">
-                    <span className="opacity-70">Last Check:</span>
-                    <span>{lastUpdateCheck.toLocaleTimeString()}</span>
-                  </div>
-                  <button
-                    onClick={() => checkForUpdates(true)}
-                    className="btn btn-xs btn-ghost w-full"
-                  >
-                    Check for Updates
-                  </button>
-                </div>
-              </div>
-            )}
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold opacity-70">Update Status</h4>
+              <button
+                onClick={handleCheckUpdates}
+                className="btn btn-xs btn-ghost w-full"
+              >
+                Check for Updates
+              </button>
+            </div>
 
             {/* Last Updated */}
             <div className="text-xs opacity-50 text-center pt-2 border-t border-base-300">
