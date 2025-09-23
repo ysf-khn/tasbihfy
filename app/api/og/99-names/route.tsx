@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
             >
               <span style={{ fontSize: '36px', color: 'white' }}>☪️</span>
             </div>
-            <div style={{ color: 'white' }}>
+            <div style={{ color: 'white', display: 'flex', flexDirection: 'column' }}>
               <h1 style={{ fontSize: '42px', fontWeight: 'bold', margin: '0', color: '#10b981' }}>
                 Tasbihfy
               </h1>
@@ -52,6 +52,9 @@ export async function GET(request: NextRequest) {
           <div style={{
               textAlign: 'center',
               marginBottom: '30px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
             }}
           >
             <h2 style={{
@@ -59,10 +62,9 @@ export async function GET(request: NextRequest) {
                 fontWeight: 'bold',
                 color: 'white',
                 margin: '0 0 10px 0',
-                fontFamily: 'serif',
               }}
             >
-              أَسْمَاءُ ٱللَّٰهِ ٱلْحُسْنَىٰ
+              The 99 Beautiful Names
             </h2>
             <p style={{
                 fontSize: '24px',
@@ -84,9 +86,9 @@ export async function GET(request: NextRequest) {
             }}
           >
             {[
-              { arabic: 'الرَّحْمَنُ', transliteration: 'Ar-Rahman' },
-              { arabic: 'الرَّحِيمُ', transliteration: 'Ar-Rahim' },
-              { arabic: 'الْمَلِكُ', transliteration: 'Al-Malik' },
+              { number: '1', transliteration: 'Ar-Rahman' },
+              { number: '2', transliteration: 'Ar-Rahim' },
+              { number: '3', transliteration: 'Al-Malik' },
             ].map((name, index) => (
               <div
                 key={index} style={{
@@ -102,11 +104,11 @@ export async function GET(request: NextRequest) {
               >
                 <span style={{
                     fontSize: '28px',
-                    fontFamily: 'serif',
                     marginBottom: '8px',
+                    fontWeight: 'bold',
                   }}
                 >
-                  {name.arabic}
+                  #{name.number}
                 </span>
                 <span style={{ fontSize: '14px', opacity: 0.8 }}>
                   {name.transliteration}

@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
             >
               <span style={{ fontSize: '36px', color: 'white' }}>🕌</span>
             </div>
-            <div style={{ color: 'white' }}>
+            <div style={{ color: 'white', display: 'flex', flexDirection: 'column' }}>
               <h1 style={{ fontSize: '42px', fontWeight: 'bold', margin: '0', color: '#10b981' }}>
                 Tasbihfy
               </h1>
@@ -60,6 +60,9 @@ export async function GET(request: NextRequest) {
             style={{
               textAlign: 'center',
               marginBottom: '40px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
             }}
           >
             <h2

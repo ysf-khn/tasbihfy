@@ -51,7 +51,7 @@ export async function GET(
             >
               <span style={{ fontSize: '24px', color: 'white' }}>☪️</span>
             </div>
-            <div style={{ color: 'white' }}>
+            <div style={{ color: 'white', display: 'flex', flexDirection: 'column' }}>
               <h1 style={{ fontSize: '28px', fontWeight: 'bold', margin: '0', color: '#10b981' }}>
                 Tasbihfy
               </h1>
@@ -81,6 +81,9 @@ export async function GET(
             style={{
               textAlign: 'center',
               marginBottom: '40px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
             }}
           >
             <h2
@@ -89,10 +92,9 @@ export async function GET(
                 fontWeight: 'bold',
                 color: 'white',
                 margin: '0 0 20px 0',
-                fontFamily: 'serif',
               }}
             >
-              {name.arabic}
+              {name.transliteration}
             </h2>
             <p
               style={{
@@ -102,7 +104,7 @@ export async function GET(
                 fontWeight: 'bold',
               }}
             >
-              {name.transliteration}
+              Name #{name.id}
             </p>
             <p
               style={{

@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
             >
               <span style={{ fontSize: '24px', color: 'white' }}>📖</span>
             </div>
-            <div style={{ color: 'white' }}>
+            <div style={{ color: 'white', display: 'flex', flexDirection: 'column' }}>
               <h1 style={{ fontSize: '28px', fontWeight: 'bold', margin: '0', color: '#10b981' }}>
                 Tasbihfy
               </h1>
@@ -90,6 +90,9 @@ export async function GET(request: NextRequest) {
                 fontWeight: 'bold',
                 marginBottom: '30px',
                 boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
               {specialName}
@@ -101,6 +104,9 @@ export async function GET(request: NextRequest) {
             style={{
               textAlign: 'center',
               marginBottom: '30px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
             }}
           >
             <h2
@@ -143,6 +149,9 @@ export async function GET(request: NextRequest) {
               backgroundColor: 'rgba(16, 185, 129, 0.1)',
               border: '2px solid rgba(16, 185, 129, 0.3)',
               marginBottom: '30px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
             }}
           >
             <p
@@ -150,11 +159,10 @@ export async function GET(request: NextRequest) {
                 fontSize: '36px',
                 color: 'white',
                 margin: '0',
-                fontFamily: 'serif',
                 textAlign: 'center',
               }}
             >
-              بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+              In the name of Allah, Most Gracious, Most Merciful
             </p>
           </div>
 
@@ -183,6 +191,7 @@ export async function GET(request: NextRequest) {
                     borderRadius: '50%',
                     backgroundColor: '#10b981',
                     marginRight: '8px',
+                    display: 'flex',
                   }}
                 />
                 <span style={{ fontSize: '16px' }}>{feature}</span>
