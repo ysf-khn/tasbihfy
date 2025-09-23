@@ -121,8 +121,7 @@ export function getApiUrl(): string {
   // Use appropriate API URL based on environment
   const isDev = process.env.NODE_ENV === "development";
   return isDev
-    ? process.env.QURAN_API_URL ||
-        "https://apis-prelive.quran.foundation/api/content/v4"
+    ? "https://apis-prelive.quran.foundation/content/api/v4"
     : "https://apis.quran.foundation/content/api/v4";
 }
 
