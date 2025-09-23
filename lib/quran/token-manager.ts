@@ -26,13 +26,13 @@ export async function getAccessToken(): Promise<string> {
     // Use appropriate credentials based on environment
     const isDev = process.env.NODE_ENV === "development";
     const clientId = isDev
-      ? process.env.QURAN_API_CLIENT_ID
+      ? process.env.QURAN_API_CLIENT_ID_TEST
       : process.env.QURAN_API_CLIENT_ID_PROD;
     const clientSecret = isDev
-      ? process.env.QURAN_API_CLIENT_SECRET
+      ? process.env.QURAN_API_CLIENT_SECRET_TEST
       : process.env.QURAN_API_CLIENT_SECRET_PROD;
     const authUrl = isDev
-      ? process.env.QURAN_API_AUTH_URL
+      ? process.env.QURAN_API_AUTH_URL_TEST
       : process.env.QURAN_API_AUTH_URL_PROD;
 
     if (!clientId || !clientSecret || !authUrl) {
@@ -104,7 +104,7 @@ export function getClientId(): string {
   // Use appropriate client ID based on environment
   const isDev = process.env.NODE_ENV === "development";
   const clientId = isDev
-    ? process.env.QURAN_API_CLIENT_ID
+    ? process.env.QURAN_API_CLIENT_ID_TEST
     : process.env.QURAN_API_CLIENT_ID_PROD;
 
   if (!clientId) {
