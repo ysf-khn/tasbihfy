@@ -11,6 +11,7 @@ import {
 import UnifiedSettingsDrawer from "@/components/ui/UnifiedSettingsDrawer";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useTheme } from "next-themes";
 
 interface UnifiedHeaderProps {
   title?: string;
@@ -25,6 +26,7 @@ export default function UnifiedHeader({
   const pathname = usePathname();
   const { isScrollingDown, isAtTop } = useScrollDirection({ threshold: 5 });
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   // Determine if header should be visible
   const shouldHideHeader = isScrollingDown && !isAtTop;
@@ -55,17 +57,17 @@ export default function UnifiedHeader({
             )}
 
             {/* Theme Toggle Button */}
-            <label className="btn btn-ghost btn-sm btn-square swap swap-rotate" title="Toggle theme">
-              <input
-                type="checkbox"
-                data-toggle-theme="dark,light"
-                data-act-class="swap-active"
-              />
-              {/* sun icon */}
-              <SunIcon className="swap-on w-5 h-5" />
-              {/* moon icon */}
-              <MoonIcon className="swap-off w-5 h-5" />
-            </label>
+            <button
+              className="btn btn-ghost btn-sm btn-square"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              title="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <SunIcon className="w-5 h-5" />
+              ) : (
+                <MoonIcon className="w-5 h-5" />
+              )}
+            </button>
 
             {/* Settings Button */}
             <button

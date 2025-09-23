@@ -11,7 +11,7 @@ import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import ServiceWorkerRegistration from "@/components/pwa/ServiceWorkerRegistration";
 import UpdateNotification from "@/components/pwa/UpdateNotification";
 import LayoutClient from "@/components/layout/LayoutClient";
-import ThemeInitializer from "@/components/ui/ThemeInitializer";
+import { ThemeProvider } from "next-themes";
 
 import { GoogleAnalytics } from "@next/third-parties/google";
 import StructuredData from "@/components/seo/StructuredData";
@@ -154,8 +154,8 @@ export const metadata: Metadata = {
     "msapplication-tap-highlight": "no",
     "theme-color": "#57c5b6",
     "Cache-Control": "no-cache, no-store, must-revalidate",
-    "Pragma": "no-cache",
-    "Expires": "0",
+    Pragma: "no-cache",
+    Expires: "0",
   },
 };
 
@@ -248,15 +248,22 @@ export default function RootLayout({
         className={`${bricolageGrotesque.variable} ${notoNaskhArabic.variable} ${notoNastaliqUrdu.variable} antialiased`}
       >
         <StructuredData data={applicationStructuredData} />
-        <ThemeInitializer />
-        <Providers>
-          <ServiceWorkerRegistration>
-            <LayoutClient>{children}</LayoutClient>
-            <OfflineIndicator />
-            <InstallPrompt />
-            <UpdateNotification />
-          </ServiceWorkerRegistration>
-        </Providers>
+        <ThemeProvider
+          attribute="data-theme"
+          defaultTheme="light"
+          themes={["light", "dark"]}
+          enableSystem={true}
+          disableTransitionOnChange={false}
+        >
+          <Providers>
+            <ServiceWorkerRegistration>
+              <LayoutClient>{children}</LayoutClient>
+              <OfflineIndicator />
+              <InstallPrompt />
+              <UpdateNotification />
+            </ServiceWorkerRegistration>
+          </Providers>
+        </ThemeProvider>
       </body>
       <GoogleAnalytics gaId="G-70LYJPKZN7" />
     </html>
