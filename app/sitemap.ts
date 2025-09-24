@@ -141,8 +141,37 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
+  // Add high-value Islamic practice landing pages
+  const islamicPracticePages: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/ayatul-kursi`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/morning-adhkar`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/evening-adhkar`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/durood-shareef`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.9,
+    },
+  ];
+
   return [
     ...staticRoutes,
+    ...islamicPracticePages,
     ...names99IndexPage,
     ...names99Pages,
     ...quranSurahs,
