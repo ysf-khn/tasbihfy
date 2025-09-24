@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 import { generateSurahSlug, duaCategories, createSlug } from "@/lib/url-utils";
+import { names99Allah } from "@/data/99-names";
+import { cities } from "@/data/cities";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://tasbihfy.com";
@@ -91,5 +93,62 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
-  return [...staticRoutes, ...quranSurahs, ...duasChapters, ...dhikrPages];
+  // Generate 99 Names of Allah pages
+  const names99Pages: MetadataRoute.Sitemap = names99Allah.map((name) => ({
+    url: `${baseUrl}/99-names/${name.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
+  // Add main 99 Names index page
+  const names99IndexPage: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/99-names`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    },
+  ];
+
+  // Generate prayer times pages for major cities (top 50 for SEO)
+  const majorCities = cities.slice(0, 50); // Top 50 cities
+  const prayerTimesPages: MetadataRoute.Sitemap = majorCities.map((city) => ({
+    url: `${baseUrl}/prayer-times/${city.countrySlug}/${city.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "daily" as const,
+    priority: 0.7,
+  }));
+
+  // Add special Quran verses with high search volume
+  const specialVerses = [
+    { surah: "2-al-baqarah", verse: 255, name: "Ayat al-Kursi" },
+    { surah: "2-al-baqarah", verse: 286, name: "Last verse of Al-Baqarah" },
+    { surah: "36-ya-sin", verse: 1, name: "Opening of Surah Yaseen" },
+    { surah: "67-al-mulk", verse: 1, name: "Opening of Surah Mulk" },
+    { surah: "112-al-ikhlas", verse: 1, name: "Surah Ikhlas opening" },
+    { surah: "1-al-fatiha", verse: 1, name: "Opening of the Quran" },
+    { surah: "3-ali-imran", verse: 185, name: "Every soul shall taste death" },
+    { surah: "2-al-baqarah", verse: 152, name: "Remember Me" },
+    { surah: "94-ash-sharh", verse: 5, name: "With hardship comes ease" },
+    { surah: "93-ad-duhaa", verse: 5, name: "Your Lord has not abandoned you" },
+  ];
+
+  const specialVersesPages: MetadataRoute.Sitemap = specialVerses.map((verse) => ({
+    url: `${baseUrl}/quran/${verse.surah}/verse/${verse.verse}`,
+    lastModified: new Date(),
+    changeFrequency: "yearly" as const,
+    priority: 0.8,
+  }));
+
+  return [
+    ...staticRoutes,
+    ...names99IndexPage,
+    ...names99Pages,
+    ...quranSurahs,
+    ...specialVersesPages,
+    ...duasChapters,
+    ...prayerTimesPages,
+    ...dhikrPages,
+  ];
 }
