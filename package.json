@@ -4,8 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build --turbopack",
-    "start": "next start"
+    "build": "next build",
+    "start": "next start",
+    "pages:build": "npx @cloudflare/next-on-pages",
+    "pages:preview": "npm run pages:build && npx wrangler pages dev",
+    "pages:deploy": "npm run pages:build && npx wrangler pages deploy"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -34,6 +37,7 @@
     "zod": "^4.1.4"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.13.16",
     "@tailwindcss/postcss": "^4.1.12",
     "@types/node": "^20",
     "@types/node-cron": "^3.0.11",
@@ -44,6 +48,7 @@
     "sharp": "^0.34.3",
     "tailwindcss": "^4.1.12",
     "tw-animate-css": "^1.3.7",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.54.0"
   }
 }

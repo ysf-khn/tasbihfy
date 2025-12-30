@@ -1,0 +1,11 @@
+name = "tasbihfy"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".vercel/output/static"
+
+[vars]
+NODE_ENV = "production"
+
+# Cron Triggers - runs every 5 minutes for daily reminders
+[triggers]
+crons = ["*/5 * * * *"]
