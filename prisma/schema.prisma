@@ -22,7 +22,7 @@ model Account {
   refreshToken          String?
   refreshTokenExpiresAt DateTime?
   scope                 String?
-  User                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model DailyProgress {
@@ -35,8 +35,8 @@ model DailyProgress {
   completed    Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime
-  Dhikr        Dhikr    @relation(fields: [dhikrId], references: [id], onDelete: Cascade)
-  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dhikr        Dhikr    @relation(fields: [dhikrId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, dhikrId, date])
   @@index([dhikrId])
@@ -53,9 +53,9 @@ model Dhikr {
   updatedAt       DateTime
   arabicText      String?
   transliteration String?
-  DailyProgress   DailyProgress[]
-  User            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  DhikrSession    DhikrSession[]
+  dailyProgress   DailyProgress[]
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions        DhikrSession[]
 
   @@index([userId])
   @@index([userId, isFavorite])
@@ -70,8 +70,8 @@ model DhikrSession {
   startedAt    DateTime  @default(now())
   completedAt  DateTime?
   updatedAt    DateTime
-  Dhikr        Dhikr     @relation(fields: [dhikrId], references: [id], onDelete: Cascade)
-  User         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dhikr        Dhikr     @relation(fields: [dhikrId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([dhikrId])
   @@index([userId])
@@ -88,7 +88,7 @@ model PrayerLocation {
   countryCode String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime
-  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -129,7 +129,7 @@ model ReminderPreferences {
   lastReminderSent DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime
-  User             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -143,7 +143,7 @@ model Session {
   userAgent String?
   createdAt DateTime @default(now())
   updatedAt DateTime
-  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
@@ -154,13 +154,13 @@ model User {
   image               String?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime
-  Account             Account[]
-  DailyProgress       DailyProgress[]
-  Dhikr               Dhikr[]
-  DhikrSession        DhikrSession[]
-  PrayerLocation      PrayerLocation?
-  ReminderPreferences ReminderPreferences?
-  Session             Session[]
+  accounts            Account[]
+  dailyProgress       DailyProgress[]
+  dhikrs              Dhikr[]
+  dhikrSessions       DhikrSession[]
+  prayerLocation      PrayerLocation?
+  reminderPreferences ReminderPreferences?
+  sessions            Session[]
 }
 
 model verification {
