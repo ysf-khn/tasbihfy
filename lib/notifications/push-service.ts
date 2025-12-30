@@ -1,7 +1,8 @@
 // Push notification service for sending daily ayah reminders
-// Uses web-push library with VAPID authentication
+// Edge-compatible implementation using Web Crypto API and fetch
 
-import webpush from "web-push";
+import { generateVapidHeaders } from "./vapid-edge";
+import { buildEncryptedRequest } from "./encrypt-edge";
 import type { AyahForNotification } from "./random-ayah";
 
 // VAPID configuration
@@ -10,27 +11,6 @@ const vapidDetails = {
   privateKey: process.env.VAPID_PRIVATE_KEY!,
   subject: process.env.VAPID_EMAIL || "mailto:yusufmohd72@gmail.com",
 };
-
-// Initialize web-push with VAPID details
-let vapidConfigured = false;
-
-function ensureVapidConfigured() {
-  if (!vapidConfigured) {
-    if (!vapidDetails.publicKey || !vapidDetails.privateKey) {
-      throw new Error(
-        "VAPID keys are required. Please set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY environment variables."
-      );
-    }
-
-    webpush.setVapidDetails(
-      vapidDetails.subject,
-      vapidDetails.publicKey,
-      vapidDetails.privateKey
-    );
-    vapidConfigured = true;
-    console.log("✅ VAPID configured successfully");
-  }
-}
 
 // Push subscription interface
 export interface PushSubscription {
@@ -48,7 +28,7 @@ interface NotificationPayload {
   icon?: string;
   badge?: string;
   tag?: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   actions?: Array<{
     action: string;
     title: string;
@@ -58,46 +38,91 @@ interface NotificationPayload {
 }
 
 /**
- * Send push notification to a single subscription
+ * Send push notification to a single subscription using Edge-compatible APIs
  */
 export async function sendPushNotification(
   subscription: PushSubscription,
   payload: NotificationPayload
 ): Promise<boolean> {
   try {
-    ensureVapidConfigured();
+    if (!vapidDetails.publicKey || !vapidDetails.privateKey) {
+      throw new Error(
+        "VAPID keys are required. Please set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY environment variables."
+      );
+    }
 
     console.log("🔄 Sending push notification...", {
       endpoint: subscription.endpoint.substring(0, 50) + "...",
       title: payload.title,
     });
 
-    const result = await webpush.sendNotification(
-      subscription,
-      JSON.stringify(payload)
+    // Serialize the payload
+    const payloadString = JSON.stringify(payload);
+
+    // Build encrypted request body
+    const encrypted = await buildEncryptedRequest(
+      payloadString,
+      subscription.keys.p256dh,
+      subscription.keys.auth
     );
 
-    console.log("✅ Push notification sent successfully");
-    return true;
-  } catch (error: any) {
-    console.error("❌ Failed to send push notification:", error);
+    // Generate VAPID headers
+    const vapidHeaders = await generateVapidHeaders(
+      subscription.endpoint,
+      vapidDetails.subject,
+      vapidDetails.publicKey,
+      vapidDetails.privateKey
+    );
 
-    // Handle specific web-push errors
-    if (error.statusCode === 410) {
+    // Combine all headers
+    const headers: HeadersInit = {
+      ...encrypted.headers,
+      ...vapidHeaders,
+      TTL: "86400", // 24 hours
+    };
+
+    // Send the push notification
+    // Convert Uint8Array to ArrayBuffer for fetch body
+    const bodyBuffer = encrypted.body.buffer.slice(
+      encrypted.body.byteOffset,
+      encrypted.body.byteOffset + encrypted.body.byteLength
+    ) as ArrayBuffer;
+
+    const response = await fetch(subscription.endpoint, {
+      method: "POST",
+      headers,
+      body: bodyBuffer,
+    });
+
+    if (response.ok || response.status === 201) {
+      console.log("✅ Push notification sent successfully");
+      return true;
+    }
+
+    // Handle specific error codes
+    if (response.status === 410 || response.status === 404) {
       console.log("⚠️ Push subscription expired or invalid");
       return false; // Subscription should be removed from database
     }
 
-    if (error.statusCode === 413) {
+    if (response.status === 413) {
       console.log("⚠️ Payload too large");
       return false;
     }
 
-    if (error.statusCode === 429) {
+    if (response.status === 429) {
       console.log("⚠️ Rate limited by push service");
       return false;
     }
 
+    const errorText = await response.text();
+    console.error(
+      `❌ Push notification failed: ${response.status} ${response.statusText}`,
+      errorText
+    );
+    return false;
+  } catch (error) {
+    console.error("❌ Failed to send push notification:", error);
     return false;
   }
 }
@@ -176,14 +201,16 @@ export async function sendTestNotification(
  * Validate push subscription
  */
 export function validatePushSubscription(
-  subscription: any
+  subscription: unknown
 ): subscription is PushSubscription {
+  if (!subscription || typeof subscription !== "object") return false;
+  const sub = subscription as Record<string, unknown>;
   return !!(
-    subscription &&
-    typeof subscription.endpoint === "string" &&
-    subscription.keys &&
-    typeof subscription.keys.p256dh === "string" &&
-    typeof subscription.keys.auth === "string"
+    typeof sub.endpoint === "string" &&
+    sub.keys &&
+    typeof sub.keys === "object" &&
+    typeof (sub.keys as Record<string, unknown>).p256dh === "string" &&
+    typeof (sub.keys as Record<string, unknown>).auth === "string"
   );
 }
 
