@@ -9,13 +9,13 @@ datasource db {
 }
 
 model Account {
-  id                    String    @id
+  id                    String    @id @default(cuid())
   accountId             String
   providerId            String
   userId                String
   password              String?
   createdAt             DateTime  @default(now())
-  updatedAt             DateTime
+  updatedAt             DateTime  @updatedAt
   accessToken           String?
   accessTokenExpiresAt  DateTime?
   idToken               String?
@@ -26,7 +26,7 @@ model Account {
 }
 
 model DailyProgress {
-  id           String   @id
+  id           String   @id @default(cuid())
   userId       String
   dhikrId      String
   date         DateTime @default(now()) @db.Date
@@ -34,7 +34,7 @@ model DailyProgress {
   currentCount Int      @default(0)
   completed    Boolean  @default(false)
   createdAt    DateTime @default(now())
-  updatedAt    DateTime
+  updatedAt    DateTime @updatedAt
   dhikr        Dhikr    @relation(fields: [dhikrId], references: [id], onDelete: Cascade)
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -44,13 +44,13 @@ model DailyProgress {
 }
 
 model Dhikr {
-  id              String          @id
+  id              String          @id @default(cuid())
   userId          String
   name            String
   targetCount     Int
   isFavorite      Boolean         @default(false)
   createdAt       DateTime        @default(now())
-  updatedAt       DateTime
+  updatedAt       DateTime        @updatedAt
   arabicText      String?
   transliteration String?
   dailyProgress   DailyProgress[]
@@ -62,14 +62,14 @@ model Dhikr {
 }
 
 model DhikrSession {
-  id           String    @id
+  id           String    @id @default(cuid())
   dhikrId      String
   userId       String
   currentCount Int       @default(0)
   completed    Boolean   @default(false)
   startedAt    DateTime  @default(now())
   completedAt  DateTime?
-  updatedAt    DateTime
+  updatedAt    DateTime  @updatedAt
   dhikr        Dhikr     @relation(fields: [dhikrId], references: [id], onDelete: Cascade)
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -78,7 +78,7 @@ model DhikrSession {
 }
 
 model PrayerLocation {
-  id          String   @id
+  id          String   @id @default(cuid())
   userId      String   @unique
   name        String
   latitude    String
@@ -87,14 +87,14 @@ model PrayerLocation {
   country     String?
   countryCode String?
   createdAt   DateTime @default(now())
-  updatedAt   DateTime
+  updatedAt   DateTime @updatedAt
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
 model PrayerTimeCache {
-  id             String   @id
+  id             String   @id @default(cuid())
   locationQuery  String
   date           DateTime @db.Date
   fajr           String
@@ -112,7 +112,7 @@ model PrayerTimeCache {
   temperature    String?
   pressure       String?
   createdAt      DateTime @default(now())
-  updatedAt      DateTime
+  updatedAt      DateTime @updatedAt
 
   @@unique([locationQuery, date])
   @@index([date])
@@ -120,7 +120,7 @@ model PrayerTimeCache {
 }
 
 model ReminderPreferences {
-  id               String    @id
+  id               String    @id @default(cuid())
   userId           String    @unique
   reminderEnabled  Boolean   @default(false)
   reminderTime     String    @default("09:00")
@@ -128,32 +128,32 @@ model ReminderPreferences {
   pushSubscription Json?
   lastReminderSent DateTime?
   createdAt        DateTime  @default(now())
-  updatedAt        DateTime
+  updatedAt        DateTime  @updatedAt
   user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
 model Session {
-  id        String   @id
+  id        String   @id @default(cuid())
   userId    String
   token     String   @unique
   expiresAt DateTime
   ipAddress String?
   userAgent String?
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
-  id                  String               @id
+  id                  String               @id @default(cuid())
   name                String
   email               String               @unique
   emailVerified       Boolean              @default(false)
   image               String?
   createdAt           DateTime             @default(now())
-  updatedAt           DateTime
+  updatedAt           DateTime             @updatedAt
   accounts            Account[]
   dailyProgress       DailyProgress[]
   dhikrs              Dhikr[]
@@ -164,12 +164,12 @@ model User {
 }
 
 model verification {
-  id         String   @id
+  id         String   @id @default(cuid())
   identifier String
   value      String   @unique
   expiresAt  DateTime
   createdAt  DateTime @default(now())
-  updatedAt  DateTime
+  updatedAt  DateTime @updatedAt
 
   @@unique([identifier, value])
 }
