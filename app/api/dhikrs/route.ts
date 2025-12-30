@@ -3,6 +3,8 @@ import { prisma } from '@/lib/db'
 import { auth } from '@/lib/auth'
 import { z } from 'zod'
 
+export const runtime = 'edge';
+
 const createDhikrSchema = z.object({
   name: z.string().min(1).max(100),
   targetCount: z.number().int().min(1).max(10000),

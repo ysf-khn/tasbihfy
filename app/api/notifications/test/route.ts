@@ -8,6 +8,8 @@ import { prisma } from "@/lib/db";
 import { sendTestNotification, validatePushSubscription } from "@/lib/notifications/push-service";
 import { getRandomAyah, getFallbackAyah } from "@/lib/notifications/random-ayah";
 
+export const runtime = 'edge';
+
 // Rate limiting for test notifications
 const testNotificationLimits = new Map<string, number>();
 const RATE_LIMIT_DURATION = 60 * 1000; // 1 minute

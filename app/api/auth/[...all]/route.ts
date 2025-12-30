@@ -1,5 +1,7 @@
 import { auth } from "@/lib/auth"
 
+export const runtime = 'edge';
+
 // Debug function to log requests
 const debugRequest = (method: string, url: string) => {
   console.log(`[Better Auth] ${method} ${url}`)

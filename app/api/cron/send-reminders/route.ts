@@ -13,6 +13,8 @@ import {
   validatePushSubscription,
 } from "@/lib/notifications/push-service";
 
+export const runtime = 'edge';
+
 // Simple authentication for cron endpoints
 const CRON_SECRET = process.env.CRON_SECRET || "your-secret-key";
 

@@ -3,6 +3,8 @@ import { prisma } from '@/lib/db'
 import { auth } from '@/lib/auth'
 import { z } from 'zod'
 
+export const runtime = 'edge';
+
 const updateSessionSchema = z.object({
   currentCount: z.number().int().min(0),
   completed: z.boolean().optional()

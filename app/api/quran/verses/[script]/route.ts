@@ -1,6 +1,8 @@
 import { getAccessToken, getClientId, getApiUrl } from '@/lib/quran/token-manager';
 import { QURAN_SCRIPTS } from '@/lib/quran/constants';
 
+export const runtime = 'edge';
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ script: string }> }

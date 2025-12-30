@@ -7,6 +7,8 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/db";
 
+export const runtime = 'edge';
+
 export async function DELETE(request: NextRequest) {
   try {
     console.log("🗑️ Processing push notification unsubscribe...");

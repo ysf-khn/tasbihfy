@@ -4,6 +4,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getVapidPublicKey, isVapidConfigured } from "@/lib/notifications/push-service";
 
+export const runtime = 'edge';
+
 export async function GET(request: NextRequest) {
   try {
     console.log("🔑 Getting VAPID public key...");

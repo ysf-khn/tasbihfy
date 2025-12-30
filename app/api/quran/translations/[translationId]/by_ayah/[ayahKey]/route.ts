@@ -1,5 +1,7 @@
 import { getAccessToken, getClientId, getApiUrl } from '@/lib/quran/token-manager';
 
+export const runtime = 'edge';
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ translationId: string; ayahKey: string }> }

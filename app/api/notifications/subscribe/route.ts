@@ -8,6 +8,8 @@ import { prisma } from "@/lib/db";
 import { validatePushSubscription } from "@/lib/notifications/push-service";
 import { z } from "zod";
 
+export const runtime = 'edge';
+
 // Validation schema for subscription data
 const subscribeSchema = z.object({
   subscription: z.object({
