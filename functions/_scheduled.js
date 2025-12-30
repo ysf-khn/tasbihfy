@@ -1,17 +1,8 @@
 // Cloudflare Cron Trigger Handler
 // Runs every 5 minutes to send daily reminders (configured in wrangler.toml)
 
-interface Env {
-  APP_URL: string;
-  CRON_SECRET: string;
-}
-
 export default {
-  async scheduled(
-    event: ScheduledEvent,
-    env: Env,
-    ctx: ExecutionContext
-  ): Promise<void> {
+  async scheduled(event, env, ctx) {
     const url = `${env.APP_URL}/api/cron/send-reminders`;
 
     ctx.waitUntil(
