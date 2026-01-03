@@ -1,452 +1,358 @@
 "use client";
 
-import { useState, useEffect, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { useSessionTracking } from "@/hooks/useSessionTracking";
-import { useConfetti } from "@/components/ui/Confetti";
-import DhikrCounter from "@/components/counter/DhikrCounter";
-import hisnulMuslim from "@/data/hisnul-muslim-complete.json";
-import HomeDhikrCard from "@/components/dhikr/HomeDhikrCard";
-import CreateDhikrModal from "@/components/dhikr/CreateDhikrModal";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
-import NightlyRecitationsCard from "@/components/nightly/NightlyRecitationsCard";
-import type { Dhikr, DhikrSession } from "@prisma/client";
-import { GuestStorage } from "@/lib/guestStorage";
-import { PlusIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import { getHadithOfTheDay, type Hadith } from "@/lib/hadith-utils";
+import { usePrayerTimes } from "@/hooks/usePrayerTimes";
+import {
+  ClockIcon,
+  BookOpenIcon,
+  DocumentTextIcon,
+  SparklesIcon,
+  HeartIcon,
+  SunIcon,
+  MoonIcon,
+} from "@heroicons/react/24/outline";
+import {
+  ClockIcon as ClockIconSolid,
+  BookOpenIcon as BookOpenIconSolid,
+  DocumentTextIcon as DocumentTextIconSolid,
+} from "@heroicons/react/24/solid";
 
-interface DhikrWithSession extends Dhikr {
-  sessions: DhikrSession[];
-}
+// Feature cards data
+const features = [
+  {
+    id: "dhikr",
+    title: "Dhikr Counter",
+    description: "Track your daily remembrance",
+    icon: SparklesIcon,
+    activeIcon: SparklesIcon,
+    href: "/dhikr",
+    color: "text-primary",
+    bgColor: "bg-primary/10",
+  },
+  {
+    id: "prayer",
+    title: "Prayer Times",
+    description: "Never miss a prayer",
+    icon: ClockIcon,
+    activeIcon: ClockIconSolid,
+    href: "/prayer-times",
+    color: "text-secondary",
+    bgColor: "bg-secondary/10",
+  },
+  {
+    id: "quran",
+    title: "Quran",
+    description: "Read with audio & translations",
+    icon: BookOpenIcon,
+    activeIcon: BookOpenIconSolid,
+    href: "/quran",
+    color: "text-accent",
+    bgColor: "bg-accent/10",
+  },
+  {
+    id: "duas",
+    title: "Duas",
+    description: "Daily supplications collection",
+    icon: DocumentTextIcon,
+    activeIcon: DocumentTextIconSolid,
+    href: "/duas",
+    color: "text-info",
+    bgColor: "bg-info/10",
+  },
+];
 
-// Loading fallback component
-function HomePageLoading() {
+// Quick access items
+const quickAccess = [
+  {
+    title: "99 Names",
+    description: "Allah's beautiful names",
+    href: "/99-names",
+    icon: HeartIcon,
+  },
+  {
+    title: "Morning Adhkar",
+    description: "Start your day right",
+    href: "/morning-adhkar",
+    icon: SunIcon,
+  },
+  {
+    title: "Evening Adhkar",
+    description: "End your day peacefully",
+    href: "/evening-adhkar",
+    icon: MoonIcon,
+  },
+  {
+    title: "Ayatul Kursi",
+    description: "The throne verse",
+    href: "/ayatul-kursi",
+    icon: BookOpenIcon,
+  },
+];
+
+export default function HomePage() {
+  const { user } = useAuth();
+  const [dailyHadith, setDailyHadith] = useState<Hadith | null>(null);
+  const {
+    prayerData,
+    loading: prayerLoading,
+    error: prayerError,
+    nextPrayer,
+  } = usePrayerTimes();
+
+  // Load daily hadith
+  useEffect(() => {
+    const hadith = getHadithOfTheDay();
+    setDailyHadith(hadith);
+  }, []);
+
   return (
     <div className="min-h-screen bg-base-200">
       <UnifiedHeader showSignIn={true} />
-      <div className="flex flex-col justify-center items-center min-h-screen space-y-4">
-        <div className="loading loading-spinner loading-lg text-primary"></div>
-        <p className="text-base-content/70 animate-pulse">Loading...</p>
-      </div>
-    </div>
-  );
-}
 
-// Component that uses useSearchParams
-function HomeContent() {
-  const searchParams = useSearchParams();
-  const dhikrId = searchParams.get("dhikr");
-  const isTemp = searchParams.get("temp") === "true";
-  const isInstant = searchParams.get("instant") === "true";
-  const chapterId = searchParams.get("chapterId");
-  const duaId = searchParams.get("duaId");
-  const { user } = useAuth();
-  const { fireCelebration } = useConfetti();
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-24">
+        <div className="lg:grid lg:grid-cols-3 lg:gap-8 space-y-6 lg:space-y-0">
 
-  const [dhikrs, setDhikrs] = useState<DhikrWithSession[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
+          {/* Main Content Area - Features and Quick Access */}
+          <div className="lg:col-span-2 space-y-8">
 
-  // Instant Tasbih state (simple counter, no persistence)
-  const [instantCount, setInstantCount] = useState(0);
-
-  // Create temp dhikr object for temporary sessions (memoized to prevent infinite re-renders)
-  const tempDhikr = useMemo(() => {
-    if (!isTemp || !chapterId || !duaId) return null;
-
-    const chapter = hisnulMuslim.chapters.find(
-      (c) => c.id === parseInt(chapterId)
-    );
-    const dua = chapter?.duas.find((d) => d.id === parseInt(duaId));
-
-    if (!dua) return null;
-
-    return {
-      id: "temp",
-      name: dua.translation,
-      targetCount: 33, // Default count for duas
-      arabic: dua.arabic,
-      transliteration: dua.transliteration,
-      source: `Hisnul Muslim - ${dua.hisnNumber}`,
-    };
-  }, [isTemp, chapterId, duaId]);
-
-  const {
-    localCount,
-    dhikrName,
-    targetCount,
-    isComplete,
-    isLoading: isCounterLoading,
-    error: counterError,
-    hasUnsavedChanges,
-    incrementCount,
-    resetCount,
-    arabicText,
-    transliteration,
-  } = useSessionTracking({ dhikrId, tempDhikr });
-
-  const fetchDhikrs = async () => {
-    try {
-      if (!user) {
-        // Guest mode: load from localStorage
-        const guestDhikrs = GuestStorage.getDhikrs();
-        const dhikrsWithSessions = guestDhikrs.map((guestDhikr) => ({
-          id: guestDhikr.id,
-          name: guestDhikr.name,
-          targetCount: guestDhikr.targetCount,
-          arabicText: guestDhikr.arabicText,
-          transliteration: guestDhikr.transliteration,
-          userId: "",
-          isFavorite: false, // Guests don't have favorites yet
-          createdAt: new Date(guestDhikr.createdAt),
-          updatedAt: new Date(guestDhikr.createdAt),
-          sessions: [], // Guest sessions are handled separately
-        })) as DhikrWithSession[];
-
-        setDhikrs(dhikrsWithSessions);
-        setIsLoading(false);
-        return;
-      }
-
-      // Authenticated user: fetch from database
-      const response = await fetch("/api/dhikrs");
-      if (!response.ok) throw new Error("Failed to fetch dhikrs");
-      const data = await response.json();
-      setDhikrs(data);
-    } catch (err) {
-      setError("Failed to load dhikrs");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    // Fetch dhikrs for both authenticated users and guests
-    fetchDhikrs();
-  }, [user]);
-
-  const handleComplete = () => {
-    console.log("Dhikr completed!");
-    fireCelebration();
-  };
-
-  // Instant Tasbih handlers
-  const handleInstantIncrement = () => {
-    setInstantCount((prev) => prev + 1);
-  };
-
-  const handleInstantReset = () => {
-    setInstantCount(0);
-  };
-
-  const handleCreate = async (data: {
-    name: string;
-    targetCount: number;
-    arabic?: string;
-    transliteration?: string;
-  }) => {
-    try {
-      if (!user) {
-        // Guest mode: save to localStorage
-        GuestStorage.addDhikr({
-          name: data.name,
-          targetCount: data.targetCount,
-          arabicText: data.arabic,
-          transliteration: data.transliteration,
-        });
-
-        // Refresh the dhikrs list for guests
-        await fetchDhikrs();
-        setIsModalOpen(false);
-        return;
-      }
-
-      // Authenticated user: save to database
-      const response = await fetch("/api/dhikrs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) throw new Error("Failed to create dhikr");
-
-      await fetchDhikrs();
-      setIsModalOpen(false);
-    } catch (err) {
-      console.error("Error creating dhikr:", err);
-      throw err;
-    }
-  };
-
-  const handleToggleFavorite = async (dhikrId: string) => {
-    try {
-      if (!user) {
-        // Guest mode: favorites not supported yet
-        return;
-      }
-
-      // Authenticated user: toggle in database
-      const response = await fetch(`/api/dhikrs/${dhikrId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "toggleFavorite" }),
-      });
-
-      if (!response.ok) throw new Error("Failed to toggle favorite");
-
-      const updatedDhikr = await response.json();
-
-      setDhikrs((prev) =>
-        prev.map((dhikr) =>
-          dhikr.id === dhikrId
-            ? { ...dhikr, isFavorite: updatedDhikr.isFavorite }
-            : dhikr
-        )
-      );
-    } catch (err) {
-      console.error("Error toggling favorite:", err);
-    }
-  };
-
-  // If viewing instant tasbih counter
-  if (isInstant) {
-    return (
-      <div className="min-h-screen bg-base-200">
-        <UnifiedHeader showSignIn={true} />
-        <div>
-          <div className="max-w-2xl mx-auto">
-            <DhikrCounter
-              dhikrName="Instant Tasbih"
-              targetCount={0}
-              currentCount={instantCount}
-              onIncrement={handleInstantIncrement}
-              onReset={handleInstantReset}
-              hasUnsavedChanges={false}
-              isInstantMode={true}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // If viewing counter for a specific dhikr (regular or temporary)
-  if ((dhikrId && dhikrName) || (tempDhikr && tempDhikr.name)) {
-    if (isCounterLoading) {
-      return (
-        <div className="min-h-screen bg-base-200">
-          <UnifiedHeader showSignIn={true} />
-          <div className="flex flex-col justify-center items-center min-h-screen space-y-4">
-            <div className="loading loading-spinner loading-lg text-primary"></div>
-            <p className="text-base-content/70 animate-pulse">
-              Loading your dhikr...
-            </p>
-          </div>
-        </div>
-      );
-    }
-
-    if (counterError) {
-      return (
-        <div className="min-h-screen bg-base-200">
-          <UnifiedHeader showSignIn={true} />
-          <div className="flex flex-col justify-center items-center min-h-screen p-4">
-            <div className="max-w-md mx-auto">
-              <div className="alert alert-error shadow-lg">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="stroke-current shrink-0 h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <div>
-                  <h3 className="font-bold">Oops!</h3>
-                  <div className="text-xs">{counterError}</div>
+            {/* Mobile: Hadith and Prayer at top */}
+            <div className="lg:hidden space-y-6">
+              {/* Daily Hadith (Mobile) */}
+              <div className="card bg-base-100 shadow-xl">
+                <div className="card-body">
+                  <h2 className="card-title text-lg text-primary">
+                    Hadith of the Day
+                  </h2>
+                  {dailyHadith ? (
+                    <>
+                      <blockquote className="text-base-content italic">
+                        "{dailyHadith.text}"
+                      </blockquote>
+                      <cite className="text-base-content/70 text-sm">
+                        — {dailyHadith.source}
+                      </cite>
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="loading loading-spinner loading-md text-primary"></div>
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* Next Prayer (Mobile) */}
+              {prayerLoading ? (
+                <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3">
+                  <div className="flex items-center justify-center">
+                    <div className="loading loading-spinner loading-sm text-primary"></div>
+                    <span className="ml-2 text-sm text-base-content/70">
+                      Loading prayer times...
+                    </span>
+                  </div>
+                </div>
+              ) : prayerError ? (
+                <div className="bg-error/10 border border-error/20 rounded-lg px-4 py-3">
+                  <div className="flex items-center space-x-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4 text-error"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium text-error">
+                      Prayer times unavailable
+                    </span>
+                  </div>
+                </div>
+              ) : nextPrayer ? (
+                <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3">
+                  <div className="space-y-1">
+                    <div className="font-bold text-base-content">
+                      Next Prayer:{" "}
+                      <span className="capitalize font-bold text-primary">
+                        {nextPrayer.prayer.name}
+                      </span>{" "}
+                      ({nextPrayer.prayer.time})
+                    </div>
+                    <div className="text-sm text-base-content/70">
+                      in {nextPrayer.timeUntil}
+                      {prayerData?.location && (
+                        <span> | {prayerData.location.name}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </div>
-          </div>
-        </div>
-      );
-    }
 
-    return (
-      <div className="min-h-screen bg-base-200">
-        <UnifiedHeader showSignIn={true} />
-        <div>
-          <div className="max-w-2xl mx-auto">
-            <DhikrCounter
-              dhikrName={dhikrName}
-              targetCount={targetCount}
-              currentCount={localCount}
-              onIncrement={incrementCount}
-              onReset={resetCount}
-              onComplete={handleComplete}
-              hasUnsavedChanges={hasUnsavedChanges}
-              arabicText={arabicText || undefined}
-              transliteration={transliteration || undefined}
-              tempDhikr={
-                tempDhikr
-                  ? {
-                      arabic: tempDhikr.arabic || undefined,
-                      transliteration: tempDhikr.transliteration || undefined,
-                      source: tempDhikr.source || undefined,
-                    }
-                  : undefined
-              }
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Home screen
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-base-200">
-        <UnifiedHeader showSignIn={true} />
-        <div className="flex flex-col justify-center items-center min-h-screen space-y-4">
-          <div className="loading loading-spinner loading-lg text-primary"></div>
-          <p className="text-base-content/70 animate-pulse">
-            Loading your dhikrs...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const favoritesDhikrs = dhikrs.filter((dhikr) => dhikr.isFavorite);
-
-  return (
-    <div className="min-h-screen bg-base-200">
-      <UnifiedHeader showSignIn={true} />
-      <div>
-        {/* Content */}
-        <div className="p-4 sm:p-6 space-y-6 pb-24">
-          {/* Nightly Recitations Card - Shows only after sunset */}
-          <NightlyRecitationsCard />
-
-          {/* Favorites Section */}
-          {favoritesDhikrs.length > 0 && (
-            <div className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-bold text-base-content">
-                Favorites
+            {/* Main Features Grid */}
+            <div className="space-y-6">
+              <h2 className="text-2xl lg:text-3xl font-bold text-base-content">
+                Explore Features
               </h2>
-              <div className="space-y-2 sm:space-y-3">
-                {favoritesDhikrs.map((dhikr) => (
-                  <HomeDhikrCard
-                    key={dhikr.id}
-                    dhikr={dhikr}
-                    onToggleFavorite={handleToggleFavorite}
-                  />
-                ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
+                {features.map((feature) => {
+                  const IconComponent = feature.icon;
+                  return (
+                    <Link key={feature.id} href={feature.href}>
+                      <div className="card bg-base-100 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer h-full">
+                        <div className="card-body">
+                          <div className="flex items-start space-x-4">
+                            <div className={`p-3 rounded-lg ${feature.bgColor}`}>
+                              <IconComponent
+                                className={`w-6 h-6 ${feature.color}`}
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-bold text-lg lg:text-xl">{feature.title}</h3>
+                              <p className="text-base-content/70 text-sm lg:text-base">
+                                {feature.description}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
-          )}
 
-          {/* All Dhikrs or Empty State */}
-          {dhikrs.length === 0 ? (
-            <div className="text-center py-16 space-y-6">
-              <div className="space-y-3">
-                <h3 className="text-2xl font-bold text-primary">
-                  Welcome to Tasbihfy
-                </h3>
-                <p className="text-base-content/70">
-                  Dhikr, Prayers, Quran, and Duas
-                </p>
-                {!user && (
-                  <div className="alert alert-warning max-w-sm mx-auto">
-                    <SparklesIcon className="w-6 h-6" />
-                    <div className="text-left">
-                      <div className="font-semibold">Try as a guest!</div>
-                      <div className="text-sm opacity-70">
-                        Create dhikrs and they'll be saved locally. Sign in to
-                        sync across devices.
+            {/* Quick Access */}
+            <div className="space-y-6">
+              <h2 className="text-xl lg:text-2xl font-bold text-base-content">Quick Access</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
+                {quickAccess.map((item) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <Link key={item.href} href={item.href}>
+                      <div className="card bg-base-100 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer h-full">
+                        <div className="card-body p-4 text-center">
+                          <IconComponent className="w-8 h-8 mx-auto text-base-content/70 mb-2" />
+                          <h4 className="font-semibold text-sm lg:text-base">{item.title}</h4>
+                          <p className="text-xs lg:text-sm text-base-content/60 mt-1">
+                            {item.description}
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Guest Mode Encouragement (Main Content) */}
+            {!user && (
+              <div className="alert alert-info">
+                <SparklesIcon className="w-6 h-6" />
+                <div>
+                  <div className="font-semibold">Enhanced Experience</div>
+                  <div className="text-sm opacity-80">
+                    Sign in to sync your progress across devices and unlock advanced
+                    features.
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </div>
+
+          {/* Sidebar Area - Hadith and Prayer */}
+          <div className="hidden lg:block space-y-6">{/* Daily Hadith (Sidebar) */}
+            <div className="card bg-base-100 shadow-xl sticky top-24">
+              <div className="card-body">
+                <h2 className="card-title text-lg text-primary">
+                  Hadith of the Day
+                </h2>
+                {dailyHadith ? (
+                  <>
+                    <blockquote className="text-base-content italic text-sm">
+                      "{dailyHadith.text}"
+                    </blockquote>
+                    <cite className="text-base-content/70 text-xs">
+                      — {dailyHadith.source}
+                    </cite>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="loading loading-spinner loading-md text-primary"></div>
                   </div>
                 )}
-                <div className="alert alert-info max-w-sm mx-auto">
-                  <SparklesIcon className="w-6 h-6" />
-                  <div className="text-left">
-                    <div className="font-semibold">
-                      Start with the classics:
-                    </div>
-                    <div className="text-sm opacity-70">
-                      "SubhanAllah" (33x), "Alhamdulillah" (33x), "Allahu Akbar"
-                      (34x)
-                    </div>
-                  </div>
+              </div>
+            </div>
+
+            {/* Next Prayer (Sidebar) */}
+            {prayerLoading ? (
+              <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3">
+                <div className="flex items-center justify-center">
+                  <div className="loading loading-spinner loading-sm text-primary"></div>
+                  <span className="ml-2 text-sm text-base-content/70">
+                    Loading prayer times...
+                  </span>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-bold text-base-content">
-                {favoritesDhikrs.length > 0 ? "Other Dhikrs" : "All Dhikrs"}
-              </h2>
-              <div className="space-y-2 sm:space-y-3">
-                {(favoritesDhikrs.length > 0
-                  ? dhikrs.filter((dhikr) => !dhikr.isFavorite)
-                  : dhikrs
-                ).map((dhikr) => (
-                  <HomeDhikrCard
-                    key={dhikr.id}
-                    dhikr={dhikr}
-                    onToggleFavorite={handleToggleFavorite}
-                  />
-                ))}
+            ) : prayerError ? (
+              <div className="bg-error/10 border border-error/20 rounded-lg px-4 py-3">
+                <div className="flex items-center space-x-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 text-error"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01"
+                    />
+                  </svg>
+                  <span className="text-sm font-medium text-error">
+                    Prayer times unavailable
+                  </span>
+                </div>
               </div>
-            </div>
-          )}
+            ) : nextPrayer ? (
+              <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-4">
+                <div className="space-y-2">
+                  <div className="font-bold text-base-content">
+                    Next Prayer:{" "}
+                    <span className="capitalize font-bold text-primary">
+                      {nextPrayer.prayer.name}
+                    </span>
+                  </div>
+                  <div className="text-lg font-bold text-primary">
+                    {nextPrayer.prayer.time}
+                  </div>
+                  <div className="text-sm text-base-content/70">
+                    in {nextPrayer.timeUntil}
+                  </div>
+                  {prayerData?.location && (
+                    <div className="text-xs text-base-content/50">
+                      📍 {prayerData.location.name}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : null}
+
+          </div>
+
         </div>
-
-        {/* Floating Action Buttons */}
-        <div className="fixed bottom-24 left-4 right-4 z-40 flex flex-col gap-3 bg-base-100/60 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-base-300/20">
-          {/* Add New Dhikr Button */}
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="btn btn-primary rounded-full py-4 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2"
-          >
-            <PlusIcon className="w-5 h-5" />
-            Add New Tasbih
-          </button>
-
-          {/* Instant Tasbih Option */}
-          <Link href="/?instant=true">
-            <button className="btn btn-secondary rounded-full py-3 shadow-md hover:shadow-lg transition-all duration-200 w-full font-medium">
-              Instant Tasbih
-            </button>
-          </Link>
-        </div>
-
-        <CreateDhikrModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSubmit={handleCreate}
-          title="Create New Dhikr"
-        />
       </div>
     </div>
-  );
-}
-
-// Main page component with Suspense boundary
-export default function Home() {
-  return (
-    <Suspense fallback={<HomePageLoading />}>
-      <HomeContent />
-    </Suspense>
   );
 }

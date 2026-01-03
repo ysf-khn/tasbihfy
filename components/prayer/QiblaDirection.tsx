@@ -111,7 +111,7 @@ export default function QiblaDirection({ direction }: QiblaDirectionProps) {
   };
 
   return (
-    <div className="card bg-base-100 shadow-xl">
+    <div className="lg:hidden card bg-base-100 shadow-xl">
       <div className="card-body text-center p-6">
         <div className="flex items-center justify-center mb-6">
           <h3 className="text-lg font-semibold text-base-content">

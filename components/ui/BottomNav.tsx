@@ -7,16 +7,18 @@ import {
   BookOpenIcon,
   CalendarIcon,
   ClockIcon,
-  Cog6ToothIcon,
   DocumentTextIcon,
+  SparklesIcon,
+  EllipsisHorizontalIcon,
 } from "@heroicons/react/24/outline";
 import {
   HomeIcon as HomeIconSolid,
   BookOpenIcon as BookOpenIconSolid,
   CalendarIcon as CalendarIconSolid,
   ClockIcon as ClockIconSolid,
-  Cog6ToothIcon as Cog6ToothIconSolid,
   DocumentTextIcon as DocumentTextIconSolid,
+  SparklesIcon as SparklesIconSolid,
+  EllipsisHorizontalIcon as EllipsisHorizontalIconSolid,
 } from "@heroicons/react/24/solid";
 
 export default function BottomNav() {
@@ -37,6 +39,12 @@ export default function BottomNav() {
       activeIcon: HomeIconSolid,
     },
     {
+      name: "Dhikr",
+      path: "/dhikr",
+      icon: SparklesIcon,
+      activeIcon: SparklesIconSolid,
+    },
+    {
       name: "Prayer",
       path: "/prayer-times",
       icon: ClockIcon,
@@ -49,21 +57,15 @@ export default function BottomNav() {
       activeIcon: BookOpenIconSolid,
     },
     {
-      name: "Duas",
-      path: "/duas",
-      icon: DocumentTextIcon,
-      activeIcon: DocumentTextIconSolid,
-    },
-    {
-      name: "Settings",
-      path: "/settings",
-      icon: Cog6ToothIcon,
-      activeIcon: Cog6ToothIconSolid,
+      name: "More",
+      path: "/more",
+      icon: EllipsisHorizontalIcon,
+      activeIcon: EllipsisHorizontalIconSolid,
     },
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 w-full z-50 bg-base-100 border-t border-base-200 shadow-2xl">
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 w-full z-50 bg-base-100 border-t border-base-200 shadow-2xl">
       <div className="flex justify-around items-center py-3 px-2">
         {navItems.map((item) => {
           const active = isActive(item.path);

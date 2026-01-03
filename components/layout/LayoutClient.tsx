@@ -40,7 +40,7 @@ export default function LayoutClient({ children }: LayoutClientProps) {
   
   return (
     <>
-      <div className={hideBottomNav ? "" : "pb-20"}>
+      <div className={hideBottomNav ? "" : "pb-20 lg:pb-0"}>
         {children}
       </div>
       {!hideBottomNav && <BottomNav />}

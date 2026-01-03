@@ -6,7 +6,15 @@ import Link from "next/link";
 import {
   AdjustmentsHorizontalIcon,
   SunIcon,
-  MoonIcon
+  MoonIcon,
+  Cog6ToothIcon,
+  HomeIcon,
+  SparklesIcon,
+  ClockIcon,
+  BookOpenIcon,
+  EllipsisHorizontalIcon,
+  DocumentTextIcon,
+  HeartIcon,
 } from "@heroicons/react/24/outline";
 import UnifiedSettingsDrawer from "@/components/ui/UnifiedSettingsDrawer";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
@@ -28,6 +36,76 @@ export default function UnifiedHeader({
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
   const { theme, setTheme } = useTheme();
 
+  // Desktop navigation items (expanded)
+  const desktopNavItems = [
+    {
+      name: "Home",
+      path: "/",
+      icon: HomeIcon,
+    },
+    {
+      name: "Dhikr",
+      path: "/dhikr",
+      icon: SparklesIcon,
+    },
+    {
+      name: "Prayer",
+      path: "/prayer-times",
+      icon: ClockIcon,
+    },
+    {
+      name: "Quran",
+      path: "/quran",
+      icon: BookOpenIcon,
+    },
+    {
+      name: "Duas",
+      path: "/duas",
+      icon: DocumentTextIcon,
+    },
+    {
+      name: "99 Names",
+      path: "/99-names",
+      icon: HeartIcon,
+    },
+  ];
+
+  // Mobile navigation items (with More)
+  const mobileNavItems = [
+    {
+      name: "Home",
+      path: "/",
+      icon: HomeIcon,
+    },
+    {
+      name: "Dhikr",
+      path: "/dhikr",
+      icon: SparklesIcon,
+    },
+    {
+      name: "Prayer",
+      path: "/prayer-times",
+      icon: ClockIcon,
+    },
+    {
+      name: "Quran",
+      path: "/quran",
+      icon: BookOpenIcon,
+    },
+    {
+      name: "More",
+      path: "/more",
+      icon: EllipsisHorizontalIcon,
+    },
+  ];
+
+  const isActive = (path: string) => {
+    if (path === "/") {
+      return pathname === "/";
+    }
+    return pathname.startsWith(path);
+  };
+
   // Determine if header should be visible
   const shouldHideHeader = isScrollingDown && !isAtTop;
 
@@ -43,9 +121,33 @@ export default function UnifiedHeader({
       >
         <div className="flex justify-between items-center p-4 sm:p-6">
           {/* Left: App Title */}
-          <h1 className="text-xl sm:text-2xl font-bold text-base-content">
-            {title}
-          </h1>
+          <div className="flex items-center space-x-8">
+            <h1 className="text-xl sm:text-2xl font-bold text-base-content">
+              {title}
+            </h1>
+
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center space-x-4">
+              {desktopNavItems.map((item) => {
+                const IconComponent = item.icon;
+                const active = isActive(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    href={item.path}
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
+                      active
+                        ? "text-primary bg-primary/10"
+                        : "text-base-content/70 hover:text-base-content hover:bg-base-200/50"
+                    }`}
+                  >
+                    <IconComponent className="w-4 h-4" />
+                    <span className="font-medium text-sm">{item.name}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
 
           {/* Right: Controls */}
           <div className="flex items-center gap-3">
@@ -69,14 +171,24 @@ export default function UnifiedHeader({
               )}
             </button>
 
-            {/* Settings Button */}
+            {/* Quick Settings Button */}
             <button
               onClick={() => setShowSettingsDrawer(true)}
               className="btn btn-ghost btn-sm btn-square"
-              title="Settings"
+              title="Quick Settings"
             >
               <AdjustmentsHorizontalIcon className="w-5 h-5" />
             </button>
+
+            {/* Main Settings Button */}
+            <Link href="/settings">
+              <button
+                className="btn btn-ghost btn-sm btn-square"
+                title="Settings"
+              >
+                <Cog6ToothIcon className="w-5 h-5" />
+              </button>
+            </Link>
 
           </div>
         </div>
