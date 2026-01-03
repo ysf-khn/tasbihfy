@@ -84,7 +84,6 @@ export default function PrayerClient() {
               {prayerData.prayers && (
                 <PrayerTimesList
                   prayers={prayerData.prayers}
-                  date={prayerData.date}
                 />
               )}
 

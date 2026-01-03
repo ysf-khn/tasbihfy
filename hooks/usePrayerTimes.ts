@@ -133,7 +133,7 @@ export function usePrayerTimes(): UsePrayerTimesResult {
 
       let location = locationQuery;
       if (!location) {
-        location = await getSavedLocation();
+        location = await getSavedLocation() ?? undefined;
       }
 
       if (!location) {
