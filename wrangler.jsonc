@@ -9,6 +9,16 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  "vars": {
+    "NODE_ENV": "production",
+    "BETTER_AUTH_URL": "https://tasbihfy.com",
+    "NEXT_PUBLIC_APP_URL": "https://tasbihfy.com",
+    "NEXT_PUBLIC_SUPABASE_URL": "https://mmtkxouwjqgdgqsbqckj.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tdGt4b3V3anFnZGdxc2JxY2tqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwODgyNjAsImV4cCI6MjA4MjY2NDI2MH0.IQqNSJd2YkLKdLCTyvdzrXx3JBNhMbQEtHwvoLb7X1Y",
+    "QURAN_API_AUTH_URL_PROD": "https://oauth2.quran.foundation",
+    "VAPID_PUBLIC_KEY": "BGdnqzbc7cvPDiLzIbPNZkqW0xIDBdLCxS0Xo5ebecMmQGRsh6js2XehWuGAc1QbrXIwgrLkQJ5MBu3KQimvg64",
+    "VAPID_EMAIL": "mailto:yusufmohd72@gmail.com"
+  },
   "observability": {
     "enabled": false,
     "head_sampling_rate": 1,

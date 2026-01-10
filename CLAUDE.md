@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is **Tasbihfy** - a comprehensive Islamic PWA featuring dhikr counting, Quran reading, prayer times, and daily reminders. It allows Muslims to count dhikr (remembrance of Allah), read Quran with audio, track prayer times, and receive daily spiritual reminders.
+This is **Tasbihfy** - a comprehensive Islamic PWA featuring dhikr counting, Quran reading, prayer times, and daily reminders. It allows Muslims to count dhikr (remembrance of Allah), read Quran with audio, track prayer times, and receive daily spiritual reminders. App is deployed on CF Workers.
 
 ## Tech Stack
 
