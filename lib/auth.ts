@@ -20,7 +20,9 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24, // 1 day (update session every day)
   },
   advanced: {
-    generateId: () => crypto.randomUUID(),
+    database: {
+      generateId: () => crypto.randomUUID(),
+    },
   },
 })
 
