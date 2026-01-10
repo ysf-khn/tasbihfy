@@ -8,7 +8,8 @@
     "start": "next start",
     "cf:build": "npx opennextjs-cloudflare build",
     "cf:preview": "npm run cf:build && npx wrangler dev",
-    "cf:deploy": "npm run cf:build && npx wrangler deploy"
+    "cf:deploy": "npm run cf:build && npx wrangler deploy",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -41,16 +42,11 @@
     "@types/react-dom": "^19",
     "@types/sharp": "^0.31.1",
     "esbuild": "^0.27.2",
+    "patch-package": "^8.0.1",
     "sharp": "^0.34.3",
     "tailwindcss": "^4.1.12",
     "tw-animate-css": "^1.3.7",
     "typescript": "^5",
     "wrangler": "^4.54.0"
-  },
-  "overrides": {
-    "@noble/ciphers": "1.3.0",
-    "better-auth": {
-      "@noble/ciphers": "2.1.1"
-    }
   }
 }
