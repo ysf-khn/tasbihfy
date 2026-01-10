@@ -19,6 +19,9 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day (update session every day)
   },
+  advanced: {
+    generateId: () => crypto.randomUUID(),
+  },
 })
 
 export type Session = typeof auth.$Infer.Session.session

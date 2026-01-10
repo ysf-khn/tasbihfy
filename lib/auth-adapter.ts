@@ -53,37 +53,36 @@ export const supabaseAdapter = (config: SupabaseAdapterConfig = {}) =>
       return {
         async create({ model, data }: { model: string; data: any }) {
           const tableName = ctx.getModelName(model)
-          const inputData = ctx.transformInput(data, model, 'create')
-
+          // Data is already transformed by the factory wrapper - don't transform again
           const { data: result, error } = await (supabase.from(tableName) as any)
-            .insert(inputData)
+            .insert(data)
             .select()
             .single()
 
           if (error) throw error
-          return ctx.transformOutput(result, model)
+          return result
         },
 
         async findOne({ model, where }: { model: string; where: any }) {
           const tableName = ctx.getModelName(model)
-          const whereClause = ctx.transformWhereClause(where, model)
+          // Where clause is already transformed by the factory wrapper
 
           let query = (supabase.from(tableName) as any).select('*')
-          query = applyWhere(query, whereClause)
+          query = applyWhere(query, where)
 
           const { data, error } = await query.limit(1).maybeSingle()
 
           if (error) throw error
           if (!data) return null
-          return ctx.transformOutput(data, model)
+          return data
         },
 
         async findMany({ model, where, limit, offset, sortBy }: { model: string; where?: any; limit?: number; offset?: number; sortBy?: any }) {
           const tableName = ctx.getModelName(model)
-          const whereClause = where ? ctx.transformWhereClause(where, model) : undefined
+          // Where clause is already transformed by the factory wrapper
 
           let query = (supabase.from(tableName) as any).select('*')
-          query = applyWhere(query, whereClause)
+          query = applyWhere(query, where)
 
           if (sortBy) {
             query = query.order(sortBy.field, { ascending: sortBy.direction === 'asc' })
@@ -97,30 +96,28 @@ export const supabaseAdapter = (config: SupabaseAdapterConfig = {}) =>
           const { data, error } = await query
 
           if (error) throw error
-          return (data || []).map((row: any) => ctx.transformOutput(row, model))
+          return data || []
         },
 
         async update({ model, where, update: updateData }: { model: string; where: any; update: any }) {
           const tableName = ctx.getModelName(model)
-          const whereClause = ctx.transformWhereClause(where, model)
-          const inputData = ctx.transformInput(updateData, model, 'update')
+          // Data and where clause are already transformed by the factory wrapper
 
-          let query = (supabase.from(tableName) as any).update(inputData)
-          query = applyWhere(query, whereClause)
+          let query = (supabase.from(tableName) as any).update(updateData)
+          query = applyWhere(query, where)
 
           const { data, error } = await query.select().single()
 
           if (error) throw error
-          return ctx.transformOutput(data, model)
+          return data
         },
 
         async updateMany({ model, where, update: updateData }: { model: string; where: any; update: any }) {
           const tableName = ctx.getModelName(model)
-          const whereClause = ctx.transformWhereClause(where, model)
-          const inputData = ctx.transformInput(updateData, model, 'update')
+          // Data and where clause are already transformed by the factory wrapper
 
-          let query = (supabase.from(tableName) as any).update(inputData)
-          query = applyWhere(query, whereClause)
+          let query = (supabase.from(tableName) as any).update(updateData)
+          query = applyWhere(query, where)
 
           const { data, error } = await query.select()
 
@@ -130,10 +127,10 @@ export const supabaseAdapter = (config: SupabaseAdapterConfig = {}) =>
 
         async delete({ model, where }: { model: string; where: any }) {
           const tableName = ctx.getModelName(model)
-          const whereClause = ctx.transformWhereClause(where, model)
+          // Where clause is already transformed by the factory wrapper
 
           let query = (supabase.from(tableName) as any).delete()
-          query = applyWhere(query, whereClause)
+          query = applyWhere(query, where)
 
           const { error } = await query
 
@@ -142,10 +139,10 @@ export const supabaseAdapter = (config: SupabaseAdapterConfig = {}) =>
 
         async deleteMany({ model, where }: { model: string; where: any }) {
           const tableName = ctx.getModelName(model)
-          const whereClause = ctx.transformWhereClause(where, model)
+          // Where clause is already transformed by the factory wrapper
 
           let query = (supabase.from(tableName) as any).delete()
-          query = applyWhere(query, whereClause)
+          query = applyWhere(query, where)
 
           const { data, error } = await query.select()
 
@@ -155,10 +152,10 @@ export const supabaseAdapter = (config: SupabaseAdapterConfig = {}) =>
 
         async count({ model, where }: { model: string; where?: any }) {
           const tableName = ctx.getModelName(model)
-          const whereClause = where ? ctx.transformWhereClause(where, model) : undefined
+          // Where clause is already transformed by the factory wrapper
 
           let query = (supabase.from(tableName) as any).select('*', { count: 'exact', head: true })
-          query = applyWhere(query, whereClause)
+          query = applyWhere(query, where)
 
           const { count, error } = await query
 
