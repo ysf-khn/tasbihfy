@@ -1,6 +1,14 @@
 import { createAdapterFactory, type DBAdapterDebugLogOption } from 'better-auth/adapters'
 import { createServerClient } from './supabase'
 
+// Map Better Auth model names to actual Supabase table names
+const modelNameMap: Record<string, string> = {
+  user: 'User',
+  account: 'Account',
+  session: 'Session',
+  verification: 'verification', // lowercase in Supabase
+}
+
 interface SupabaseAdapterConfig {
   debugLogs?: DBAdapterDebugLogOption
 }
@@ -52,7 +60,8 @@ export const supabaseAdapter = (config: SupabaseAdapterConfig = {}) =>
 
       return {
         async create({ model, data }: { model: string; data: any }) {
-          const tableName = ctx.getModelName(model)
+          const rawName = ctx.getModelName(model)
+          const tableName = modelNameMap[rawName] || rawName
           // Data is already transformed by the factory wrapper - don't transform again
           const { data: result, error } = await (supabase.from(tableName) as any)
             .insert(data)
@@ -64,7 +73,8 @@ export const supabaseAdapter = (config: SupabaseAdapterConfig = {}) =>
         },
 
         async findOne({ model, where }: { model: string; where: any }) {
-          const tableName = ctx.getModelName(model)
+          const rawName = ctx.getModelName(model)
+          const tableName = modelNameMap[rawName] || rawName
           // Where clause is already transformed by the factory wrapper
 
           let query = (supabase.from(tableName) as any).select('*')
@@ -78,7 +88,8 @@ export const supabaseAdapter = (config: SupabaseAdapterConfig = {}) =>
         },
 
         async findMany({ model, where, limit, offset, sortBy }: { model: string; where?: any; limit?: number; offset?: number; sortBy?: any }) {
-          const tableName = ctx.getModelName(model)
+          const rawName = ctx.getModelName(model)
+          const tableName = modelNameMap[rawName] || rawName
           // Where clause is already transformed by the factory wrapper
 
           let query = (supabase.from(tableName) as any).select('*')
@@ -100,7 +111,8 @@ export const supabaseAdapter = (config: SupabaseAdapterConfig = {}) =>
         },
 
         async update({ model, where, update: updateData }: { model: string; where: any; update: any }) {
-          const tableName = ctx.getModelName(model)
+          const rawName = ctx.getModelName(model)
+          const tableName = modelNameMap[rawName] || rawName
           // Data and where clause are already transformed by the factory wrapper
 
           let query = (supabase.from(tableName) as any).update(updateData)
@@ -113,7 +125,8 @@ export const supabaseAdapter = (config: SupabaseAdapterConfig = {}) =>
         },
 
         async updateMany({ model, where, update: updateData }: { model: string; where: any; update: any }) {
-          const tableName = ctx.getModelName(model)
+          const rawName = ctx.getModelName(model)
+          const tableName = modelNameMap[rawName] || rawName
           // Data and where clause are already transformed by the factory wrapper
 
           let query = (supabase.from(tableName) as any).update(updateData)
@@ -126,7 +139,8 @@ export const supabaseAdapter = (config: SupabaseAdapterConfig = {}) =>
         },
 
         async delete({ model, where }: { model: string; where: any }) {
-          const tableName = ctx.getModelName(model)
+          const rawName = ctx.getModelName(model)
+          const tableName = modelNameMap[rawName] || rawName
           // Where clause is already transformed by the factory wrapper
 
           let query = (supabase.from(tableName) as any).delete()
@@ -138,7 +152,8 @@ export const supabaseAdapter = (config: SupabaseAdapterConfig = {}) =>
         },
 
         async deleteMany({ model, where }: { model: string; where: any }) {
-          const tableName = ctx.getModelName(model)
+          const rawName = ctx.getModelName(model)
+          const tableName = modelNameMap[rawName] || rawName
           // Where clause is already transformed by the factory wrapper
 
           let query = (supabase.from(tableName) as any).delete()
@@ -151,7 +166,8 @@ export const supabaseAdapter = (config: SupabaseAdapterConfig = {}) =>
         },
 
         async count({ model, where }: { model: string; where?: any }) {
-          const tableName = ctx.getModelName(model)
+          const rawName = ctx.getModelName(model)
+          const tableName = modelNameMap[rawName] || rawName
           // Where clause is already transformed by the factory wrapper
 
           let query = (supabase.from(tableName) as any).select('*', { count: 'exact', head: true })

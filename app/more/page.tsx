@@ -106,25 +106,6 @@ const features = [
   },
 ];
 
-// Coming soon features
-const comingSoon = [
-  {
-    title: "Hadith Collection",
-    description: "Authentic sayings of Prophet Muhammad ﷺ",
-    icon: BookOpenIcon,
-  },
-  {
-    title: "Raheeq Al Makhtum",
-    description: "The Sealed Nectar - Biography of Prophet ﷺ",
-    icon: UserIcon,
-  },
-  {
-    title: "Islamic Calendar",
-    description: "Important dates and events",
-    icon: CalendarDaysIcon,
-  },
-];
-
 export default function MorePage() {
   return (
     <div className="min-h-screen bg-base-200">
@@ -156,7 +137,9 @@ export default function MorePage() {
                       <div className="card-body">
                         <div className="flex items-start space-x-4">
                           <div className={`p-3 rounded-lg ${item.bgColor}`}>
-                            <IconComponent className={`w-6 h-6 ${item.color}`} />
+                            <IconComponent
+                              className={`w-6 h-6 ${item.color}`}
+                            />
                           </div>
                           <div className="flex-1">
                             <h3 className="font-bold text-lg">{item.title}</h3>
@@ -173,43 +156,6 @@ export default function MorePage() {
             </div>
           </div>
         ))}
-
-        {/* Coming Soon Section */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-base-content">
-            Coming Soon
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {comingSoon.map((item) => {
-              const IconComponent = item.icon;
-              return (
-                <div
-                  key={item.title}
-                  className="card bg-base-100 shadow-lg opacity-60 cursor-not-allowed"
-                >
-                  <div className="card-body">
-                    <div className="flex items-start space-x-4">
-                      <div className="p-3 rounded-lg bg-base-content/10">
-                        <IconComponent className="w-6 h-6 text-base-content/50" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-lg flex items-center gap-2">
-                          {item.title}
-                          <span className="badge badge-outline badge-sm">
-                            Soon
-                          </span>
-                        </h3>
-                        <p className="text-base-content/70 text-sm">
-                          {item.description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
 
         {/* Feedback Section */}
         <div className="card bg-primary/5 border border-primary/20">
