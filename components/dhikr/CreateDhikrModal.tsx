@@ -7,7 +7,7 @@ import islamicTexts from "@/data/islamic-texts.json";
 interface CreateDhikrModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { name: string; targetCount: number; arabic?: string; transliteration?: string }) => Promise<void>;
+  onSubmit: (data: { name: string; targetCount: number; arabic?: string; transliteration?: string }) => Promise<void | string>;
   initialData?: Dhikr;
   title: string;
 }
