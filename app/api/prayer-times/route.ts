@@ -1,17 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { PrayerTimesResponse } from '@/types/prayer';
-
-export const runtime = 'edge';
+import { NextRequest, NextResponse } from "next/server";
+import {
+  getCachedPrayerTimes,
+  cachePrayerTimes,
+  deleteOldPrayerCache,
+} from "@/lib/supabase-queries";
+import { PrayerTimesResponse } from "@/types/prayer";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const location = searchParams.get('location');
-    
+    const location = searchParams.get("location");
+
     if (!location) {
       return NextResponse.json(
-        { error: 'Location parameter is required' },
+        { error: "Location parameter is required" },
         { status: 400 }
       );
     }
@@ -20,63 +22,66 @@ export async function GET(request: NextRequest) {
     today.setHours(0, 0, 0, 0);
 
     // Check if we have cached data for today
-    const cachedData = await prisma.prayerTimeCache.findFirst({
-      where: {
-        locationQuery: location.toLowerCase(),
-        date: today
-      }
-    });
+    const cachedData = await getCachedPrayerTimes(location, today);
 
     if (cachedData) {
+      const dateStr = `${cachedData.date.getFullYear()}-${String(
+        cachedData.date.getMonth() + 1
+      ).padStart(2, "0")}-${String(cachedData.date.getDate()).padStart(
+        2,
+        "0"
+      )}`;
       return NextResponse.json({
         location: {
           name: location,
-          latitude: cachedData.latitude || '',
-          longitude: cachedData.longitude || '',
-          country: cachedData.country || '',
-          countryCode: cachedData.countryCode || '',
-          timezone: cachedData.timezone || ''
+          latitude: cachedData.latitude || "",
+          longitude: cachedData.longitude || "",
+          country: cachedData.country || "",
+          countryCode: cachedData.countryCode || "",
+          timezone: cachedData.timezone || "",
         },
-        date: `${cachedData.date.getFullYear()}-${String(cachedData.date.getMonth() + 1).padStart(2, '0')}-${String(cachedData.date.getDate()).padStart(2, '0')}`,
+        date: dateStr,
         prayers: [
-          { name: 'fajr', time: cachedData.fajr, arabicName: 'الفجر' },
-          { name: 'shurooq', time: cachedData.shurooq, arabicName: 'الشروق' },
-          { name: 'dhuhr', time: cachedData.dhuhr, arabicName: 'الظهر' },
-          { name: 'asr', time: cachedData.asr, arabicName: 'العصر' },
-          { name: 'maghrib', time: cachedData.maghrib, arabicName: 'المغرب' },
-          { name: 'isha', time: cachedData.isha, arabicName: 'العشاء' }
+          { name: "fajr", time: cachedData.fajr, arabicName: "الفجر" },
+          { name: "shurooq", time: cachedData.shurooq, arabicName: "الشروق" },
+          { name: "dhuhr", time: cachedData.dhuhr, arabicName: "الظهر" },
+          { name: "asr", time: cachedData.asr, arabicName: "العصر" },
+          { name: "maghrib", time: cachedData.maghrib, arabicName: "المغرب" },
+          { name: "isha", time: cachedData.isha, arabicName: "العشاء" },
         ],
-        qiblaDirection: cachedData.qiblaDirection || '',
+        qiblaDirection: cachedData.qiblaDirection || "",
         weather: {
-          temperature: cachedData.temperature || '',
-          pressure: cachedData.pressure ? parseInt(cachedData.pressure) : 0
+          temperature: cachedData.temperature || "",
+          pressure: cachedData.pressure ? parseInt(cachedData.pressure) : 0,
         },
-        sunrise: cachedData.shurooq
+        sunrise: cachedData.shurooq,
       });
     }
 
     // Fetch from API if not cached
-    const apiUrl = `https://muslimsalat.p.rapidapi.com/${encodeURIComponent(location)}.json`;
+    const apiUrl = `https://muslimsalat.p.rapidapi.com/${encodeURIComponent(
+      location
+    )}.json`;
     const apiKey = process.env.SALATTIME_API_KEY;
-    
+
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'API key not configured' },
+        { error: "API key not configured" },
         { status: 500 }
       );
     }
 
     const response = await fetch(apiUrl, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'x-rapidapi-key': apiKey,
-        'x-rapidapi-host': 'muslimsalat.p.rapidapi.com'
-      }
+        "x-rapidapi-key": apiKey,
+        "x-rapidapi-host": "muslimsalat.p.rapidapi.com",
+      },
     });
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: 'Failed to fetch prayer times' },
+        { error: "Failed to fetch prayer times" },
         { status: response.status }
       );
     }
@@ -85,7 +90,7 @@ export async function GET(request: NextRequest) {
 
     if (data.status_code !== 1 || !data.items || data.items.length === 0) {
       return NextResponse.json(
-        { error: 'Invalid response from prayer times API' },
+        { error: "Invalid response from prayer times API" },
         { status: 400 }
       );
     }
@@ -93,36 +98,27 @@ export async function GET(request: NextRequest) {
     const todayPrayers = data.items[0];
 
     // Cache the data
-    await prisma.prayerTimeCache.create({
-      data: {
-        locationQuery: location.toLowerCase(),
-        date: today,
-        fajr: todayPrayers.fajr,
-        shurooq: todayPrayers.shurooq,
-        dhuhr: todayPrayers.dhuhr,
-        asr: todayPrayers.asr,
-        maghrib: todayPrayers.maghrib,
-        isha: todayPrayers.isha,
-        qiblaDirection: data.qibla_direction,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        timezone: String(data.timezone),
-        country: data.country,
-        countryCode: data.country_code,
-        temperature: data.today_weather.temperature,
-        pressure: data.today_weather.pressure.toString()
-      }
+    await cachePrayerTimes({
+      locationQuery: location,
+      date: today,
+      fajr: todayPrayers.fajr,
+      shurooq: todayPrayers.shurooq,
+      dhuhr: todayPrayers.dhuhr,
+      asr: todayPrayers.asr,
+      maghrib: todayPrayers.maghrib,
+      isha: todayPrayers.isha,
+      qiblaDirection: data.qibla_direction,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      timezone: String(data.timezone),
+      country: data.country,
+      countryCode: data.country_code,
+      temperature: data.today_weather?.temperature ?? null,
+      pressure: data.today_weather?.pressure?.toString() ?? null,
     });
 
     // Clean up old cache entries for this location (keep only today's data)
-    await prisma.prayerTimeCache.deleteMany({
-      where: {
-        locationQuery: location.toLowerCase(),
-        date: {
-          lt: today
-        }
-      }
-    });
+    await deleteOldPrayerCache(location, today);
 
     // Return formatted data
     return NextResponse.json({
@@ -132,29 +128,28 @@ export async function GET(request: NextRequest) {
         longitude: data.longitude,
         country: data.country,
         countryCode: data.country_code,
-        timezone: String(data.timezone)
+        timezone: String(data.timezone),
       },
       date: todayPrayers.date_for,
       prayers: [
-        { name: 'fajr', time: todayPrayers.fajr, arabicName: 'الفجر' },
-        { name: 'shurooq', time: todayPrayers.shurooq, arabicName: 'الشروق' },
-        { name: 'dhuhr', time: todayPrayers.dhuhr, arabicName: 'الظهر' },
-        { name: 'asr', time: todayPrayers.asr, arabicName: 'العصر' },
-        { name: 'maghrib', time: todayPrayers.maghrib, arabicName: 'المغرب' },
-        { name: 'isha', time: todayPrayers.isha, arabicName: 'العشاء' }
+        { name: "fajr", time: todayPrayers.fajr, arabicName: "الفجر" },
+        { name: "shurooq", time: todayPrayers.shurooq, arabicName: "الشروق" },
+        { name: "dhuhr", time: todayPrayers.dhuhr, arabicName: "الظهر" },
+        { name: "asr", time: todayPrayers.asr, arabicName: "العصر" },
+        { name: "maghrib", time: todayPrayers.maghrib, arabicName: "المغرب" },
+        { name: "isha", time: todayPrayers.isha, arabicName: "العشاء" },
       ],
       qiblaDirection: data.qibla_direction,
       weather: {
-        temperature: data.today_weather.temperature,
-        pressure: data.today_weather.pressure
+        temperature: data.today_weather?.temperature ?? "",
+        pressure: data.today_weather?.pressure ?? 0,
       },
-      sunrise: todayPrayers.shurooq
+      sunrise: todayPrayers.shurooq,
     });
-
   } catch (error) {
-    console.error('Prayer times API error:', error);
+    console.error("Prayer times API error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
-import type { Dhikr, DhikrSession } from "@prisma/client";
+import type { Dhikr, DhikrSession } from "@/types/models";
 import { Bars3Icon } from "@heroicons/react/24/outline";
 
 interface DhikrWithSession extends Dhikr {

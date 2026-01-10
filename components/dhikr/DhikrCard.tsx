@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import type { Dhikr, DhikrSession } from '@prisma/client'
+import type { Dhikr, DhikrSession } from '@/types/models'
 import { 
   EllipsisVerticalIcon, 
   PencilIcon, 

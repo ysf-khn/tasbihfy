@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
 
+  // Increase static page generation timeout (default is 60s)
+  staticPageGenerationTimeout: 120,
+
   // Image optimization
   images: {
     formats: ["image/avif", "image/webp"],

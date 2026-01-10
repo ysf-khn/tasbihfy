@@ -26,6 +26,7 @@ export function InstallPrompt() {
     useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [iosDismissed, setIosDismissed] = useState(false);
 
   useEffect(() => {
     // Detect iOS
@@ -43,6 +44,10 @@ export function InstallPrompt() {
     // Check if app was already installed
     const wasInstalled = localStorage.getItem("tasbihfy-installed") === "true";
     setIsInstalled(wasInstalled);
+
+    // Check if iOS prompt was previously dismissed
+    const iosPreviouslyDismissed = localStorage.getItem("ios-install-dismissed") === "true";
+    setIosDismissed(iosPreviouslyDismissed);
 
     // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -125,7 +130,9 @@ export function InstallPrompt() {
 
   const handleDismiss = () => {
     setShowPrompt(false);
+    setIosDismissed(true);
     localStorage.setItem("install-prompt-dismissed", "true");
+    localStorage.setItem("ios-install-dismissed", "true");
     localStorage.setItem("install-prompt-last-shown", Date.now().toString());
     // Track when user manually dismisses prompt
     window.gtag?.("event", "pwa_install_dismissed", {
@@ -150,7 +157,7 @@ export function InstallPrompt() {
   }
 
   // iOS Installation Instructions
-  if (isIOS && !showPrompt) {
+  if (isIOS && !iosDismissed) {
     return (
       <div className="fixed bottom-4 left-4 right-4 z-50">
         <div className="bg-primary text-primary-content rounded-lg p-4 shadow-lg">

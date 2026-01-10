@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import DhikrCard from "./DhikrCard";
 import CreateDhikrModal from "./CreateDhikrModal";
-import type { Dhikr, DhikrSession } from "@prisma/client";
+import type { Dhikr, DhikrSession } from "@/types/models";
 import { PlusCircleIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import { emptyStates, getTimeBasedGreeting } from "@/lib/messages";
 

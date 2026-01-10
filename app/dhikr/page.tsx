@@ -11,7 +11,7 @@ import HomeDhikrCard from "@/components/dhikr/HomeDhikrCard";
 import CreateDhikrModal from "@/components/dhikr/CreateDhikrModal";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import NightlyRecitationsCard from "@/components/nightly/NightlyRecitationsCard";
-import type { Dhikr, DhikrSession } from "@prisma/client";
+import type { Dhikr, DhikrSession } from "@/types/models";
 import { GuestStorage } from "@/lib/guestStorage";
 import { PlusIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";

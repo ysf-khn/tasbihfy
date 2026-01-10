@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { Dhikr, DhikrSession } from "@prisma/client";
+import type { Dhikr, DhikrSession } from "@/types/models";
 import { HeartIcon } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 

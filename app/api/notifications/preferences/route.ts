@@ -4,10 +4,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { prisma } from "@/lib/db";
+import {
+  getReminderPreferences,
+  upsertReminderPreferences,
+} from "@/lib/supabase-queries";
 import { z } from "zod";
-
-export const runtime = 'edge';
 
 // Validation schema for preferences update
 const preferencesSchema = z.object({
@@ -38,9 +39,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's reminder preferences
-    const reminderPreferences = await prisma.reminderPreferences.findUnique({
-      where: { userId: session.user.id },
-    });
+    const reminderPreferences = await getReminderPreferences(session.user.id);
 
     const preferences = {
       reminderEnabled: reminderPreferences?.reminderEnabled || false,
@@ -99,21 +98,14 @@ export async function PUT(request: NextRequest) {
     );
 
     // Update reminder preferences
-    const reminderPreferences = await prisma.reminderPreferences.upsert({
-      where: { userId: session.user.id },
-      update: {
-        ...(reminderEnabled !== undefined && { reminderEnabled }),
-        ...(reminderTime && { reminderTime }),
-        ...(timezone && { timezone }),
-        updatedAt: new Date(),
-      },
-      create: {
-        userId: session.user.id,
-        reminderEnabled: reminderEnabled ?? false,
-        reminderTime: reminderTime || "09:00",
-        timezone: timezone || "UTC",
-      },
-    });
+    const reminderPreferences = await upsertReminderPreferences(
+      session.user.id,
+      {
+        reminderEnabled,
+        reminderTime,
+        timezone,
+      }
+    );
 
     console.log("✅ Preferences updated successfully:", {
       userId: session.user.id,

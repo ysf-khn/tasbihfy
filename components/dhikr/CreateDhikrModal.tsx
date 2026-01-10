@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Dhikr } from "@prisma/client";
+import type { Dhikr } from "@/types/models";
 import islamicTexts from "@/data/islamic-texts.json";
 
 interface CreateDhikrModalProps {

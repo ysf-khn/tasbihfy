@@ -2,17 +2,14 @@
 // Remove push subscription from user's reminder preferences
 
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { prisma } from "@/lib/db";
-
-export const runtime = 'edge';
+import { upsertReminderPreferences } from "@/lib/supabase-queries";
 
 export async function DELETE(request: NextRequest) {
   try {
     console.log("🗑️ Processing push notification unsubscribe...");
-    
+
     // Get user session
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -26,24 +23,18 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    console.log(`📱 Unsubscribing user ${session.user.id} from push notifications`);
+    console.log(
+      `📱 Unsubscribing user ${session.user.id} from push notifications`
+    );
 
     // Update reminder preferences to remove subscription
-    const reminderPreferences = await prisma.reminderPreferences.upsert({
-      where: { userId: session.user.id },
-      update: {
-        pushSubscription: Prisma.JsonNull,
+    const reminderPreferences = await upsertReminderPreferences(
+      session.user.id,
+      {
+        pushSubscription: null,
         reminderEnabled: false,
-        updatedAt: new Date(),
-      },
-      create: {
-        userId: session.user.id,
-        reminderEnabled: false,
-        pushSubscription: Prisma.JsonNull,
-        reminderTime: "09:00",
-        timezone: "UTC",
-      },
-    });
+      }
+    );
 
     console.log("✅ Push subscription removed successfully:", {
       userId: session.user.id,
@@ -59,7 +50,6 @@ export async function DELETE(request: NextRequest) {
         timezone: reminderPreferences.timezone,
       },
     });
-
   } catch (error) {
     console.error("❌ Error removing push subscription:", error);
 

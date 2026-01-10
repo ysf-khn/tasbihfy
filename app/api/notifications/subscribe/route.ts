@@ -4,11 +4,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { prisma } from "@/lib/db";
+import { upsertReminderPreferences } from "@/lib/supabase-queries";
 import { validatePushSubscription } from "@/lib/notifications/push-service";
 import { z } from "zod";
-
-export const runtime = 'edge';
 
 // Validation schema for subscription data
 const subscribeSchema = z.object({
@@ -61,22 +59,15 @@ export async function POST(request: NextRequest) {
     console.log(`📱 Subscribing user ${session.user.id} to push notifications`);
 
     // Upsert reminder preferences
-    const reminderPreferences = await prisma.reminderPreferences.upsert({
-      where: { userId: session.user.id },
-      update: {
-        pushSubscription: subscription,
-        reminderTime: reminderTime || undefined,
-        timezone: timezone || undefined,
-        updatedAt: new Date(),
-      },
-      create: {
-        userId: session.user.id,
+    const reminderPreferences = await upsertReminderPreferences(
+      session.user.id,
+      {
+        pushSubscription: subscription as Record<string, unknown>,
+        reminderTime: reminderTime,
+        timezone: timezone,
         reminderEnabled: true,
-        pushSubscription: subscription,
-        reminderTime: reminderTime || "09:00",
-        timezone: timezone || "UTC",
-      },
-    });
+      }
+    );
 
     console.log("✅ Push subscription saved successfully:", {
       userId: session.user.id,

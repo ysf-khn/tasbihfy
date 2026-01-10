@@ -44,8 +44,8 @@ export async function getAccessToken(): Promise<string> {
       clientId
     );
 
-    // Create basic auth header
-    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+    // Create basic auth header (using btoa for Edge compatibility)
+    const auth = btoa(`${clientId}:${clientSecret}`);
 
     const response = await fetch(`${authUrl}/oauth2/token`, {
       method: "POST",

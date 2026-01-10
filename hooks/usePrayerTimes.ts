@@ -146,8 +146,24 @@ export function usePrayerTimes(): UsePrayerTimesResult {
             });
           });
 
-          // Use coordinates to get location name (you could implement reverse geocoding)
-          location = `${position.coords.latitude},${position.coords.longitude}`;
+          // Reverse geocode coordinates to get city name
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+
+          try {
+            const geocodeResponse = await fetch(`/api/geocode?lat=${lat}&lon=${lon}`);
+            if (geocodeResponse.ok) {
+              const geocodeData = await geocodeResponse.json();
+              location = geocodeData.city;
+            }
+          } catch (geocodeError) {
+            console.warn('Geocoding failed, falling back to coordinates:', geocodeError);
+          }
+
+          // Fallback to coordinates if geocoding failed
+          if (!location) {
+            location = `${lat},${lon}`;
+          }
         } else {
           throw new Error('Location access denied. Please set your location in Settings.');
         }

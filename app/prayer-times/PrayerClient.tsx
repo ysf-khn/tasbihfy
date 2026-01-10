@@ -102,8 +102,8 @@ export default function PrayerClient() {
                 </div>
               )}
 
-              {/* Weather Info */}
-              {prayerData.weather && (
+              {/* Weather Info - only show if we have valid temperature data */}
+              {prayerData.weather && prayerData.weather.temperature && prayerData.weather.temperature !== "" && (
                 <div className="card bg-base-100 shadow-lg">
                   <div className="card-body">
                     <h3 className="card-title text-lg">Weather</h3>
