@@ -1,3 +1,4 @@
+import "@/lib/polyfills"; // Must be FIRST import - Cloudflare Workers compatibility
 import { auth } from "@/lib/auth";
 
 // Debug function to log requests
