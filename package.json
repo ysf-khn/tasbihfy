@@ -46,5 +46,10 @@
     "tw-animate-css": "^1.3.7",
     "typescript": "^5",
     "wrangler": "^4.54.0"
+  },
+  "overrides": {
+    "@dotenvx/dotenvx": {
+      "@noble/ciphers": "1.3.0"
+    }
   }
 }
