@@ -39,7 +39,7 @@ export default function BottomNav() {
       activeIcon: HomeIconSolid,
     },
     {
-      name: "Dhikr",
+      name: "Tasbih",
       path: "/dhikr",
       icon: SparklesIcon,
       activeIcon: SparklesIconSolid,

@@ -44,7 +44,7 @@ export default function UnifiedHeader({
       icon: HomeIcon,
     },
     {
-      name: "Dhikr",
+      name: "Tasbih",
       path: "/dhikr",
       icon: SparklesIcon,
     },
@@ -189,7 +189,6 @@ export default function UnifiedHeader({
                 <Cog6ToothIcon className="w-5 h-5" />
               </button>
             </Link>
-
           </div>
         </div>
       </div>

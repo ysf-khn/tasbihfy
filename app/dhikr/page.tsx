@@ -1,14 +1,15 @@
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useSessionTracking } from "@/hooks/useSessionTracking";
 import { useConfetti } from "@/components/ui/Confetti";
 import DhikrCounter from "@/components/counter/DhikrCounter";
 import hisnulMuslim from "@/data/hisnul-muslim-complete.json";
 import HomeDhikrCard from "@/components/dhikr/HomeDhikrCard";
-import CreateDhikrModal from "@/components/dhikr/CreateDhikrModal";
+import CreateDhikrModal, { commonDhikrs } from "@/components/dhikr/CreateDhikrModal";
+import islamicTexts from "@/data/islamic-texts.json";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import NightlyRecitationsCard from "@/components/nightly/NightlyRecitationsCard";
 import type { Dhikr, DhikrSession } from "@/types/models";
@@ -36,6 +37,7 @@ function DhikrPageLoading() {
 // Component that uses useSearchParams
 function DhikrContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const dhikrId = searchParams.get("dhikr");
   const isTemp = searchParams.get("temp") === "true";
   const isInstant = searchParams.get("instant") === "true";
@@ -147,11 +149,11 @@ function DhikrContent() {
     targetCount: number;
     arabic?: string;
     transliteration?: string;
-  }) => {
+  }): Promise<string> => {
     try {
       if (!user) {
         // Guest mode: save to localStorage
-        GuestStorage.addDhikr({
+        const newDhikr = GuestStorage.addDhikr({
           name: data.name,
           targetCount: data.targetCount,
           arabicText: data.arabic,
@@ -161,7 +163,7 @@ function DhikrContent() {
         // Refresh the dhikrs list for guests
         await fetchDhikrs();
         setIsModalOpen(false);
-        return;
+        return newDhikr.id;
       }
 
       // Authenticated user: save to database
@@ -173,8 +175,10 @@ function DhikrContent() {
 
       if (!response.ok) throw new Error("Failed to create dhikr");
 
+      const createdDhikr = await response.json();
       await fetchDhikrs();
       setIsModalOpen(false);
+      return createdDhikr.id;
     } catch (err) {
       console.error("Error creating dhikr:", err);
       throw err;
@@ -208,6 +212,34 @@ function DhikrContent() {
       );
     } catch (err) {
       console.error("Error toggling favorite:", err);
+    }
+  };
+
+  // Handle selecting a preset dhikr - creates and navigates to counter
+  const handlePresetSelect = async (preset: typeof commonDhikrs[number]) => {
+    try {
+      // Resolve textRef to get full Arabic text if needed
+      let arabic = preset.arabic;
+      let transliteration = preset.transliteration;
+
+      if ('textRef' in preset && preset.textRef) {
+        const fullText = islamicTexts[preset.textRef as keyof typeof islamicTexts];
+        if (fullText) {
+          arabic = fullText.arabic;
+          transliteration = fullText.transliteration;
+        }
+      }
+
+      const newId = await handleCreate({
+        name: preset.name,
+        targetCount: preset.targetCount,
+        arabic,
+        transliteration,
+      });
+
+      router.push(`/dhikr?dhikr=${newId}`);
+    } catch (err) {
+      console.error("Error creating preset dhikr:", err);
     }
   };
 
@@ -333,7 +365,7 @@ function DhikrContent() {
       <UnifiedHeader showSignIn={true} />
       <div>
         {/* Content */}
-        <div className="p-4 sm:p-6 space-y-6 pb-24">
+        <div className="p-4 sm:p-6 space-y-6 pb-48">
           {/* Nightly Recitations Card - Shows only after sunset */}
           <NightlyRecitationsCard />
 
@@ -357,79 +389,258 @@ function DhikrContent() {
 
           {/* All Dhikrs or Empty State */}
           {dhikrs.length === 0 ? (
-            <div className="text-center py-16 space-y-6">
-              <div className="space-y-3">
-                <h3 className="text-2xl font-bold text-primary">
-                  Welcome to Tasbihfy
-                </h3>
-                <p className="text-base-content/70">
-                  Dhikr, Prayers, Quran, and Duas
-                </p>
-                {!user && (
-                  <div className="alert alert-warning max-w-sm mx-auto">
-                    <SparklesIcon className="w-6 h-6" />
-                    <div className="text-left">
-                      <div className="font-semibold">Try as a guest!</div>
-                      <div className="text-sm opacity-70">
-                        Create dhikrs and they'll be saved locally. Sign in to
-                        sync across devices.
-                      </div>
+            <div className="space-y-6">
+              <div className="text-center space-y-2">
+                <h3 className="text-xl font-bold text-base-content">Start Your Tasbih</h3>
+                <p className="text-base-content/70 text-sm">Tap a dhikr to add it and start counting</p>
+              </div>
+
+              {!user && (
+                <div className="alert alert-warning">
+                  <SparklesIcon className="w-5 h-5 shrink-0" />
+                  <div className="text-left">
+                    <div className="font-semibold text-sm">Try as a guest!</div>
+                    <div className="text-xs opacity-70">
+                      Your dhikrs will be saved locally. Sign in to sync across devices.
                     </div>
                   </div>
-                )}
-                <div className="alert alert-info max-w-sm mx-auto">
-                  <SparklesIcon className="w-6 h-6" />
-                  <div className="text-left">
-                    <div className="font-semibold">
-                      Start with the classics:
+                </div>
+              )}
+
+              {/* Basic Tasbihat - expanded by default */}
+              <div className="collapse collapse-arrow bg-base-100 rounded-xl">
+                <input type="checkbox" defaultChecked />
+                <div className="collapse-title font-semibold text-base-content">
+                  Basic Tasbihat
+                </div>
+                <div className="collapse-content">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                    {commonDhikrs.slice(0, 3).concat(commonDhikrs.slice(5, 7)).map((preset, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handlePresetSelect(preset)}
+                        className="card bg-base-100 border border-base-300 hover:border-primary hover:bg-primary/5 p-4 text-left transition-all active:scale-[0.98] group"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-base-content truncate">{preset.name}</p>
+                            <p className="text-xs text-base-content/60 mt-0.5">{preset.targetCount}x target</p>
+                          </div>
+                          <div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-primary-content flex items-center justify-center transition-colors">
+                            <PlusIcon className="w-4 h-4 text-primary group-hover:text-primary-content" />
+                          </div>
+                        </div>
+                        {preset.arabic && (
+                          <p className="font-arabic text-lg text-base-content/80 mt-2 text-right">{preset.arabic}</p>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Longer Dhikrs */}
+              <div className="collapse collapse-arrow bg-base-100 rounded-xl">
+                <input type="checkbox" />
+                <div className="collapse-title font-semibold text-base-content">
+                  Longer Dhikrs
+                </div>
+                <div className="collapse-content">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                    {[commonDhikrs[3], commonDhikrs[4], commonDhikrs[7], commonDhikrs[8], commonDhikrs[10]].map((preset, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handlePresetSelect(preset)}
+                        className="card bg-base-100 border border-base-300 hover:border-primary hover:bg-primary/5 p-4 text-left transition-all active:scale-[0.98] group"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-base-content truncate">{preset.name}</p>
+                            <p className="text-xs text-base-content/60 mt-0.5">{preset.targetCount}x target</p>
+                          </div>
+                          <div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-primary-content flex items-center justify-center transition-colors">
+                            <PlusIcon className="w-4 h-4 text-primary group-hover:text-primary-content" />
+                          </div>
+                        </div>
+                        {preset.arabic && (
+                          <p className="font-arabic text-lg text-base-content/80 mt-2 text-right">{preset.arabic}</p>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Surahs & Duas */}
+              <div className="collapse collapse-arrow bg-base-100 rounded-xl">
+                <input type="checkbox" />
+                <div className="collapse-title font-semibold text-base-content">
+                  Surahs & Duas
+                </div>
+                <div className="collapse-content">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                    {[commonDhikrs[9], commonDhikrs[11], commonDhikrs[12], commonDhikrs[13], commonDhikrs[14], commonDhikrs[15], commonDhikrs[16]].map((preset, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handlePresetSelect(preset)}
+                        className="card bg-base-100 border border-base-300 hover:border-primary hover:bg-primary/5 p-4 text-left transition-all active:scale-[0.98] group"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-base-content truncate">{preset.name}</p>
+                            <p className="text-xs text-base-content/60 mt-0.5">{preset.targetCount}x target</p>
+                          </div>
+                          <div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-primary-content flex items-center justify-center transition-colors">
+                            <PlusIcon className="w-4 h-4 text-primary group-hover:text-primary-content" />
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Custom dhikr option */}
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="btn btn-outline w-full"
+              >
+                <PlusIcon className="w-5 h-5" />
+                Create Custom Tasbih
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* User's Dhikrs */}
+              <div className="space-y-3 sm:space-y-4">
+                <h2 className="text-lg sm:text-xl font-bold text-base-content">
+                  {favoritesDhikrs.length > 0 ? "Other Dhikrs" : "All Dhikrs"}
+                </h2>
+                <div className="space-y-2 sm:space-y-3">
+                  {(favoritesDhikrs.length > 0
+                    ? dhikrs.filter((dhikr) => !dhikr.isFavorite)
+                    : dhikrs
+                  ).map((dhikr) => (
+                    <HomeDhikrCard
+                      key={dhikr.id}
+                      dhikr={dhikr}
+                      onToggleFavorite={handleToggleFavorite}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Add More Section */}
+              <div className="space-y-4">
+                <h2 className="text-lg sm:text-xl font-bold text-base-content">Add More</h2>
+
+                {/* Basic Tasbihat */}
+                <div className="collapse collapse-arrow bg-base-100 rounded-xl">
+                  <input type="checkbox" />
+                  <div className="collapse-title font-semibold text-base-content">
+                    Basic Tasbihat
+                  </div>
+                  <div className="collapse-content">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                      {commonDhikrs.slice(0, 3).concat(commonDhikrs.slice(5, 7)).map((preset, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handlePresetSelect(preset)}
+                          className="card bg-base-100 border border-base-300 hover:border-primary hover:bg-primary/5 p-4 text-left transition-all active:scale-[0.98] group"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-base-content truncate">{preset.name}</p>
+                              <p className="text-xs text-base-content/60 mt-0.5">{preset.targetCount}x target</p>
+                            </div>
+                            <div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-primary-content flex items-center justify-center transition-colors">
+                              <PlusIcon className="w-4 h-4 text-primary group-hover:text-primary-content" />
+                            </div>
+                          </div>
+                          {preset.arabic && (
+                            <p className="font-arabic text-lg text-base-content/80 mt-2 text-right">{preset.arabic}</p>
+                          )}
+                        </button>
+                      ))}
                     </div>
-                    <div className="text-sm opacity-70">
-                      "SubhanAllah" (33x), "Alhamdulillah" (33x), "Allahu Akbar"
-                      (34x)
+                  </div>
+                </div>
+
+                {/* Longer Dhikrs */}
+                <div className="collapse collapse-arrow bg-base-100 rounded-xl">
+                  <input type="checkbox" />
+                  <div className="collapse-title font-semibold text-base-content">
+                    Longer Dhikrs
+                  </div>
+                  <div className="collapse-content">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                      {[commonDhikrs[3], commonDhikrs[4], commonDhikrs[7], commonDhikrs[8], commonDhikrs[10]].map((preset, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handlePresetSelect(preset)}
+                          className="card bg-base-100 border border-base-300 hover:border-primary hover:bg-primary/5 p-4 text-left transition-all active:scale-[0.98] group"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-base-content truncate">{preset.name}</p>
+                              <p className="text-xs text-base-content/60 mt-0.5">{preset.targetCount}x target</p>
+                            </div>
+                            <div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-primary-content flex items-center justify-center transition-colors">
+                              <PlusIcon className="w-4 h-4 text-primary group-hover:text-primary-content" />
+                            </div>
+                          </div>
+                          {preset.arabic && (
+                            <p className="font-arabic text-lg text-base-content/80 mt-2 text-right">{preset.arabic}</p>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Surahs & Duas */}
+                <div className="collapse collapse-arrow bg-base-100 rounded-xl">
+                  <input type="checkbox" />
+                  <div className="collapse-title font-semibold text-base-content">
+                    Surahs & Duas
+                  </div>
+                  <div className="collapse-content">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                      {[commonDhikrs[9], commonDhikrs[11], commonDhikrs[12], commonDhikrs[13], commonDhikrs[14], commonDhikrs[15], commonDhikrs[16]].map((preset, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handlePresetSelect(preset)}
+                          className="card bg-base-100 border border-base-300 hover:border-primary hover:bg-primary/5 p-4 text-left transition-all active:scale-[0.98] group"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-base-content truncate">{preset.name}</p>
+                              <p className="text-xs text-base-content/60 mt-0.5">{preset.targetCount}x target</p>
+                            </div>
+                            <div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-primary-content flex items-center justify-center transition-colors">
+                              <PlusIcon className="w-4 h-4 text-primary group-hover:text-primary-content" />
+                            </div>
+                          </div>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-bold text-base-content">
-                {favoritesDhikrs.length > 0 ? "Other Dhikrs" : "All Dhikrs"}
-              </h2>
-              <div className="space-y-2 sm:space-y-3">
-                {(favoritesDhikrs.length > 0
-                  ? dhikrs.filter((dhikr) => !dhikr.isFavorite)
-                  : dhikrs
-                ).map((dhikr) => (
-                  <HomeDhikrCard
-                    key={dhikr.id}
-                    dhikr={dhikr}
-                    onToggleFavorite={handleToggleFavorite}
-                  />
-                ))}
-              </div>
-            </div>
           )}
         </div>
 
-        {/* Floating Action Buttons */}
-        <div className="fixed bottom-24 left-4 right-4 z-40 flex flex-col gap-3 bg-base-100/60 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-base-300/20">
-          {/* Add New Dhikr Button */}
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="btn btn-primary rounded-full py-4 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2"
-          >
-            <PlusIcon className="w-5 h-5" />
-            Add New Tasbih
-          </button>
-
-          {/* Instant Tasbih Option */}
-          <Link href="/dhikr?instant=true">
-            <button className="btn btn-secondary rounded-full py-3 shadow-md hover:shadow-lg transition-all duration-200 w-full font-medium">
-              Instant Tasbih
-            </button>
-          </Link>
-        </div>
+        {/* Floating Instant Tasbih Button - only show when user has dhikrs */}
+        {dhikrs.length > 0 && (
+          <div className="fixed bottom-24 left-4 right-4 z-40">
+            <Link href="/dhikr?instant=true">
+              <button className="btn btn-secondary rounded-full py-3 shadow-lg hover:shadow-xl transition-all duration-200 w-full font-medium">
+                Instant Tasbih
+              </button>
+            </Link>
+          </div>
+        )}
 
         <CreateDhikrModal
           isOpen={isModalOpen}

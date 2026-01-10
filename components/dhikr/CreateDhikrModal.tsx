@@ -12,7 +12,7 @@ interface CreateDhikrModalProps {
   title: string;
 }
 
-const commonDhikrs = [
+export const commonDhikrs = [
   // Basic Tasbihat with inline Arabic
   { name: "SubhanAllah", arabic: "سُبْحَانَ اللَّهِ", transliteration: "SubhanAllah", targetCount: 33 },
   { name: "Alhamdulillah", arabic: "الْحَمْدُ لِلَّهِ", transliteration: "Alhamdulillah", targetCount: 33 },

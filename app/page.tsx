@@ -25,7 +25,7 @@ import {
 const features = [
   {
     id: "dhikr",
-    title: "Dhikr Counter",
+    title: "Tasbih Counter",
     description: "Track your daily remembrance",
     icon: SparklesIcon,
     activeIcon: SparklesIcon,
@@ -115,10 +115,8 @@ export default function HomePage() {
 
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-24">
         <div className="lg:grid lg:grid-cols-3 lg:gap-8 space-y-6 lg:space-y-0">
-
           {/* Main Content Area - Features and Quick Access */}
           <div className="lg:col-span-2 space-y-8">
-
             {/* Mobile: Hadith and Prayer at top */}
             <div className="lg:hidden space-y-6">
               {/* Daily Hadith (Mobile) */}
@@ -210,13 +208,17 @@ export default function HomePage() {
                       <div className="card bg-base-100 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer h-full">
                         <div className="card-body">
                           <div className="flex items-start space-x-4">
-                            <div className={`p-3 rounded-lg ${feature.bgColor}`}>
+                            <div
+                              className={`p-3 rounded-lg ${feature.bgColor}`}
+                            >
                               <IconComponent
                                 className={`w-6 h-6 ${feature.color}`}
                               />
                             </div>
                             <div className="flex-1">
-                              <h3 className="font-bold text-lg lg:text-xl">{feature.title}</h3>
+                              <h3 className="font-bold text-lg lg:text-xl">
+                                {feature.title}
+                              </h3>
                               <p className="text-base-content/70 text-sm lg:text-base">
                                 {feature.description}
                               </p>
@@ -232,7 +234,9 @@ export default function HomePage() {
 
             {/* Quick Access */}
             <div className="space-y-6">
-              <h2 className="text-xl lg:text-2xl font-bold text-base-content">Quick Access</h2>
+              <h2 className="text-xl lg:text-2xl font-bold text-base-content">
+                Quick Access
+              </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
                 {quickAccess.map((item) => {
                   const IconComponent = item.icon;
@@ -241,7 +245,9 @@ export default function HomePage() {
                       <div className="card bg-base-100 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer h-full">
                         <div className="card-body p-4 text-center">
                           <IconComponent className="w-8 h-8 mx-auto text-base-content/70 mb-2" />
-                          <h4 className="font-semibold text-sm lg:text-base">{item.title}</h4>
+                          <h4 className="font-semibold text-sm lg:text-base">
+                            {item.title}
+                          </h4>
                           <p className="text-xs lg:text-sm text-base-content/60 mt-1">
                             {item.description}
                           </p>
@@ -260,17 +266,17 @@ export default function HomePage() {
                 <div>
                   <div className="font-semibold">Enhanced Experience</div>
                   <div className="text-sm opacity-80">
-                    Sign in to sync your progress across devices and unlock advanced
-                    features.
+                    Sign in to sync your progress across devices and unlock
+                    advanced features.
                   </div>
                 </div>
               </div>
             )}
-
           </div>
 
           {/* Sidebar Area - Hadith and Prayer */}
-          <div className="hidden lg:block space-y-6">{/* Daily Hadith (Sidebar) */}
+          <div className="hidden lg:block space-y-6">
+            {/* Daily Hadith (Sidebar) */}
             <div className="card bg-base-100 shadow-xl sticky top-24">
               <div className="card-body">
                 <h2 className="card-title text-lg text-primary">
@@ -348,9 +354,7 @@ export default function HomePage() {
                 </div>
               </div>
             ) : null}
-
           </div>
-
         </div>
       </div>
     </div>
