@@ -9,7 +9,6 @@ import { Providers } from "./providers";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import ServiceWorkerRegistration from "@/components/pwa/ServiceWorkerRegistration";
-import UpdateNotification from "@/components/pwa/UpdateNotification";
 import LayoutClient from "@/components/layout/LayoutClient";
 import { ThemeProvider } from "next-themes";
 
@@ -260,7 +259,6 @@ export default function RootLayout({
               <LayoutClient>{children}</LayoutClient>
               <OfflineIndicator />
               <InstallPrompt />
-              <UpdateNotification />
             </ServiceWorkerRegistration>
           </Providers>
         </ThemeProvider>
