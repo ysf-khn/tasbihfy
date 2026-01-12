@@ -1,7 +1,7 @@
 // Simplified Service Worker for Tasbihfy PWA
 // Based on Next.js PWA guide - much simpler than previous implementation
 
-const CACHE_NAME = "tasbihfy-v1";
+const CACHE_NAME = "tasbihfy-v130126";
 const urlsToCache = [
   "/",
   "/icons/icon-192x192.png",
@@ -10,8 +10,9 @@ const urlsToCache = [
   "/favicon.ico",
 ];
 
-// Install event - cache essential resources
+// Install event - cache essential resources and skip waiting
 self.addEventListener("install", function (event) {
+  self.skipWaiting(); // Take over immediately, don't wait for old SW
   event.waitUntil(
     caches.open(CACHE_NAME).then(function (cache) {
       console.log("[SW] Caching essential resources");
@@ -20,19 +21,25 @@ self.addEventListener("install", function (event) {
   );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches and claim clients
 self.addEventListener("activate", function (event) {
   event.waitUntil(
-    caches.keys().then(function (cacheNames) {
-      return Promise.all(
-        cacheNames.map(function (cacheName) {
-          if (cacheName !== CACHE_NAME) {
-            console.log("[SW] Removing old cache:", cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches
+      .keys()
+      .then(function (cacheNames) {
+        return Promise.all(
+          cacheNames.map(function (cacheName) {
+            if (cacheName !== CACHE_NAME) {
+              console.log("[SW] Removing old cache:", cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+      .then(function () {
+        console.log("[SW] Claiming clients");
+        return self.clients.claim(); // Take control of all open pages
+      })
   );
 });
 
