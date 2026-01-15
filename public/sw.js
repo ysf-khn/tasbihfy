@@ -1,7 +1,7 @@
 // Simplified Service Worker for Tasbihfy PWA
 // Based on Next.js PWA guide - much simpler than previous implementation
 
-const CACHE_NAME = "tasbihfy-v1301261";
+const CACHE_NAME = "tasbihfy-v150126";
 const urlsToCache = [
   "/",
   "/icons/icon-192x192.png",

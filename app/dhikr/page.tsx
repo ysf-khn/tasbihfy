@@ -11,7 +11,6 @@ import HomeDhikrCard from "@/components/dhikr/HomeDhikrCard";
 import CreateDhikrModal, { commonDhikrs } from "@/components/dhikr/CreateDhikrModal";
 import islamicTexts from "@/data/islamic-texts.json";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
-import NightlyRecitationsCard from "@/components/nightly/NightlyRecitationsCard";
 import type { Dhikr, DhikrSession } from "@/types/models";
 import { GuestStorage } from "@/lib/guestStorage";
 import { PlusIcon, SparklesIcon } from "@heroicons/react/24/outline";
@@ -366,9 +365,6 @@ function DhikrContent() {
       <div>
         {/* Content */}
         <div className="p-4 sm:p-6 space-y-6 pb-48">
-          {/* Nightly Recitations Card - Shows only after sunset */}
-          <NightlyRecitationsCard />
-
           {/* Favorites Section */}
           {favoritesDhikrs.length > 0 && (
             <div className="space-y-3 sm:space-y-4">
@@ -631,16 +627,14 @@ function DhikrContent() {
           )}
         </div>
 
-        {/* Floating Instant Tasbih Button - only show when user has dhikrs */}
-        {dhikrs.length > 0 && (
-          <div className="fixed bottom-24 left-4 right-4 z-40">
-            <Link href="/dhikr?instant=true">
-              <button className="btn btn-secondary rounded-full py-3 shadow-lg hover:shadow-xl transition-all duration-200 w-full font-medium">
-                Instant Tasbih
-              </button>
-            </Link>
-          </div>
-        )}
+        {/* Floating Instant Tasbih Button */}
+        <div className="fixed bottom-24 lg:bottom-8 left-4 right-4 z-40 max-w-md lg:left-1/2 lg:-translate-x-1/2 lg:right-auto lg:w-full lg:px-4">
+          <Link href="/dhikr?instant=true">
+            <button className="btn btn-secondary rounded-full py-3 shadow-lg hover:shadow-xl transition-all duration-200 w-full font-medium">
+              Instant Tasbih
+            </button>
+          </Link>
+        </div>
 
         <CreateDhikrModal
           isOpen={isModalOpen}

@@ -1,20 +1,23 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { useSunsetTime } from '@/hooks/useSunsetTime';
-import { loadProgress } from '@/data/nightly-recitations';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useSunsetTime } from "@/hooks/useSunsetTime";
+import { loadProgress } from "@/data/nightly-recitations";
 
 export default function NightlyRecitationsCard() {
   const { isAfterSunset, nextMaghribIn, loading } = useSunsetTime();
-  const [progress, setProgress] = useState<{ completed: boolean; currentIndex: number } | null>(null);
+  const [progress, setProgress] = useState<{
+    completed: boolean;
+    currentIndex: number;
+  } | null>(null);
 
   useEffect(() => {
     const savedProgress = loadProgress();
     if (savedProgress) {
       setProgress({
         completed: savedProgress.completedToday,
-        currentIndex: savedProgress.currentIndex
+        currentIndex: savedProgress.currentIndex,
       });
     }
   }, []);
@@ -50,10 +53,10 @@ export default function NightlyRecitationsCard() {
               </h3>
               <p className="text-sm text-base-content/70 mt-1">
                 {progress?.completed
-                  ? 'Completed tonight ✓'
+                  ? "Completed tonight ✓"
                   : progress && progress.currentIndex > 0
                   ? `Continue from verse ${progress.currentIndex + 1}/48`
-                  : 'Start your nightly protection'}
+                  : "Start your nightly protection"}
               </p>
             </div>
 

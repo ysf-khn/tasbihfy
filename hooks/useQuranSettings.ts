@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { QuranSettings, QuranScript } from '@/lib/quran/types';
 import { DEFAULT_QURAN_SETTINGS, QURAN_SCRIPTS } from '@/lib/quran/constants';
 import { getDefaultTranslations, getTranslationById } from '@/lib/quran/translations-data';
+import { getRegionDefaultScript } from '@/lib/user-region';
 
 export function useQuranSettings() {
   const [settings, setSettings] = useState<QuranSettings>(DEFAULT_QURAN_SETTINGS);
@@ -26,13 +27,17 @@ export function useQuranSettings() {
     try {
       setIsLoading(true);
       const savedSettings = localStorage.getItem('quran_settings');
+      const isNewUser = !savedSettings;
       let finalSettings: QuranSettings = { ...DEFAULT_QURAN_SETTINGS };
-      
+
       if (savedSettings) {
         const parsed = JSON.parse(savedSettings);
         finalSettings = { ...DEFAULT_QURAN_SETTINGS, ...parsed };
+      } else {
+        // NEW USER: Set region-based script default (IndoPak for India/Pakistan/Bangladesh)
+        finalSettings.selectedScript = getRegionDefaultScript();
       }
-      
+
       // Ensure selectedTranslations has valid defaults if empty
       if (!finalSettings.selectedTranslations || finalSettings.selectedTranslations.length === 0) {
         const defaults = getDefaultTranslations();
@@ -42,8 +47,17 @@ export function useQuranSettings() {
           selectedTranslations: defaultIds.slice(0, 2) // Start with 2 default translations
         };
       }
-      
+
       setSettings(finalSettings);
+
+      // Save settings for new users to persist the region-based choice
+      if (isNewUser) {
+        try {
+          localStorage.setItem('quran_settings', JSON.stringify(finalSettings));
+        } catch (error) {
+          console.warn('Failed to persist initial settings:', error);
+        }
+      }
     } catch (error) {
       console.error('Failed to load Quran settings:', error);
       setSettings(DEFAULT_QURAN_SETTINGS);

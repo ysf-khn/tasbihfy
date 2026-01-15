@@ -20,6 +20,7 @@ import {
   BookOpenIcon as BookOpenIconSolid,
   DocumentTextIcon as DocumentTextIconSolid,
 } from "@heroicons/react/24/solid";
+import NightlyRecitationsCard from "@/components/nightly/NightlyRecitationsCard";
 
 // Feature cards data
 const features = [
@@ -120,7 +121,7 @@ export default function HomePage() {
             {/* Mobile: Hadith and Prayer at top */}
             <div className="lg:hidden space-y-6">
               {/* Daily Hadith (Mobile) */}
-              <div className="card bg-base-100 shadow-xl">
+              <div className="card bg-base-100 border border-base-300">
                 <div className="card-body">
                   <h2 className="card-title text-lg text-primary">
                     Hadith of the Day
@@ -195,17 +196,17 @@ export default function HomePage() {
               ) : null}
             </div>
 
+            {/* Nightly Recitations Card - Shows only after sunset */}
+            <NightlyRecitationsCard />
+
             {/* Main Features Grid */}
-            <div className="space-y-6">
-              <h2 className="text-2xl lg:text-3xl font-bold text-base-content">
-                Explore Features
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
                 {features.map((feature) => {
                   const IconComponent = feature.icon;
                   return (
                     <Link key={feature.id} href={feature.href}>
-                      <div className="card bg-base-100 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer h-full">
+                      <div className="card bg-base-100 border border-base-300 transition-all duration-200 cursor-pointer h-full">
                         <div className="card-body">
                           <div className="flex items-start space-x-4">
                             <div
@@ -242,7 +243,7 @@ export default function HomePage() {
                   const IconComponent = item.icon;
                   return (
                     <Link key={item.href} href={item.href}>
-                      <div className="card bg-base-100 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer h-full">
+                      <div className="card bg-base-100 border border-base-300 transition-all duration-200 cursor-pointer h-full">
                         <div className="card-body p-4 text-center">
                           <IconComponent className="w-8 h-8 mx-auto text-base-content/70 mb-2" />
                           <h4 className="font-semibold text-sm lg:text-base">
@@ -277,7 +278,7 @@ export default function HomePage() {
           {/* Sidebar Area - Hadith and Prayer */}
           <div className="hidden lg:block space-y-6">
             {/* Daily Hadith (Sidebar) */}
-            <div className="card bg-base-100 shadow-xl sticky top-24">
+            <div className="card bg-base-100 border border-base-300 sticky top-24">
               <div className="card-body">
                 <h2 className="card-title text-lg text-primary">
                   Hadith of the Day

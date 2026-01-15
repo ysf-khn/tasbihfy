@@ -136,7 +136,7 @@ export default function QuranClient() {
         )}
 
         {/* Popular Surahs */}
-        <div className="mb-2">
+        <div className="mb-4">
           <div className="flex flex-wrap gap-2">
             {[
               { id: 18, name: "Al-Kahf" },
@@ -156,6 +156,12 @@ export default function QuranClient() {
                 {surah.name}
               </Link>
             ))}
+            <Link
+              href="/baqarah-last-two"
+              className="badge badge-lg badge-neutral hover:badge-primary transition-all duration-200 px-3 py-2"
+            >
+              Last 2 Ayahs (Al-Baqarah)
+            </Link>
           </div>
         </div>
 
@@ -179,7 +185,6 @@ export default function QuranClient() {
           </div>
         </>
       </div>
-
     </div>
   );
 }
