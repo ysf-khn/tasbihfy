@@ -253,6 +253,9 @@ export default function ReminderSettings({ user }: ReminderSettingsProps) {
           return;
         }
 
+        // The device is now subscribed — reflect it so the test button enables
+        setPreferences((prev) => ({ ...prev, hasSubscription: true }));
+
         // Update server preferences to enabled after successful subscription
         const response = await fetch("/api/notifications/preferences", {
           method: "PUT",
