@@ -4,8 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "sw:version": "node scripts/generate-sw.js",
+    "prebuild": "npm run sw:version",
     "build": "next build",
     "start": "next start",
+    "precf:build": "npm run sw:version",
     "cf:build": "npx opennextjs-cloudflare build",
     "cf:preview": "npm run cf:build && npx wrangler dev",
     "cf:deploy": "npm run cf:build && npx wrangler deploy",

@@ -1,70 +1,62 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
-const { execSync } = require('child_process');
+/**
+ * Stamps public/sw.js with a build-specific CACHE_NAME.
+ *
+ * The service worker's activate handler deletes every cache whose name does
+ * not match CACHE_NAME, so changing it on each build is what guarantees users
+ * get fresh assets instead of a stale shell. Doing that by hand is easy to
+ * forget, which is the bug this prevents.
+ */
 
-// Get git hash for versioning (fallback to timestamp)
+const fs = require("fs");
+const path = require("path");
+const { execSync } = require("child_process");
+
+const SW_PATH = path.join(__dirname, "..", "public", "sw.js");
+const VERSION_PATH = path.join(__dirname, "..", "public", "sw-version.json");
+
+// Prefer the commit hash: deterministic, so rebuilding the same commit does
+// not churn the file. Fall back to a timestamp outside a git checkout.
 function getVersion() {
   try {
-    const gitHash = execSync('git rev-parse --short HEAD').toString().trim();
-    const timestamp = Date.now();
-    return `${gitHash}-${timestamp}`;
+    return execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] })
+      .toString()
+      .trim();
   } catch {
-    return Date.now().toString();
+    return String(Date.now());
   }
 }
 
-// Generate content hash for cache busting
-function getContentHash(content) {
-  return crypto.createHash('md5').update(content).digest('hex').slice(0, 8);
-}
-
-// Read the service worker template
-const swTemplatePath = path.join(__dirname, '..', 'public', 'sw-template.js');
-const swOutputPath = path.join(__dirname, '..', 'public', 'sw.js');
-
-// Generate the service worker with version
 function generateServiceWorker() {
-  const version = getVersion();
-  const buildTime = new Date().toISOString();
-
-  // Read template or existing sw.js
-  let swContent;
-  if (fs.existsSync(swTemplatePath)) {
-    swContent = fs.readFileSync(swTemplatePath, 'utf-8');
-  } else {
-    swContent = fs.readFileSync(swOutputPath, 'utf-8');
+  if (!fs.existsSync(SW_PATH)) {
+    console.error(`❌ Service worker not found at ${SW_PATH}`);
+    process.exit(1);
   }
 
-  // Replace version placeholders
-  swContent = swContent.replace(/const SW_VERSION = .*?;/, `const SW_VERSION = "${version}";`);
-  swContent = swContent.replace(/const BUILD_TIME = .*?;/, `const BUILD_TIME = "${buildTime}";`);
+  const version = getVersion();
+  const cacheName = `tasbihfy-${version}`;
+  const source = fs.readFileSync(SW_PATH, "utf-8");
 
-  // Calculate content hash
-  const contentHash = getContentHash(swContent);
+  const pattern = /const CACHE_NAME = "[^"]*";/;
+  if (!pattern.test(source)) {
+    // Fail loudly rather than silently shipping an unbumped cache name.
+    console.error("❌ Could not find a CACHE_NAME declaration in public/sw.js");
+    process.exit(1);
+  }
 
-  // Write the generated service worker
-  fs.writeFileSync(swOutputPath, swContent);
+  const updated = source.replace(pattern, `const CACHE_NAME = "${cacheName}";`);
 
-  console.log(`✅ Service Worker generated successfully!`);
-  console.log(`   Version: ${version}`);
-  console.log(`   Build Time: ${buildTime}`);
-  console.log(`   Content Hash: ${contentHash}`);
-
-  // Also update a version file for reference
-  const versionInfo = {
-    version,
-    buildTime,
-    contentHash,
-  };
+  if (updated !== source) {
+    fs.writeFileSync(SW_PATH, updated);
+  }
 
   fs.writeFileSync(
-    path.join(__dirname, '..', 'public', 'sw-version.json'),
-    JSON.stringify(versionInfo, null, 2)
+    VERSION_PATH,
+    JSON.stringify({ cacheName, version, buildTime: new Date().toISOString() }, null, 2) + "\n"
   );
+
+  console.log(`✅ Service worker cache name set to ${cacheName}`);
 }
 
-// Run the generation
 generateServiceWorker();
