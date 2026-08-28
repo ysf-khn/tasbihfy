@@ -28,7 +28,7 @@ export default function PrayerClient() {
       <div className="container mx-auto px-4 py-6 lg:py-4 max-w-7xl space-y-6 lg:space-y-4">
         {/* Header Section */}
         <div className="text-center space-y-2 lg:space-y-1">
-          <h1 className="text-3xl lg:text-2xl font-bold text-base-content">Prayer Times</h1>
+          <h1 className="heading-ornate-center text-3xl lg:text-2xl font-bold text-base-content">Prayer Times</h1>
           {prayerData?.hijri ? (
             <p className="text-base-content/70 text-sm">
               {prayerData.hijri.day} {prayerData.hijri.monthEn}{" "}

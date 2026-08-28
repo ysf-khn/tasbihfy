@@ -14,12 +14,9 @@ import {
   HeartIcon,
   SunIcon,
   MoonIcon,
+  MapPinIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/24/outline";
-import {
-  ClockIcon as ClockIconSolid,
-  BookOpenIcon as BookOpenIconSolid,
-  DocumentTextIcon as DocumentTextIconSolid,
-} from "@heroicons/react/24/solid";
 import NightlyRecitationsCard from "@/components/nightly/NightlyRecitationsCard";
 
 // Feature cards data
@@ -29,40 +26,28 @@ const features = [
     title: "Tasbih Counter",
     description: "Track your daily remembrance",
     icon: SparklesIcon,
-    activeIcon: SparklesIcon,
     href: "/dhikr",
-    color: "text-primary",
-    bgColor: "bg-primary/10",
   },
   {
     id: "prayer",
     title: "Prayer Times",
     description: "Never miss a prayer",
     icon: ClockIcon,
-    activeIcon: ClockIconSolid,
     href: "/prayer-times",
-    color: "text-secondary",
-    bgColor: "bg-secondary/10",
   },
   {
     id: "quran",
     title: "Quran",
     description: "Read with audio & translations",
     icon: BookOpenIcon,
-    activeIcon: BookOpenIconSolid,
     href: "/quran",
-    color: "text-accent",
-    bgColor: "bg-accent/10",
   },
   {
     id: "duas",
     title: "Duas",
     description: "Daily supplications collection",
     icon: DocumentTextIcon,
-    activeIcon: DocumentTextIconSolid,
     href: "/duas",
-    color: "text-info",
-    bgColor: "bg-info/10",
   },
 ];
 
@@ -94,15 +79,117 @@ const quickAccess = [
   },
 ];
 
-export default function HomePage() {
-  const { user } = useAuth();
-  const [dailyHadith, setDailyHadith] = useState<Hadith | null>(null);
+function HeroBand() {
   const {
     prayerData,
     loading: prayerLoading,
     error: prayerError,
     nextPrayer,
   } = usePrayerTimes();
+
+  return (
+    <Link href="/prayer-times" className="block">
+      <div className="relative overflow-hidden rounded-2xl bg-primary text-primary-content">
+        <div className="absolute inset-0 pattern-star" aria-hidden="true" />
+        <div className="relative px-5 py-6 sm:px-8 sm:py-8">
+          {prayerLoading ? (
+            <div className="flex items-center gap-3 py-4">
+              <div className="loading loading-spinner loading-sm" />
+              <span className="text-sm opacity-80">
+                Loading prayer times...
+              </span>
+            </div>
+          ) : prayerError ? (
+            <div className="py-4">
+              <div className="font-semibold">Prayer times unavailable</div>
+              <div className="text-sm opacity-75 mt-1">
+                Tap to set your location
+              </div>
+            </div>
+          ) : nextPrayer ? (
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] opacity-75">
+                  Next Prayer
+                </div>
+                <div className="mt-1 text-3xl sm:text-4xl font-bold capitalize">
+                  {nextPrayer.prayer.name}
+                </div>
+                <div className="mt-1 text-sm opacity-85">
+                  in {nextPrayer.timeUntil}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl sm:text-3xl font-bold tabular-nums">
+                  {nextPrayer.prayer.time}
+                </div>
+                {prayerData?.location && (
+                  <div className="mt-1 flex items-center justify-end gap-1 text-xs opacity-75">
+                    <MapPinIcon className="w-3.5 h-3.5" />
+                    {prayerData.location.name}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="py-4">
+              <div className="font-semibold">Prayer times</div>
+              <div className="text-sm opacity-75 mt-1">
+                Tap to set your location
+              </div>
+            </div>
+          )}
+
+          {prayerData?.hijri && (
+            <div className="mt-4 border-t border-primary-content/20 pt-3 flex items-center justify-between text-xs">
+              <span className="opacity-85">
+                {prayerData.hijri.day} {prayerData.hijri.monthEn}{" "}
+                {prayerData.hijri.year} AH
+              </span>
+              <span className="opacity-60">
+                {new Date().toLocaleDateString(undefined, {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                })}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function HadithCard({ hadith }: { hadith: Hadith | null }) {
+  return (
+    <div className="frame-gold rounded-2xl bg-base-100 p-6 sm:p-7">
+      <div className="ornament-divider mb-4">
+        <span className="text-[0.65rem] font-semibold uppercase tracking-[0.25em]">
+          Hadith of the Day
+        </span>
+      </div>
+      {hadith ? (
+        <>
+          <blockquote className="text-base-content leading-relaxed italic text-center">
+            &ldquo;{hadith.text}&rdquo;
+          </blockquote>
+          <cite className="mt-3 block text-center text-sm text-base-content/60 not-italic">
+            — {hadith.source}
+          </cite>
+        </>
+      ) : (
+        <div className="flex items-center justify-center py-4">
+          <div className="loading loading-spinner loading-md text-primary" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function HomePage() {
+  const { user } = useAuth();
+  const [dailyHadith, setDailyHadith] = useState<Hadith | null>(null);
 
   // Load daily hadith
   useEffect(() => {
@@ -116,121 +203,44 @@ export default function HomePage() {
 
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-24">
         <div className="lg:grid lg:grid-cols-3 lg:gap-8 space-y-6 lg:space-y-0">
-          {/* Main Content Area - Features and Quick Access */}
+          {/* Main Content Area */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Mobile: Hadith and Prayer at top */}
-            <div className="lg:hidden space-y-6">
-              {/* Daily Hadith (Mobile) */}
-              <div className="card bg-base-100 border border-base-300">
-                <div className="card-body">
-                  <h2 className="card-title text-lg text-primary">
-                    Hadith of the Day
-                  </h2>
-                  {dailyHadith ? (
-                    <>
-                      <blockquote className="text-base-content italic">
-                        "{dailyHadith.text}"
-                      </blockquote>
-                      <cite className="text-base-content/70 text-sm">
-                        — {dailyHadith.source}
-                      </cite>
-                    </>
-                  ) : (
-                    <div className="flex items-center justify-center py-4">
-                      <div className="loading loading-spinner loading-md text-primary"></div>
-                    </div>
-                  )}
-                </div>
-              </div>
+            <HeroBand />
 
-              {/* Next Prayer (Mobile) */}
-              {prayerLoading ? (
-                <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3">
-                  <div className="flex items-center justify-center">
-                    <div className="loading loading-spinner loading-sm text-primary"></div>
-                    <span className="ml-2 text-sm text-base-content/70">
-                      Loading prayer times...
-                    </span>
-                  </div>
-                </div>
-              ) : prayerError ? (
-                <div className="bg-error/10 border border-error/20 rounded-lg px-4 py-3">
-                  <div className="flex items-center space-x-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 text-error"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 9v2m0 4h.01"
-                      />
-                    </svg>
-                    <span className="text-sm font-medium text-error">
-                      Prayer times unavailable
-                    </span>
-                  </div>
-                </div>
-              ) : nextPrayer ? (
-                <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3">
-                  <div className="space-y-1">
-                    <div className="font-bold text-base-content">
-                      Next Prayer:{" "}
-                      <span className="capitalize font-bold text-primary">
-                        {nextPrayer.prayer.name}
-                      </span>{" "}
-                      ({nextPrayer.prayer.time})
-                    </div>
-                    <div className="text-sm text-base-content/70">
-                      in {nextPrayer.timeUntil}
-                      {prayerData?.location && (
-                        <span> | {prayerData.location.name}</span>
-                      )}
-                    </div>
-                    {prayerData?.hijri && (
-                      <div className="text-xs text-base-content/60">
-                        {prayerData.hijri.day} {prayerData.hijri.monthEn}{" "}
-                        {prayerData.hijri.year} AH
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : null}
+            {/* Hadith (mobile — sidebar carries it on desktop) */}
+            <div className="lg:hidden">
+              <HadithCard hadith={dailyHadith} />
             </div>
 
             {/* Nightly Recitations Card - Shows only after sunset */}
             <NightlyRecitationsCard />
 
             {/* Main Features Grid */}
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
+            <div className="space-y-5">
+              <h2 className="heading-ornate text-xl lg:text-2xl font-bold text-base-content">
+                Your Companion
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {features.map((feature) => {
                   const IconComponent = feature.icon;
                   return (
                     <Link key={feature.id} href={feature.href}>
-                      <div className="card bg-base-100 border border-base-300 transition-all duration-200 cursor-pointer h-full">
-                        <div className="card-body">
-                          <div className="flex items-start space-x-4">
-                            <div
-                              className={`p-3 rounded-lg ${feature.bgColor}`}
-                            >
-                              <IconComponent
-                                className={`w-6 h-6 ${feature.color}`}
-                              />
-                            </div>
-                            <div className="flex-1">
-                              <h3 className="font-bold text-lg lg:text-xl">
-                                {feature.title}
-                              </h3>
-                              <p className="text-base-content/70 text-sm lg:text-base">
-                                {feature.description}
-                              </p>
-                            </div>
+                      <div className="group card bg-base-100 border border-base-300 hover:border-secondary/50 transition-colors duration-200 cursor-pointer h-full">
+                        <div className="card-body flex-row items-center gap-4">
+                          <span className="star-8 bg-primary/10 text-primary w-11 h-11 shrink-0 flex items-center justify-center">
+                            <span className="flex items-center justify-center">
+                              <IconComponent className="w-5 h-5" />
+                            </span>
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-lg">
+                              {feature.title}
+                            </h3>
+                            <p className="text-base-content/65 text-sm">
+                              {feature.description}
+                            </p>
                           </div>
+                          <ChevronRightIcon className="w-4 h-4 text-base-content/30 group-hover:text-secondary transition-colors" />
                         </div>
                       </div>
                     </Link>
@@ -240,22 +250,22 @@ export default function HomePage() {
             </div>
 
             {/* Quick Access */}
-            <div className="space-y-6">
-              <h2 className="text-xl lg:text-2xl font-bold text-base-content">
+            <div className="space-y-5">
+              <h2 className="heading-ornate text-xl lg:text-2xl font-bold text-base-content">
                 Quick Access
               </h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {quickAccess.map((item) => {
                   const IconComponent = item.icon;
                   return (
                     <Link key={item.href} href={item.href}>
-                      <div className="card bg-base-100 border border-base-300 transition-all duration-200 cursor-pointer h-full">
-                        <div className="card-body p-4 text-center">
-                          <IconComponent className="w-8 h-8 mx-auto text-base-content/70 mb-2" />
-                          <h4 className="font-semibold text-sm lg:text-base">
+                      <div className="card bg-base-100 border border-base-300 hover:border-secondary/50 transition-colors duration-200 cursor-pointer h-full">
+                        <div className="card-body p-4 items-center text-center">
+                          <IconComponent className="w-7 h-7 text-primary/70 mb-1" />
+                          <h4 className="font-semibold text-sm">
                             {item.title}
                           </h4>
-                          <p className="text-xs lg:text-sm text-base-content/60 mt-1">
+                          <p className="text-xs text-base-content/55">
                             {item.description}
                           </p>
                         </div>
@@ -266,101 +276,34 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Guest Mode Encouragement (Main Content) */}
+            {/* Guest Mode Encouragement */}
             {!user && (
-              <div className="alert alert-info">
-                <SparklesIcon className="w-6 h-6" />
-                <div>
-                  <div className="font-semibold">Enhanced Experience</div>
-                  <div className="text-sm opacity-80">
-                    Sign in to sync your progress across devices and unlock
-                    advanced features.
+              <div className="rounded-2xl border border-secondary/40 bg-base-100 p-5 flex items-center gap-4">
+                <span className="star-8 bg-secondary/15 text-secondary w-10 h-10 shrink-0 flex items-center justify-center">
+                  <span className="flex items-center justify-center">
+                    <SparklesIcon className="w-5 h-5" />
+                  </span>
+                </span>
+                <div className="flex-1">
+                  <div className="font-semibold text-base-content">
+                    Keep your progress
+                  </div>
+                  <div className="text-sm text-base-content/65">
+                    Sign in to sync your dhikr and prayers across devices.
                   </div>
                 </div>
+                <Link href="/login" className="btn btn-primary btn-sm">
+                  Sign In
+                </Link>
               </div>
             )}
           </div>
 
-          {/* Sidebar Area - Hadith and Prayer */}
+          {/* Sidebar Area (desktop) */}
           <div className="hidden lg:block space-y-6">
-            {/* Daily Hadith (Sidebar) */}
-            <div className="card bg-base-100 border border-base-300 sticky top-24">
-              <div className="card-body">
-                <h2 className="card-title text-lg text-primary">
-                  Hadith of the Day
-                </h2>
-                {dailyHadith ? (
-                  <>
-                    <blockquote className="text-base-content italic text-sm">
-                      "{dailyHadith.text}"
-                    </blockquote>
-                    <cite className="text-base-content/70 text-xs">
-                      — {dailyHadith.source}
-                    </cite>
-                  </>
-                ) : (
-                  <div className="flex items-center justify-center py-4">
-                    <div className="loading loading-spinner loading-md text-primary"></div>
-                  </div>
-                )}
-              </div>
+            <div className="sticky top-24">
+              <HadithCard hadith={dailyHadith} />
             </div>
-
-            {/* Next Prayer (Sidebar) */}
-            {prayerLoading ? (
-              <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3">
-                <div className="flex items-center justify-center">
-                  <div className="loading loading-spinner loading-sm text-primary"></div>
-                  <span className="ml-2 text-sm text-base-content/70">
-                    Loading prayer times...
-                  </span>
-                </div>
-              </div>
-            ) : prayerError ? (
-              <div className="bg-error/10 border border-error/20 rounded-lg px-4 py-3">
-                <div className="flex items-center space-x-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 text-error"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01"
-                    />
-                  </svg>
-                  <span className="text-sm font-medium text-error">
-                    Prayer times unavailable
-                  </span>
-                </div>
-              </div>
-            ) : nextPrayer ? (
-              <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-4">
-                <div className="space-y-2">
-                  <div className="font-bold text-base-content">
-                    Next Prayer:{" "}
-                    <span className="capitalize font-bold text-primary">
-                      {nextPrayer.prayer.name}
-                    </span>
-                  </div>
-                  <div className="text-lg font-bold text-primary">
-                    {nextPrayer.prayer.time}
-                  </div>
-                  <div className="text-sm text-base-content/70">
-                    in {nextPrayer.timeUntil}
-                  </div>
-                  {prayerData?.location && (
-                    <div className="text-xs text-base-content/50">
-                      📍 {prayerData.location.name}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : null}
           </div>
         </div>
       </div>

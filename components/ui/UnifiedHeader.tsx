@@ -113,18 +113,23 @@ export default function UnifiedHeader({
     <>
       <div
         className={`
-          fixed top-0 left-0 right-0 z-50 
-          bg-base-100/90 backdrop-blur-md border-b border-base-200/20
+          fixed top-0 left-0 right-0 z-50
+          bg-base-100/90 backdrop-blur-md border-b border-secondary/30
           transition-transform duration-300 ease-in-out
           ${shouldHideHeader ? "-translate-y-full" : "translate-y-0"}
         `}
       >
         <div className="flex justify-between items-center p-4 sm:p-6">
-          {/* Left: App Title */}
+          {/* Left: Brand mark + title */}
           <div className="flex items-center space-x-8">
-            <h1 className="text-xl sm:text-2xl font-bold text-base-content">
-              {title}
-            </h1>
+            <Link href="/" className="flex items-center gap-2.5">
+              <span className="star-8 bg-primary w-5 h-5 shrink-0 flex items-center justify-center">
+                <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
+              </span>
+              <h1 className="text-xl sm:text-2xl font-bold text-base-content tracking-tight">
+                {title}
+              </h1>
+            </Link>
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-4">

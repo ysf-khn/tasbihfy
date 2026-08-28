@@ -1,6 +1,4 @@
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
-import Image from "next/image";
-import kaabaImage from "@/public/kaaba.jpeg";
 
 export default function Loading() {
   return (
@@ -9,38 +7,17 @@ export default function Loading() {
 
       <div className="container mx-auto px-4 py-6 max-w-4xl pt-4">
         {/* Surah Header Skeleton */}
-        <div className="relative mb-6 rounded-xl overflow-hidden shadow-lg h-40">
-          {/* Background Image - Static during loading */}
-          <Image
-            src={kaabaImage}
-            alt="Kaaba"
-            fill
-            className="object-cover"
-            priority
-          />
-
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+        <div className="relative mb-6 rounded-2xl overflow-hidden bg-primary h-40">
+          <div className="absolute inset-0 pattern-star" aria-hidden="true" />
 
           {/* Header Content Skeleton */}
           <div className="relative z-10 h-full flex items-center justify-between p-6">
             <div className="flex items-center gap-4">
-              {/* Back Button Skeleton */}
-              <div className="w-10 h-10 bg-white/20 rounded-lg animate-pulse"></div>
-              
               {/* Title and Info Skeleton */}
               <div>
-                <div className="h-6 bg-white/30 rounded w-32 mb-2 animate-pulse"></div>
-                <div className="h-4 bg-white/20 rounded w-24 animate-pulse"></div>
+                <div className="h-6 bg-primary-content/30 rounded w-32 mb-2 animate-pulse"></div>
+                <div className="h-4 bg-primary-content/20 rounded w-24 animate-pulse"></div>
               </div>
-            </div>
-
-            {/* Action Buttons Skeleton */}
-            <div className="flex gap-2">
-              <div className="w-10 h-10 bg-white/20 rounded-lg animate-pulse"></div>
-              <div className="w-10 h-10 bg-white/20 rounded-lg animate-pulse"></div>
-              <div className="w-10 h-10 bg-white/20 rounded-lg animate-pulse"></div>
-              <div className="w-10 h-10 bg-white/20 rounded-lg animate-pulse"></div>
             </div>
           </div>
         </div>

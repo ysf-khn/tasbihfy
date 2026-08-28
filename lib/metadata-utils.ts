@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+﻿import { Metadata } from "next";
 
 // Base URL for the application
 export const getBaseUrl = () => {
@@ -92,9 +92,9 @@ export const getBaseMetadata = (): Partial<Metadata> => {
       "apple-mobile-web-app-capable": "yes",
       "apple-mobile-web-app-status-bar-style": "default",
       "application-name": "Tasbihfy",
-      "msapplication-TileColor": "#57c5b6",
+      "msapplication-TileColor": "#0d5c47",
       "msapplication-TileImage": "/icons/icon-144x144.png",
-      "theme-color": "#57c5b6",
+      "theme-color": "#0d5c47",
     },
   };
 };
@@ -238,3 +238,4 @@ export const pageMetadata = {
       ogImageAlt: "Hisnul Muslim Duas Collection - Tasbihfy",
     }),
 };
+

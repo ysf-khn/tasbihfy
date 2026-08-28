@@ -72,9 +72,9 @@ export default function PrayerTimesList({ prayers }: PrayerTimesListProps) {
   const nextPrayer = getNextPrayer();
 
   return (
-    <div className="card bg-base-100 shadow-xl">
+    <div className="card bg-base-100 border border-base-300">
       <div className="card-body">
-        <h2 className="card-title text-xl lg:text-2xl mb-4 lg:mb-6">Today's Prayer Times</h2>
+        <h2 className="card-title heading-ornate text-xl lg:text-2xl mb-4 lg:mb-6">Today's Prayer Times</h2>
         
         <div className="space-y-3 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0">
           {prayers.map((prayer, index) => {
@@ -87,7 +87,7 @@ export default function PrayerTimesList({ prayers }: PrayerTimesListProps) {
                 key={prayer.name}
                 className={`p-4 lg:p-3 rounded-xl border transition-all duration-200 text-center lg:text-center relative ${
                   isNext && !isNotPrayer
-                    ? 'bg-primary text-primary-content border-primary'
+                    ? 'bg-primary text-primary-content border-primary ring-2 ring-secondary/60 ring-offset-2 ring-offset-base-100'
                     : isPast
                     ? 'bg-base-200 text-base-content/70 border-base-300'
                     : isClose && !isNotPrayer

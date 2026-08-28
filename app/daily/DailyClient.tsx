@@ -88,7 +88,7 @@ function HistoryCard({ user }: { user: unknown }) {
   return (
     <div className="bg-base-100 rounded-2xl p-6 shadow-sm border border-base-200 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-base-content">Your Streak</h2>
+        <h2 className="heading-ornate text-xl font-bold text-base-content">Your Streak</h2>
         <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-warning/15 text-warning">
           <FireIcon className="w-4 h-4" />
           <span className="text-sm font-semibold">

@@ -139,8 +139,8 @@ export default function EveningAdhkarClient() {
               <MoonIcon className="w-8 h-8 text-secondary" />
             </div>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2 font-arabic-naskh">أذكار المساء</h1>
-          <p className="text-lg text-base-content/70">Evening Remembrance</p>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 arabic-display text-primary">أذكار المساء</h1>
+          <p className="heading-ornate-center inline-block text-lg text-base-content/70">Evening Remembrance</p>
           <div className="flex justify-center gap-4 mt-4">
             <div className="badge badge-outline gap-2">
               <BookOpenIcon className="w-4 h-4" />

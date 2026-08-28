@@ -133,8 +133,8 @@ export default function AyatulKursiClient() {
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Title Section */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">آية الكرسي</h1>
-          <p className="text-lg text-base-content/70">The Throne Verse - Quran 2:255</p>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 arabic-display text-primary">آية الكرسي</h1>
+          <p className="heading-ornate-center inline-block text-lg text-base-content/70">The Throne Verse - Quran 2:255</p>
           <div className="flex justify-center gap-4 mt-4">
             <div className="badge badge-outline gap-2">
               <BookOpenIcon className="w-4 h-4" />

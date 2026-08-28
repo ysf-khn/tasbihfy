@@ -139,8 +139,8 @@ export default function MorningAdhkarClient() {
               <SunIcon className="w-8 h-8 text-warning" />
             </div>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2 font-arabic-naskh">أذكار الصباح</h1>
-          <p className="text-lg text-base-content/70">Morning Remembrance</p>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 arabic-display text-primary">أذكار الصباح</h1>
+          <p className="heading-ornate-center inline-block text-lg text-base-content/70">Morning Remembrance</p>
           <div className="flex justify-center gap-4 mt-4">
             <div className="badge badge-outline gap-2">
               <BookOpenIcon className="w-4 h-4" />

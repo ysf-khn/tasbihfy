@@ -110,8 +110,8 @@ export default function DuroodShareefClient() {
               <HeartIcon className="w-8 h-8 text-accent" />
             </div>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2 font-arabic-naskh">صلوات على النبي</h1>
-          <p className="text-lg text-base-content/70 mb-2">Blessings upon the Prophet</p>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 arabic-display text-primary">صلوات على النبي</h1>
+          <p className="heading-ornate-center inline-block text-lg text-base-content/70 mb-2">Blessings upon the Prophet</p>
           <p className="text-sm text-base-content/60">صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ</p>
           <div className="flex justify-center gap-4 mt-4">
             <div className="badge badge-outline gap-2">

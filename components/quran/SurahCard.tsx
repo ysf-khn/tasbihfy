@@ -14,8 +14,8 @@ export default function SurahCard({ surah }: SurahCardProps) {
       <div className="flex items-center px-2 py-4 hover:bg-base-100/50 transition-all duration-200">
         {/* 8-pointed Star with Surah Number */}
         <div className="relative w-6 h-6 flex-shrink-0 mr-4">
-          <div className="star-8 w-full h-full bg-orange-50 border border-orange-200 flex items-center justify-center">
-            <span className="text-xs font-bold text-orange-600">{surah.id}</span>
+          <div className="star-8 w-full h-full bg-secondary/15 border border-secondary/40 flex items-center justify-center">
+            <span className="text-xs font-bold text-primary">{surah.id}</span>
           </div>
         </div>
 
@@ -33,7 +33,7 @@ export default function SurahCard({ surah }: SurahCardProps) {
 
         {/* Arabic Name - Right Side */}
         <div className="text-right flex-shrink-0 ml-4">
-          <div className="text-xl font-arabic text-base-content">
+          <div className="text-xl arabic-display text-primary">
             {getArabicName(surah.id)}
           </div>
         </div>

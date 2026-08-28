@@ -23,12 +23,13 @@ export default function Names99Client() {
       <div className="container mx-auto px-4 py-6 space-y-6 pt-4">
         {/* Header */}
         <div className="text-center space-y-4">
-          <h1 className="text-3xl font-bold text-base-content">
+          <div className="arabic-display text-3xl text-primary">
+            أَسْمَاءُ ٱللَّٰهِ ٱلْحُسْنَىٰ
+          </div>
+          <h1 className="heading-ornate-center text-3xl font-bold text-base-content">
             99 Names of Allah
           </h1>
           <p className="text-base-content/70 max-w-2xl mx-auto">
-            <span className="text-lg arabic-text">أَسْمَاءُ ٱللَّٰهِ ٱلْحُسْنَىٰ</span>
-            <br />
             Asma ul Husna - The Most Beautiful Names
           </p>
         </div>
@@ -59,20 +60,19 @@ export default function Names99Client() {
             <Link
               key={name.id}
               href={`/99-names/${name.slug}`}
-              className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow duration-200"
+              className="card bg-base-100 border border-base-300 hover:border-secondary/50 transition-colors duration-200"
             >
               <div className="card-body p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-primary">
-                    {name.id}
-                  </span>
-                  <span className="text-xs text-base-content/50">
-                    Click for details
+                <div className="flex items-center justify-start mb-2">
+                  <span className="star-8 bg-secondary/15 border border-secondary/40 w-6 h-6 flex items-center justify-center">
+                    <span className="text-[0.65rem] font-bold text-primary">
+                      {name.id}
+                    </span>
                   </span>
                 </div>
 
                 <div className="text-center space-y-2">
-                  <h3 className="text-2xl arabic-text text-base-content">
+                  <h3 className="text-3xl arabic-display text-primary">
                     {name.arabic}
                   </h3>
                   <p className="font-semibold text-base-content">

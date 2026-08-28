@@ -171,8 +171,12 @@ export default function QuranClient() {
         <div className="mb-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <BookOpenIcon className="w-8 h-8 text-base-content" />
-              <h1 className="text-3xl font-bold text-base-content">Al Quran</h1>
+              <span className="star-8 bg-primary/10 text-primary w-9 h-9 flex items-center justify-center">
+                <span className="flex items-center justify-center">
+                  <BookOpenIcon className="w-5 h-5" />
+                </span>
+              </span>
+              <h1 className="heading-ornate text-3xl font-bold text-base-content">Al Quran</h1>
             </div>
             <Link
               href="/quran/bookmarks"
@@ -233,14 +237,15 @@ export default function QuranClient() {
             <h2 className="text-lg font-semibold mb-3 text-base-content">
               Last Read
             </h2>
-            <div className="card bg-primary/10 border border-primary/20">
-              <div className="card-body p-4">
+            <div className="card bg-primary text-primary-content relative overflow-hidden">
+              <div className="absolute inset-0 pattern-star" aria-hidden="true" />
+              <div className="card-body p-4 relative">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-medium text-base-content">
+                    <h3 className="font-semibold">
                       {lastRead.surahName}
                     </h3>
-                    <p className="text-sm text-base-content/70">
+                    <p className="text-sm opacity-80">
                       {lastRead.verseNumber
                         ? `Continue from verse ${lastRead.verseNumber}`
                         : "Continue reading"}
@@ -252,7 +257,7 @@ export default function QuranClient() {
                         ? `#verse-${lastRead.verseNumber}`
                         : ""
                     }`}
-                    className="btn btn-primary btn-sm"
+                    className="btn btn-secondary btn-sm"
                   >
                     Continue
                   </Link>
@@ -294,7 +299,7 @@ export default function QuranClient() {
 
         {/* Surah List */}
         <>
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-base-300">
             {filteredSurahs.length > 0 ? (
               filteredSurahs.map((surah) => (
                 <SurahCard key={surah.id} surah={surah} />

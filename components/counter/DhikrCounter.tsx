@@ -219,7 +219,7 @@ export default function DhikrCounter({
 
           {/* Scrollable Arabic Text - Takes most space */}
           <div className="flex-1 overflow-y-auto mb-4">
-            <div className="space-y-3 bg-base-100/50 rounded-xl border border-base-300/20 p-6 mx-4">
+            <div className="space-y-3 bg-base-100 rounded-2xl frame-gold p-6 mx-4">
               {/* Arabic text */}
               <p
                 className={`leading-relaxed text-center text-base-content ${getArabicClasses()}`}
@@ -267,7 +267,7 @@ export default function DhikrCounter({
           <div className="text-center space-y-2">
             {hasArabicText ? (
               <div className="space-y-2 w-full">
-                <div className="space-y-3 bg-base-100/50 rounded-xl border border-base-300/20 p-6">
+                <div className="space-y-3 bg-base-100 rounded-2xl frame-gold p-6">
                   {/* English Name */}
                   <h2 className="text-2xl font-bold text-base-content">
                     {dhikrName}
@@ -300,13 +300,6 @@ export default function DhikrCounter({
             )}
           </div>
 
-          {/* Large Count Display */}
-          <div className="text-center">
-            <div className="text-7xl font-bold text-primary mb-2">
-              {currentCount}
-            </div>
-          </div>
-
           {!isInstantMode && isComplete && (
             <div className="alert alert-success shadow-lg max-w-md animate-pulse">
               <CheckCircleIcon className="w-6 h-6" />
@@ -318,21 +311,73 @@ export default function DhikrCounter({
 
       {/* Bottom Section */}
       <div className={`${isLongText || tempDhikr ? "space-y-2" : "space-y-4"} flex-shrink-0 pb-4`}>
-        {/* Main Count Button */}
-        <div className="flex justify-center">
-          <button
-            className={`btn btn-primary ${
-              isLongText
-                ? "w-full max-w-sm h-16 rounded-full text-2xl" // Pill shape for long text
-                : tempDhikr
-                ? "w-80 h-20 rounded-full text-2xl" // Medium for temp dhikr
-                : "w-64 h-64 rounded-full text-3xl" // Large circle for short dhikr
-            } font-bold shadow-xl hover:shadow-2xl active:scale-95 transition-all duration-200 touch-manipulation`}
-            onClick={handleIncrement}
-          >
-            Count
-          </button>
-        </div>
+        {isLongText || tempDhikr ? (
+          <div className="flex justify-center">
+            <button
+              className={`btn btn-primary ${
+                isLongText
+                  ? "w-full max-w-sm h-16 rounded-full text-2xl"
+                  : "w-80 h-20 rounded-full text-2xl"
+              } font-bold shadow-xl hover:shadow-2xl active:scale-95 transition-all duration-200 touch-manipulation`}
+              onClick={handleIncrement}
+            >
+              Count
+            </button>
+          </div>
+        ) : (
+          // The tasbih itself: big circle counter with a gold progress ring
+          <div className="flex justify-center">
+            <div className="relative w-72 h-72">
+              {targetCount > 0 && (
+                <svg
+                  className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none"
+                  viewBox="0 0 288 288"
+                  aria-hidden="true"
+                >
+                  <circle
+                    cx="144"
+                    cy="144"
+                    r="138"
+                    fill="none"
+                    strokeWidth="5"
+                    className="stroke-base-300"
+                  />
+                  <circle
+                    cx="144"
+                    cy="144"
+                    r="138"
+                    fill="none"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * 138}
+                    strokeDashoffset={
+                      2 * Math.PI * 138 * (1 - progressPercentage / 100)
+                    }
+                    className="stroke-secondary transition-[stroke-dashoffset] duration-300 ease-out"
+                  />
+                </svg>
+              )}
+              <button
+                className="absolute inset-4 rounded-full bg-primary text-primary-content shadow-xl hover:shadow-2xl active:scale-95 transition-all duration-200 touch-manipulation flex flex-col items-center justify-center select-none"
+                onClick={handleIncrement}
+                aria-label="Count"
+              >
+                <span className="text-7xl font-bold tabular-nums leading-none">
+                  {currentCount}
+                </span>
+                {targetCount > 0 ? (
+                  <span className="mt-2 text-sm uppercase tracking-[0.2em] opacity-70">
+                    of {targetCount}
+                  </span>
+                ) : (
+                  <span className="mt-2 text-sm uppercase tracking-[0.2em] opacity-70">
+                    Tap to count
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
     </>

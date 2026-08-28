@@ -152,7 +152,7 @@ export default function VerseDetailClient({
     : verse.text_uthmani || verse.text_uthmani_simple;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-base-200 to-base-100 pb-20">
+    <div className="min-h-screen bg-base-200 pb-20">
       <UnifiedHeader
         title={specialVerseName || `${surahInfo.name} - Verse ${verseNumber}`}
         showSignIn={true}
@@ -176,10 +176,9 @@ export default function VerseDetailClient({
 
         {/* Special Verse Badge - Enhanced */}
         {isSpecialVerse && specialVerseName && (
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-transparent p-6 border border-primary/30">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl"></div>
+          <div className="relative overflow-hidden rounded-2xl frame-gold bg-base-100 p-6">
             <div className="relative flex items-start gap-4">
-              <div className="flex-shrink-0 w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
+              <div className="flex-shrink-0 w-12 h-12 bg-primary/15 rounded-full flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -199,8 +198,7 @@ export default function VerseDetailClient({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-3xl">📖</span>
-                  <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  <h1 className="heading-ornate text-2xl lg:text-3xl font-bold text-primary">
                     {surahInfo.name}
                   </h1>
                 </div>
@@ -233,8 +231,7 @@ export default function VerseDetailClient({
 
             {/* Arabic Text - Enhanced Presentation */}
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent rounded-xl"></div>
-              <div className="relative text-center py-12 px-4 rounded-xl bg-base-200/50 backdrop-blur-sm">
+              <div className="relative text-center py-12 px-4 rounded-xl bg-base-200/60 frame-gold">
                 <p className="text-3xl sm:text-4xl lg:text-5xl leading-relaxed lg:leading-loose arabic-text text-base-content font-arabic" dir="rtl">
                   {arabicText}
                 </p>
@@ -289,7 +286,7 @@ export default function VerseDetailClient({
                     key={translation.resource_id}
                     className={`group relative rounded-xl transition-all duration-200 ${
                       translation.resource_id === selectedTranslation
-                        ? 'bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-primary shadow-md'
+                        ? 'bg-primary/10 border-l-4 border-primary shadow-md'
                         : 'bg-base-200/70 hover:bg-base-200 border-l-4 border-transparent hover:border-base-300'
                     }`}
                     onClick={() => setSelectedTranslation(translation.resource_id)}

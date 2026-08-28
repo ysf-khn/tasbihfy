@@ -112,8 +112,9 @@ export default function NextPrayer({ prayers }: NextPrayerProps) {
   }
 
   return (
-    <div className="card bg-primary text-primary-content shadow-lg border-0">
-      <div className="card-body text-center p-6 lg:p-4">
+    <div className="card bg-primary text-primary-content shadow-lg border-0 relative overflow-hidden">
+      <div className="absolute inset-0 pattern-star" aria-hidden="true" />
+      <div className="card-body text-center p-6 lg:p-4 relative">
         <div className="flex items-center justify-center space-x-3 mb-4 lg:mb-3">
           <div className="p-2 lg:p-1 bg-primary-content/10 rounded-full">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 lg:h-5 lg:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

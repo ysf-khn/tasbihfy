@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import {
+  Amiri,
   Bricolage_Grotesque,
   Noto_Naskh_Arabic,
   Noto_Nastaliq_Urdu,
@@ -18,6 +19,13 @@ import StructuredData from "@/components/seo/StructuredData";
 const bricolageGrotesque = Bricolage_Grotesque({
   variable: "--font-bricolage-grotesque",
   subsets: ["latin"],
+});
+
+const amiri = Amiri({
+  variable: "--font-amiri",
+  subsets: ["arabic", "latin"],
+  weight: ["400", "700"],
+  display: "swap",
 });
 
 const notoNaskhArabic = Noto_Naskh_Arabic({
@@ -148,10 +156,10 @@ export const metadata: Metadata = {
     "apple-mobile-web-app-status-bar-style": "default",
     "apple-mobile-web-app-title": "Tasbihfy",
     "application-name": "Tasbihfy",
-    "msapplication-TileColor": "#57c5b6",
+    "msapplication-TileColor": "#0d5c47",
     "msapplication-TileImage": "/icons/icon-144x144.png",
     "msapplication-tap-highlight": "no",
-    "theme-color": "#57c5b6",
+    "theme-color": "#0d5c47",
     "Cache-Control": "no-cache, no-store, must-revalidate",
     Pragma: "no-cache",
     Expires: "0",
@@ -159,7 +167,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#57c5b6",
+  themeColor: "#0d5c47",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -237,7 +245,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${bricolageGrotesque.variable} ${notoNaskhArabic.variable} ${notoNastaliqUrdu.variable} antialiased`}
+        className={`${bricolageGrotesque.variable} ${amiri.variable} ${notoNaskhArabic.variable} ${notoNastaliqUrdu.variable} antialiased`}
       >
         <StructuredData data={applicationStructuredData} />
         <ThemeProvider

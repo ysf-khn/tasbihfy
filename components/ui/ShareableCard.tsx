@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import Image from 'next/image';
 
 interface ShareableCardProps {
@@ -37,7 +37,7 @@ export const ShareableCard = React.forwardRef<HTMLDivElement, ShareableCardProps
               </div>
               <div className="flex flex-col">
                 <h1 className="text-3xl font-bold" style={{ color: '#1f2937' }}>Tasbihfy</h1>
-                <p className="text-xl" style={{ color: '#57c5b6' }}>tasbihfy.com</p>
+                <p className="text-xl" style={{ color: '#0d5c47' }}>tasbihfy.com</p>
               </div>
             </div>
           </div>
@@ -85,10 +85,10 @@ export const ShareableCard = React.forwardRef<HTMLDivElement, ShareableCardProps
                 className="font-semibold"
                 style={{
                   fontSize: '1.5rem',
-                  color: '#57c5b6',
+                  color: '#0d5c47',
                 }}
               >
-                — {reference}
+                â€” {reference}
               </p>
             </div>
           </div>
@@ -104,7 +104,7 @@ export const ShareableCard = React.forwardRef<HTMLDivElement, ShareableCardProps
                   fontWeight: '500',
                 }}
               >
-                {type === 'verse' ? '📖 Share the Quran' : '🤲 Share Islamic Duas'} • tasbihfy.com
+                {type === 'verse' ? 'ðŸ“– Share the Quran' : 'ðŸ¤² Share Islamic Duas'} â€¢ tasbihfy.com
               </p>
             </div>
           </div>

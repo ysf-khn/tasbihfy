@@ -368,7 +368,7 @@ function DhikrContent() {
           {/* Favorites Section */}
           {favoritesDhikrs.length > 0 && (
             <div className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-bold text-base-content">
+              <h2 className="heading-ornate text-lg sm:text-xl font-bold text-base-content">
                 Favorites
               </h2>
               <div className="space-y-2 sm:space-y-3">
@@ -427,7 +427,7 @@ function DhikrContent() {
                           </div>
                         </div>
                         {preset.arabic && (
-                          <p className="font-arabic text-lg text-base-content/80 mt-2 text-right">{preset.arabic}</p>
+                          <p className="arabic-display text-lg text-base-content/80 mt-2 text-right">{preset.arabic}</p>
                         )}
                       </button>
                     ))}
@@ -459,7 +459,7 @@ function DhikrContent() {
                           </div>
                         </div>
                         {preset.arabic && (
-                          <p className="font-arabic text-lg text-base-content/80 mt-2 text-right">{preset.arabic}</p>
+                          <p className="arabic-display text-lg text-base-content/80 mt-2 text-right">{preset.arabic}</p>
                         )}
                       </button>
                     ))}
@@ -509,7 +509,7 @@ function DhikrContent() {
             <div className="space-y-6">
               {/* User's Dhikrs */}
               <div className="space-y-3 sm:space-y-4">
-                <h2 className="text-lg sm:text-xl font-bold text-base-content">
+                <h2 className="heading-ornate text-lg sm:text-xl font-bold text-base-content">
                   {favoritesDhikrs.length > 0 ? "Other Dhikrs" : "All Dhikrs"}
                 </h2>
                 <div className="space-y-2 sm:space-y-3">
@@ -528,7 +528,7 @@ function DhikrContent() {
 
               {/* Add More Section */}
               <div className="space-y-4">
-                <h2 className="text-lg sm:text-xl font-bold text-base-content">Add More</h2>
+                <h2 className="heading-ornate text-lg sm:text-xl font-bold text-base-content">Add More</h2>
 
                 {/* Basic Tasbihat */}
                 <div className="collapse collapse-arrow bg-base-100 rounded-xl">
@@ -554,7 +554,7 @@ function DhikrContent() {
                             </div>
                           </div>
                           {preset.arabic && (
-                            <p className="font-arabic text-lg text-base-content/80 mt-2 text-right">{preset.arabic}</p>
+                            <p className="arabic-display text-lg text-base-content/80 mt-2 text-right">{preset.arabic}</p>
                           )}
                         </button>
                       ))}
@@ -586,7 +586,7 @@ function DhikrContent() {
                             </div>
                           </div>
                           {preset.arabic && (
-                            <p className="font-arabic text-lg text-base-content/80 mt-2 text-right">{preset.arabic}</p>
+                            <p className="arabic-display text-lg text-base-content/80 mt-2 text-right">{preset.arabic}</p>
                           )}
                         </button>
                       ))}

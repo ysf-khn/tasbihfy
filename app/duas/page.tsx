@@ -88,7 +88,7 @@ export default function DuasPage() {
         <UnifiedHeader title="Duas" showSignIn={true} />
         <div className="container mx-auto px-4 py-6 max-w-2xl">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-center mb-2">Hisnul Muslim</h1>
+            <h1 className="heading-ornate-center text-3xl font-bold mb-2">Hisnul Muslim</h1>
             <p className="text-center text-base-content/70 mb-4">
               Fortress of the Muslim
             </p>
@@ -107,7 +107,7 @@ export default function DuasPage() {
 
       <div className="container mx-auto px-4 py-6 max-w-2xl">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-center mb-2">Hisnul Muslim</h1>
+          <h1 className="heading-ornate-center text-3xl font-bold mb-2">Hisnul Muslim</h1>
           <p className="text-center text-base-content/70 mb-4">
             Fortress of the Muslim
           </p>

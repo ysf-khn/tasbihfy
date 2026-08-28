@@ -123,7 +123,7 @@ export default function MorePage() {
       <div className="p-4 sm:p-6 space-y-6 pb-24">
         {/* Page Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-bold text-base-content">
+          <h1 className="heading-ornate-center text-2xl sm:text-3xl font-bold text-base-content">
             More Features
           </h1>
           <p className="text-base-content/70">
@@ -134,7 +134,7 @@ export default function MorePage() {
         {/* Feature Categories */}
         {features.map((category) => (
           <div key={category.category} className="space-y-4">
-            <h2 className="text-xl font-bold text-base-content">
+            <h2 className="heading-ornate text-xl font-bold text-base-content">
               {category.category}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -142,7 +142,7 @@ export default function MorePage() {
                 const IconComponent = item.icon;
                 return (
                   <Link key={item.href} href={item.href}>
-                    <div className="card bg-base-100 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer">
+                    <div className="card bg-base-100 border border-base-300 hover:border-secondary/50 transition-colors duration-200 cursor-pointer">
                       <div className="card-body">
                         <div className="flex items-start space-x-4">
                           <div className={`p-3 rounded-lg ${item.bgColor}`}>

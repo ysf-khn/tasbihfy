@@ -65,8 +65,8 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 w-full z-50 bg-base-100 border-t border-base-200 shadow-2xl">
-      <div className="flex justify-around items-center py-3 px-2">
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 w-full z-50 bg-base-100/95 backdrop-blur-md border-t border-secondary/30">
+      <div className="flex justify-around items-center py-2.5 px-2 pb-[calc(0.625rem+env(safe-area-inset-bottom))]">
         {navItems.map((item) => {
           const active = isActive(item.path);
           const IconComponent = active ? item.activeIcon : item.icon;
@@ -75,14 +75,21 @@ export default function BottomNav() {
             <Link
               key={item.path}
               href={item.path}
-              className={`flex flex-col items-center px-4 py-2 rounded-lg transition-colors duration-200 ${
+              className={`relative flex flex-col items-center px-4 py-2 rounded-xl transition-colors duration-200 ${
                 active
-                  ? "text-primary bg-primary/10"
-                  : "text-base-content/60 hover:text-base-content"
+                  ? "text-primary"
+                  : "text-base-content/55 hover:text-base-content"
               }`}
             >
+              {active && (
+                <span className="absolute -top-[11px] left-1/2 -translate-x-1/2 w-1.5 h-1.5 rotate-45 bg-secondary" />
+              )}
               <IconComponent className="w-6 h-6 mb-1" />
-              <span className="text-xs font-medium">{item.name}</span>
+              <span
+                className={`text-xs ${active ? "font-semibold" : "font-medium"}`}
+              >
+                {item.name}
+              </span>
             </Link>
           );
         })}

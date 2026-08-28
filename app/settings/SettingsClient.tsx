@@ -127,7 +127,7 @@ export default function SettingsClient() {
       <div>
         {/* Content */}
         <div className="p-6 space-y-8">
-          <h2 className="text-2xl font-bold text-base-content">Settings</h2>
+          <h2 className="heading-ornate text-2xl font-bold text-base-content">Settings</h2>
 
           {/* Arabic Text Settings */}
           <div className="space-y-4">

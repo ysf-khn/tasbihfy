@@ -28,8 +28,12 @@ export default function BookmarksClient() {
 
       <div className="container mx-auto px-4 max-w-4xl pt-4">
         <div className="flex items-center gap-3 mb-6">
-          <BookmarkIcon className="w-8 h-8 text-base-content" />
-          <h1 className="text-3xl font-bold text-base-content">Bookmarks</h1>
+          <span className="star-8 bg-primary/10 text-primary w-9 h-9 flex items-center justify-center">
+            <span className="flex items-center justify-center">
+              <BookmarkIcon className="w-5 h-5" />
+            </span>
+          </span>
+          <h1 className="heading-ornate text-3xl font-bold text-base-content">Bookmarks</h1>
         </div>
 
         {loading ? (

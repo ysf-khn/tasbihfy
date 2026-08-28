@@ -1,4 +1,4 @@
-import type { MetadataRoute } from "next";
+﻿import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -8,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
       "Your complete Islamic companion app. Count dhikr with tasbih, get accurate prayer times with Qibla compass, read the Quran, and access a collection of Hisnul Muslim duas.",
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#57c5b6",
+    background_color: "#faf6ec",
+    theme_color: "#0d5c47",
     orientation: "portrait-primary",
     categories: ["lifestyle", "spirituality", "productivity"],
     lang: "en",
@@ -130,3 +130,4 @@ export default function manifest(): MetadataRoute.Manifest {
     },
   };
 }
+
