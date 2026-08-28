@@ -94,7 +94,16 @@ export default function ReminderSettings({ user }: ReminderSettingsProps) {
       if (response.ok) {
         const data = await response.json();
         console.log("Fetched preferences:", data.preferences);
-        setPreferences(data.preferences);
+        // "UTC" is the server-side default, not a user choice — prefer the
+        // device's actual timezone until the user explicitly picks one
+        const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        setPreferences({
+          ...data.preferences,
+          timezone:
+            data.preferences.timezone === "UTC" && deviceTimezone
+              ? deviceTimezone
+              : data.preferences.timezone,
+        });
       } else {
         console.error(
           "Failed to fetch preferences:",
@@ -299,7 +308,12 @@ export default function ReminderSettings({ user }: ReminderSettingsProps) {
       const response = await fetch("/api/notifications/preferences", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reminderTime: newTime }),
+        // Persist the timezone too: rows created before timezone detection
+        // may still hold the old UTC default
+        body: JSON.stringify({
+          reminderTime: newTime,
+          timezone: preferences.timezone,
+        }),
       });
 
       if (response.ok) {
