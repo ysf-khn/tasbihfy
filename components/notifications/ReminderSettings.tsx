@@ -153,11 +153,20 @@ export default function ReminderSettings({ user }: ReminderSettingsProps) {
       }
 
       const { publicKey } = await vapidResponse.json();
+      const applicationServerKey = urlB64ToUint8Array(publicKey)
+        .buffer as ArrayBuffer;
+
+      // A stale subscription (e.g. made under a different VAPID key) makes
+      // subscribe() throw InvalidStateError — drop it and start fresh
+      const existing = await registration.pushManager.getSubscription();
+      if (existing) {
+        await existing.unsubscribe().catch(() => {});
+      }
 
       // Subscribe to push notifications
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlB64ToUint8Array(publicKey).buffer as ArrayBuffer,
+        applicationServerKey,
       });
 
       // Send subscription to server
@@ -172,7 +181,9 @@ export default function ReminderSettings({ user }: ReminderSettingsProps) {
       });
 
       if (!subscribeResponse.ok) {
-        throw new Error("Failed to save subscription");
+        throw new Error(
+          `Failed to save subscription (server returned ${subscribeResponse.status})`
+        );
       }
 
       return true;
@@ -183,7 +194,9 @@ export default function ReminderSettings({ user }: ReminderSettingsProps) {
           "Service worker is not ready. Please try again or check if the app is properly installed."
         );
       } else {
-        alert("Failed to enable notifications. Please try again.");
+        const detail =
+          error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+        alert(`Failed to enable notifications.\n\n${detail}`);
       }
       return false;
     }
