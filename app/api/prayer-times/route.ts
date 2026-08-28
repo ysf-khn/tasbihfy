@@ -4,36 +4,88 @@ import {
   cachePrayerTimes,
   deleteOldPrayerCache,
 } from "@/lib/supabase-queries";
-import { PrayerTimesResponse } from "@/types/prayer";
+import {
+  UpstreamError,
+  fetchPrayerTimings,
+  fetchQiblaDirection,
+  parseCoordinates,
+  resolveLocation,
+} from "@/lib/prayer/aladhan";
+import {
+  CalculationRules,
+  getCalculationRules,
+  getMethodName,
+  getSchoolName,
+} from "@/lib/prayer/calculation-methods";
+import { CalculationInfo, ResolvedLocation } from "@/types/prayer";
+
+function describeRules(rules: CalculationRules): CalculationInfo {
+  return {
+    methodName: getMethodName(rules.method),
+    schoolName: getSchoolName(rules.school),
+  };
+}
+
+function buildPrayers(times: {
+  fajr: string;
+  shurooq: string;
+  dhuhr: string;
+  asr: string;
+  maghrib: string;
+  isha: string;
+}) {
+  return [
+    { name: "fajr", time: times.fajr, arabicName: "الفجر" },
+    { name: "shurooq", time: times.shurooq, arabicName: "الشروق" },
+    { name: "dhuhr", time: times.dhuhr, arabicName: "الظهر" },
+    { name: "asr", time: times.asr, arabicName: "العصر" },
+    { name: "maghrib", time: times.maghrib, arabicName: "المغرب" },
+    { name: "isha", time: times.isha, arabicName: "العشاء" },
+  ];
+}
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const location = searchParams.get("location");
+    const latParam = searchParams.get("latitude");
+    const lonParam = searchParams.get("longitude");
 
-    if (!location) {
+    // Coordinates are the primary path; `location` stays supported for saved
+    // city names and the static /prayer-times/[country]/[city] pages.
+    let cacheKey: string;
+    if (latParam && lonParam) {
+      cacheKey = `${latParam},${lonParam}`;
+    } else if (location) {
+      cacheKey = location;
+    } else {
       return NextResponse.json(
-        { error: "Location parameter is required" },
+        { error: "A location or latitude/longitude pair is required" },
         { status: 400 }
       );
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Anchor to UTC midnight so the cache key survives round-tripping through
+    // toISOString() regardless of the server's local timezone.
+    const now = new Date();
+    const today = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    );
+    const dateStr = today.toISOString().split("T")[0];
 
-    // Check if we have cached data for today
-    const cachedData = await getCachedPrayerTimes(location, today);
+    // The cache is an optimization, not a dependency: if the database is
+    // unreachable we still serve live prayer times.
+    let cachedData = null;
+    try {
+      cachedData = await getCachedPrayerTimes(cacheKey, today);
+    } catch (error) {
+      console.warn("Prayer times cache read failed:", error);
+    }
 
     if (cachedData) {
-      const dateStr = `${cachedData.date.getFullYear()}-${String(
-        cachedData.date.getMonth() + 1
-      ).padStart(2, "0")}-${String(cachedData.date.getDate()).padStart(
-        2,
-        "0"
-      )}`;
       return NextResponse.json({
         location: {
-          name: location,
+          name: location ?? cacheKey,
           latitude: cachedData.latitude || "",
           longitude: cachedData.longitude || "",
           country: cachedData.country || "",
@@ -41,112 +93,86 @@ export async function GET(request: NextRequest) {
           timezone: cachedData.timezone || "",
         },
         date: dateStr,
-        prayers: [
-          { name: "fajr", time: cachedData.fajr, arabicName: "الفجر" },
-          { name: "shurooq", time: cachedData.shurooq, arabicName: "الشروق" },
-          { name: "dhuhr", time: cachedData.dhuhr, arabicName: "الظهر" },
-          { name: "asr", time: cachedData.asr, arabicName: "العصر" },
-          { name: "maghrib", time: cachedData.maghrib, arabicName: "المغرب" },
-          { name: "isha", time: cachedData.isha, arabicName: "العشاء" },
-        ],
+        prayers: buildPrayers(cachedData),
         qiblaDirection: cachedData.qiblaDirection || "",
-        weather: {
-          temperature: cachedData.temperature || "",
-          pressure: cachedData.pressure ? parseInt(cachedData.pressure) : 0,
-        },
         sunrise: cachedData.shurooq,
+        // Re-derived rather than stored: the rules are a pure function of the
+        // country, which the cache row already carries.
+        calculation: describeRules(
+          getCalculationRules(cachedData.countryCode)
+        ),
       });
     }
 
-    // Fetch from API if not cached
-    const apiUrl = `https://muslimsalat.p.rapidapi.com/${encodeURIComponent(
-      location
-    )}.json`;
-    const apiKey = process.env.SALATTIME_API_KEY;
-
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "API key not configured" },
-        { status: 500 }
-      );
+    let resolved: ResolvedLocation;
+    if (latParam && lonParam) {
+      const coords = parseCoordinates(`${latParam},${lonParam}`);
+      if (!coords) {
+        return NextResponse.json(
+          { error: "Invalid latitude/longitude" },
+          { status: 400 }
+        );
+      }
+      // Reuse the reverse-geocode branch to fill in city/country labels.
+      resolved = await resolveLocation(`${coords.latitude},${coords.longitude}`);
+    } else {
+      resolved = await resolveLocation(location!);
     }
 
-    const response = await fetch(apiUrl, {
-      method: "GET",
-      headers: {
-        "x-rapidapi-key": apiKey,
-        "x-rapidapi-host": "muslimsalat.p.rapidapi.com",
-      },
-    });
+    const rules = getCalculationRules(resolved.countryCode);
 
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: "Failed to fetch prayer times" },
-        { status: response.status }
-      );
+    const [timings, qiblaDirection] = await Promise.all([
+      fetchPrayerTimings(resolved.latitude, resolved.longitude, today, rules),
+      fetchQiblaDirection(resolved.latitude, resolved.longitude),
+    ]);
+
+    try {
+      await cachePrayerTimes({
+        locationQuery: cacheKey,
+        date: today,
+        fajr: timings.fajr,
+        shurooq: timings.shurooq,
+        dhuhr: timings.dhuhr,
+        asr: timings.asr,
+        maghrib: timings.maghrib,
+        isha: timings.isha,
+        qiblaDirection,
+        latitude: String(resolved.latitude),
+        longitude: String(resolved.longitude),
+        timezone: timings.timezone,
+        country: resolved.country,
+        countryCode: resolved.countryCode,
+      });
+
+      // Clean up old cache entries for this location (keep only today's data)
+      await deleteOldPrayerCache(cacheKey, today);
+    } catch (error) {
+      console.warn("Prayer times cache write failed:", error);
     }
 
-    const data: PrayerTimesResponse = await response.json();
-
-    if (data.status_code !== 1 || !data.items || data.items.length === 0) {
-      return NextResponse.json(
-        { error: "Invalid response from prayer times API" },
-        { status: 400 }
-      );
-    }
-
-    const todayPrayers = data.items[0];
-
-    // Cache the data
-    await cachePrayerTimes({
-      locationQuery: location,
-      date: today,
-      fajr: todayPrayers.fajr,
-      shurooq: todayPrayers.shurooq,
-      dhuhr: todayPrayers.dhuhr,
-      asr: todayPrayers.asr,
-      maghrib: todayPrayers.maghrib,
-      isha: todayPrayers.isha,
-      qiblaDirection: data.qibla_direction,
-      latitude: data.latitude,
-      longitude: data.longitude,
-      timezone: String(data.timezone),
-      country: data.country,
-      countryCode: data.country_code,
-      temperature: data.today_weather?.temperature ?? null,
-      pressure: data.today_weather?.pressure?.toString() ?? null,
-    });
-
-    // Clean up old cache entries for this location (keep only today's data)
-    await deleteOldPrayerCache(location, today);
-
-    // Return formatted data
     return NextResponse.json({
       location: {
-        name: location,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        country: data.country,
-        countryCode: data.country_code,
-        timezone: String(data.timezone),
+        name: location ?? resolved.name,
+        latitude: String(resolved.latitude),
+        longitude: String(resolved.longitude),
+        country: resolved.country ?? "",
+        countryCode: resolved.countryCode ?? "",
+        timezone: timings.timezone ?? "",
       },
-      date: todayPrayers.date_for,
-      prayers: [
-        { name: "fajr", time: todayPrayers.fajr, arabicName: "الفجر" },
-        { name: "shurooq", time: todayPrayers.shurooq, arabicName: "الشروق" },
-        { name: "dhuhr", time: todayPrayers.dhuhr, arabicName: "الظهر" },
-        { name: "asr", time: todayPrayers.asr, arabicName: "العصر" },
-        { name: "maghrib", time: todayPrayers.maghrib, arabicName: "المغرب" },
-        { name: "isha", time: todayPrayers.isha, arabicName: "العشاء" },
-      ],
-      qiblaDirection: data.qibla_direction,
-      weather: {
-        temperature: data.today_weather?.temperature ?? "",
-        pressure: data.today_weather?.pressure ?? 0,
-      },
-      sunrise: todayPrayers.shurooq,
+      date: dateStr,
+      prayers: buildPrayers(timings),
+      qiblaDirection: qiblaDirection ?? "",
+      sunrise: timings.shurooq,
+      calculation: describeRules(rules),
     });
   } catch (error) {
+    if (error instanceof UpstreamError) {
+      // Surface third-party failures as a gateway error rather than passing the
+      // upstream status through, which made outages look like a missing route.
+      console.error("Prayer times upstream error:", error.message);
+      return NextResponse.json({ error: error.message }, { status: 502 });
+    }
+
     console.error("Prayer times API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },

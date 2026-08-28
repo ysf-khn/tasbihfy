@@ -149,7 +149,17 @@ export default function PrayerTimesLocationClient({
                 <h3 className="font-semibold text-base-content mb-3">About Prayer Times in {cityData.name}</h3>
                 <div className="space-y-2 text-sm text-base-content/70">
                   <p>
-                    Prayer times are calculated using precise astronomical methods for {cityData.name}, {cityData.country}.
+                    {prayerData.calculation ? (
+                      <>
+                        Prayer times for {cityData.name}, {cityData.country} are
+                        calculated using {prayerData.calculation.methodName}, with
+                        Asr following the {prayerData.calculation.schoolName.toLowerCase()} method.
+                      </>
+                    ) : (
+                      <>
+                        Prayer times are calculated using precise astronomical methods for {cityData.name}, {cityData.country}.
+                      </>
+                    )}
                   </p>
                   <p>
                     Coordinates: {cityData.lat.toFixed(4)}°, {cityData.lng.toFixed(4)}°

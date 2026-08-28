@@ -4,6 +4,7 @@ import PrayerTimesList from "@/components/prayer/PrayerTimesList";
 import LocationDisplay from "@/components/prayer/LocationDisplay";
 import QiblaDirection from "@/components/prayer/QiblaDirection";
 import NextPrayer from "@/components/prayer/NextPrayer";
+import CalculationNote from "@/components/prayer/CalculationNote";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import { usePrayerTimes } from "@/hooks/usePrayerTimes";
 
@@ -87,39 +88,20 @@ export default function PrayerClient() {
                 />
               )}
 
+              <CalculationNote calculation={prayerData.calculation} />
+
               {/* Qibla Direction (Mobile Only) */}
               {prayerData.qiblaDirection && (
                 <QiblaDirection direction={prayerData.qiblaDirection} />
               )}
             </div>
 
-            {/* Sidebar - Next Prayer and Weather */}
+            {/* Sidebar - Next Prayer */}
             <div className="space-y-6 lg:space-y-4">
               {/* Next Prayer Card */}
               {prayerData.prayers && (
                 <div className="sticky top-24">
                   <NextPrayer prayers={prayerData.prayers} />
-                </div>
-              )}
-
-              {/* Weather Info - only show if we have valid temperature data */}
-              {prayerData.weather && prayerData.weather.temperature && prayerData.weather.temperature !== "" && (
-                <div className="card bg-base-100 shadow-lg">
-                  <div className="card-body">
-                    <h3 className="card-title text-lg">Weather</h3>
-                    <div className="flex items-center space-x-4">
-                      <div>
-                        <p className="text-2xl font-bold">{prayerData.weather.temperature}°</p>
-                        <p className="text-sm text-base-content/70">Temperature</p>
-                      </div>
-                      {prayerData.weather.pressure && (
-                        <div>
-                          <p className="text-lg font-semibold">{prayerData.weather.pressure} hPa</p>
-                          <p className="text-sm text-base-content/70">Pressure</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
                 </div>
               )}
 

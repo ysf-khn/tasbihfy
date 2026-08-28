@@ -1,41 +1,56 @@
-export interface PrayerTimesResponse {
-  title: string;
-  query: string;
-  for: string;
-  method: number;
-  prayer_method_name: string;
-  daylight: string;
-  timezone: string | number;
-  map_image: string;
-  sealevel: string;
-  today_weather: {
-    pressure: number;
-    temperature: string;
+/** Raw shape of https://api.aladhan.com/v1/timings */
+export interface AladhanTimingsResponse {
+  code: number;
+  status: string;
+  data: {
+    timings: {
+      Fajr: string;
+      Sunrise: string;
+      Dhuhr: string;
+      Asr: string;
+      Sunset: string;
+      Maghrib: string;
+      Isha: string;
+      Imsak: string;
+      Midnight: string;
+    };
+    date: {
+      readable: string;
+      gregorian: { date: string };
+    };
+    meta: {
+      latitude: number;
+      longitude: number;
+      timezone: string;
+      method: { id: number; name: string };
+    };
   };
-  link: string;
-  qibla_direction: string;
-  latitude: string;
-  longitude: string;
-  address: string;
-  city: string;
-  state: string;
-  postal_code: string;
-  country: string;
-  country_code: string;
-  items: PrayerTimesItem[];
-  status_valid: number;
-  status_code: number;
-  status_description: string;
 }
 
-export interface PrayerTimesItem {
-  date_for: string;
-  fajr: string;
-  shurooq: string;
-  dhuhr: string;
-  asr: string;
-  maghrib: string;
-  isha: string;
+/** Raw shape of https://api.aladhan.com/v1/qibla/{lat}/{lng} */
+export interface AladhanQiblaResponse {
+  code: number;
+  status: string;
+  data: {
+    latitude: number;
+    longitude: number;
+    direction: number;
+  };
+}
+
+/** Which ruleset produced the times, surfaced to the user for trust. */
+export interface CalculationInfo {
+  methodName: string;
+  schoolName: string;
+}
+
+/** A location string resolved to coordinates plus display labels. */
+export interface ResolvedLocation {
+  name: string;
+  latitude: number;
+  longitude: number;
+  country: string | null;
+  countryCode: string | null;
 }
 
 export interface PrayerTime {
@@ -61,11 +76,9 @@ export interface PrayerTimesData {
   date: string;
   prayers: PrayerTime[];
   qiblaDirection: string;
-  weather: {
-    temperature: string;
-    pressure: number;
-  };
   sunrise: string;
+  /** Optional: absent from PrayerTimesData cached in localStorage before this shipped. */
+  calculation?: CalculationInfo;
 }
 
 export type PrayerName = 'fajr' | 'shurooq' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';

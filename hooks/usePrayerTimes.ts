@@ -22,7 +22,9 @@ interface CachedPrayerData {
   date: string;
 }
 
-const CACHE_KEY = 'tasbihfy-prayer-times';
+// Bump the suffix whenever the cached PrayerTimesData shape changes, so warm
+// caches don't pin users to a payload missing newly-added fields.
+const CACHE_KEY = 'tasbihfy-prayer-times-v2';
 const LOCATION_KEY = 'tasbihfy-prayer-location';
 const CACHE_DURATION = 1000 * 60 * 60 * 12; // 12 hours
 
@@ -52,6 +54,9 @@ export function usePrayerTimes(): UsePrayerTimesResult {
     if (typeof window === 'undefined') return null;
 
     try {
+      // Drop the pre-v2 entry so it doesn't sit in storage forever.
+      localStorage.removeItem('tasbihfy-prayer-times');
+
       const cached = localStorage.getItem(CACHE_KEY);
       if (!cached) return null;
 
@@ -136,42 +141,25 @@ export function usePrayerTimes(): UsePrayerTimesResult {
         location = await getSavedLocation() ?? undefined;
       }
 
-      if (!location) {
-        // Try to get user's location via geolocation
-        if (navigator.geolocation) {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              timeout: 10000,
-              enableHighAccuracy: false
-            });
-          });
-
-          // Reverse geocode coordinates to get city name
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-
-          try {
-            const geocodeResponse = await fetch(`/api/geocode?lat=${lat}&lon=${lon}`);
-            if (geocodeResponse.ok) {
-              const geocodeData = await geocodeResponse.json();
-              location = geocodeData.city;
-            }
-          } catch (geocodeError) {
-            console.warn('Geocoding failed, falling back to coordinates:', geocodeError);
-          }
-
-          // Fallback to coordinates if geocoding failed
-          if (!location) {
-            location = `${lat},${lon}`;
-          }
-        } else {
-          throw new Error('Location access denied. Please set your location in Settings.');
-        }
-      }
-
       const searchParams = new URLSearchParams();
+
       if (location) {
         searchParams.append('location', location);
+      } else {
+        // No saved location: geolocate and query by coordinates directly.
+        if (!navigator.geolocation) {
+          throw new Error('Location access denied. Please set your location in Settings.');
+        }
+
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            timeout: 10000,
+            enableHighAccuracy: false
+          });
+        });
+
+        searchParams.append('latitude', String(position.coords.latitude));
+        searchParams.append('longitude', String(position.coords.longitude));
       }
 
       const response = await fetch(`/api/prayer-times?${searchParams}`);
