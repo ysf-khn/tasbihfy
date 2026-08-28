@@ -5,13 +5,41 @@ import { BellIcon } from "@heroicons/react/24/outline";
 import type { User } from "@/lib/auth";
 import Toggle from "@/components/ui/Toggle";
 
+interface PrayerNotificationPrefs {
+  enabled: boolean;
+  prayers: {
+    fajr: boolean;
+    dhuhr: boolean;
+    asr: boolean;
+    maghrib: boolean;
+    isha: boolean;
+  };
+}
+
 interface ReminderPreferences {
   reminderEnabled: boolean;
   reminderTime: string;
   timezone: string;
   hasSubscription: boolean;
   lastReminderSent?: string | null;
+  prayerNotifications?: PrayerNotificationPrefs | null;
 }
+
+const ALL_PRAYERS_ON: PrayerNotificationPrefs["prayers"] = {
+  fajr: true,
+  dhuhr: true,
+  asr: true,
+  maghrib: true,
+  isha: true,
+};
+
+const PRAYER_LABELS: [keyof PrayerNotificationPrefs["prayers"], string][] = [
+  ["fajr", "Fajr"],
+  ["dhuhr", "Dhuhr"],
+  ["asr", "Asr"],
+  ["maghrib", "Maghrib"],
+  ["isha", "Isha"],
+];
 
 interface ReminderSettingsProps {
   user: User | null;
@@ -27,6 +55,10 @@ export default function ReminderSettings({ user }: ReminderSettingsProps) {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPrefs, setIsLoadingPrefs] = useState(true);
+  const [testResult, setTestResult] = useState<{
+    ok: boolean;
+    message: string;
+  } | null>(null);
   const [notificationPermission, setNotificationPermission] =
     useState<NotificationPermission>("default");
 
@@ -286,27 +318,98 @@ export default function ReminderSettings({ user }: ReminderSettingsProps) {
     }
   };
 
+  const savePrayerNotifications = async (
+    next: PrayerNotificationPrefs
+  ): Promise<boolean> => {
+    const response = await fetch("/api/notifications/preferences", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prayerNotifications: next }),
+    });
+    return response.ok;
+  };
+
+  const handleTogglePrayerNotifications = async (enabled: boolean) => {
+    if (!user) {
+      alert("Please sign in to enable prayer time alerts");
+      return;
+    }
+
+    const previous = preferences.prayerNotifications ?? null;
+    const next: PrayerNotificationPrefs = {
+      enabled,
+      prayers: previous?.prayers ?? ALL_PRAYERS_ON,
+    };
+
+    setPreferences((prev) => ({ ...prev, prayerNotifications: next }));
+    setIsLoading(true);
+
+    try {
+      if (enabled && !preferences.hasSubscription) {
+        const hasPermission = await requestNotificationPermission();
+        if (!hasPermission) throw new Error("Permission denied");
+        const subscribed = await subscribeToNotifications();
+        if (!subscribed) throw new Error("Subscription failed");
+        setPreferences((prev) => ({ ...prev, hasSubscription: true }));
+      }
+
+      if (!(await savePrayerNotifications(next))) {
+        throw new Error("Failed to save prayer notification settings");
+      }
+    } catch (error) {
+      console.error("Error toggling prayer notifications:", error);
+      setPreferences((prev) => ({ ...prev, prayerNotifications: previous }));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTogglePrayer = async (
+    prayer: keyof PrayerNotificationPrefs["prayers"],
+    value: boolean
+  ) => {
+    const previous = preferences.prayerNotifications;
+    if (!previous) return;
+
+    const next: PrayerNotificationPrefs = {
+      ...previous,
+      prayers: { ...previous.prayers, [prayer]: value },
+    };
+
+    setPreferences((prev) => ({ ...prev, prayerNotifications: next }));
+
+    if (!(await savePrayerNotifications(next))) {
+      setPreferences((prev) => ({ ...prev, prayerNotifications: previous }));
+    }
+  };
+
   const sendTestNotification = async () => {
     if (!user || !preferences.hasSubscription) {
-      alert("Please enable notifications first");
+      setTestResult({ ok: false, message: "Please enable notifications first" });
       return;
     }
 
     setIsLoading(true);
+    setTestResult(null);
 
     try {
       const response = await fetch("/api/notifications/test");
+      const data = await response.json().catch(() => ({}));
 
-      if (response.ok) {
-        const data = await response.json();
-        alert(`Test notification sent! Ayah: ${data.ayah.verseKey}`);
+      if (response.ok && data.success) {
+        setTestResult({ ok: true, message: "Test notification sent!" });
       } else {
-        const error = await response.json();
-        alert(`Failed to send test: ${error.error}`);
+        setTestResult({
+          ok: false,
+          message: data.message || data.error || "Failed to send test notification",
+        });
       }
     } catch (error) {
       console.error("Error sending test notification:", error);
-      alert("Failed to send test notification. Please try again.");
+      setTestResult({
+        ok: false,
+        message: "Failed to send test notification. Please try again.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -454,6 +557,14 @@ export default function ReminderSettings({ user }: ReminderSettingsProps) {
               )}
             </button>
 
+            {testResult && (
+              <div
+                className={`alert ${testResult.ok ? "alert-success" : "alert-warning"} py-2 text-sm`}
+              >
+                <span>{testResult.message}</span>
+              </div>
+            )}
+
             {preferences.lastReminderSent && (
               <div className="text-xs text-base-content/50 mt-2 text-center">
                 Last sent:{" "}
@@ -463,6 +574,54 @@ export default function ReminderSettings({ user }: ReminderSettingsProps) {
           </div>
         </>
       )}
+
+      {/* Prayer Time Alerts */}
+      <div className="border-t border-base-200 p-6">
+        <div className="flex items-center justify-between w-full gap-4">
+          <div className="flex items-center gap-4">
+            <BellIcon className="w-6 h-6 text-base-content/70" />
+            <div>
+              <span className="text-base font-medium text-base-content">
+                Prayer Time Alerts
+              </span>
+              <div className="text-sm text-base-content/60">
+                {user
+                  ? "Get notified at each prayer time"
+                  : "Sign in to enable"}
+              </div>
+            </div>
+          </div>
+
+          <Toggle
+            id="prayer-alerts-toggle"
+            name="prayerAlerts"
+            checked={preferences.prayerNotifications?.enabled ?? false}
+            onChange={handleTogglePrayerNotifications}
+            disabled={isLoading || !user}
+            aria-label="Toggle prayer time alerts"
+            className="flex-shrink-0"
+          />
+        </div>
+
+        {user && preferences.prayerNotifications?.enabled && (
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            {PRAYER_LABELS.map(([prayer, label]) => (
+              <label
+                key={prayer}
+                className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-base-200"
+              >
+                <span className="text-sm font-medium">{label}</span>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary toggle-sm"
+                  checked={preferences.prayerNotifications?.prayers[prayer] ?? false}
+                  onChange={(e) => handleTogglePrayer(prayer, e.target.checked)}
+                />
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Permission Help */}
       {user && notificationPermission === "denied" && (

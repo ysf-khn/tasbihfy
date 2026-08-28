@@ -98,7 +98,7 @@ export default function manifest(): MetadataRoute.Manifest {
         name: "My Dhikrs",
         short_name: "My Dhikrs",
         description: "View and manage your saved dhikr phrases",
-        url: "/dhikrs",
+        url: "/dhikr",
         icons: [
           {
             src: "/icons/icon-192x192.png",

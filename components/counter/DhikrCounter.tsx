@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useArabicSettings } from "@/hooks/useArabicSettings";
+import { useVibrationSetting } from "@/hooks/useVibrationSetting";
 import Link from "next/link";
 import {
   ChevronLeftIcon,
@@ -50,7 +51,7 @@ export default function DhikrCounter({
   transliteration,
   tempDhikr,
 }: DhikrCounterProps) {
-  const [isVibrationEnabled, setIsVibrationEnabled] = useState(true);
+  const { isVibrationEnabled, setVibrationEnabled } = useVibrationSetting();
   const [wasComplete, setWasComplete] = useState(false);
   const [showMilestone, setShowMilestone] = useState(false);
   const [milestoneMessage, setMilestoneMessage] = useState("");
@@ -197,7 +198,7 @@ export default function DhikrCounter({
           </button>
           <button
             className={`btn btn-ghost btn-circle btn-sm ${isVibrationEnabled ? 'btn-active' : ''}`}
-            onClick={() => setIsVibrationEnabled(!isVibrationEnabled)}
+            onClick={() => setVibrationEnabled(!isVibrationEnabled)}
             title={isVibrationEnabled ? "Vibration on" : "Vibration off"}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">

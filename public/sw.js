@@ -1,18 +1,19 @@
 // Simplified Service Worker for Tasbihfy PWA
 // Based on Next.js PWA guide - much simpler than previous implementation
 
-const CACHE_NAME = "tasbihfy-a5ec6a8";
+const CACHE_NAME = "tasbihfy-c299656";
 const urlsToCache = [
-  "/",
+  "/offline",
   "/icons/icon-192x192.png",
   "/icons/icon-512x512.png",
   "/apple-touch-icon.png",
   "/favicon.ico",
 ];
 
-// Install event - cache essential resources and skip waiting
+// Install event - cache essential resources.
+// No skipWaiting here: the new SW parks in "waiting" until the client
+// approves the update via the SKIP_WAITING message (see message handler).
 self.addEventListener("install", function (event) {
-  self.skipWaiting(); // Take over immediately, don't wait for old SW
   event.waitUntil(
     caches.open(CACHE_NAME).then(function (cache) {
       console.log("[SW] Caching essential resources");
@@ -43,47 +44,71 @@ self.addEventListener("activate", function (event) {
   );
 });
 
-// Fetch event - network first, fallback to cache for offline
+// Fetch event.
+// - Navigations: network only, offline fallback to the precached /offline page.
+//   Never cached, so users always get the latest HTML shell.
+// - /api/*: never intercepted, never cached.
+// - Same-origin static assets (/_next/static, icons, fonts, images): cache-first.
+// - Everything else same-origin: network-first with cache fallback (no cache fill).
 self.addEventListener("fetch", function (event) {
-  // Skip non-GET requests
-  if (event.request.method !== "GET") {
+  const request = event.request;
+
+  if (request.method !== "GET") {
     return;
   }
 
-  if (event.request.url.includes("verses.quran.foundation")) {
+  if (request.url.includes("verses.quran.foundation")) {
+    return;
+  }
+
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request).catch(function () {
+        return caches.match("/offline");
+      })
+    );
+    return;
+  }
+
+  const url = new URL(request.url);
+
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  if (url.pathname.startsWith("/api/")) {
+    return;
+  }
+
+  const isStaticAsset =
+    url.pathname.startsWith("/_next/static/") ||
+    url.pathname.startsWith("/icons/") ||
+    /\.(png|jpg|jpeg|svg|gif|webp|ico|woff2?|ttf|otf)$/.test(url.pathname);
+
+  if (isStaticAsset) {
+    event.respondWith(
+      caches.match(request).then(function (cached) {
+        if (cached) {
+          return cached;
+        }
+        return fetch(request).then(function (response) {
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then(function (cache) {
+              cache.put(request, responseToCache);
+            });
+          }
+          return response;
+        });
+      })
+    );
     return;
   }
 
   event.respondWith(
-    fetch(event.request)
-      .then(function (response) {
-        // Check if we received a valid response
-        if (!response || response.status !== 200 || response.type !== "basic") {
-          return response;
-        }
-
-        // Clone the response as it can only be consumed once
-        const responseToCache = response.clone();
-
-        caches.open(CACHE_NAME).then(function (cache) {
-          // Cache successful responses
-          cache.put(event.request, responseToCache);
-        });
-
-        return response;
-      })
-      .catch(function () {
-        // Network request failed, try to get from cache
-        return caches.match(event.request).then(function (response) {
-          if (response) {
-            return response;
-          }
-          // If not in cache and offline, return offline page for navigation
-          if (event.request.mode === "navigate") {
-            return caches.match("/");
-          }
-        });
-      })
+    fetch(request).catch(function () {
+      return caches.match(request);
+    })
   );
 });
 

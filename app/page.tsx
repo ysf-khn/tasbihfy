@@ -191,6 +191,12 @@ export default function HomePage() {
                         <span> | {prayerData.location.name}</span>
                       )}
                     </div>
+                    {prayerData?.hijri && (
+                      <div className="text-xs text-base-content/60">
+                        {prayerData.hijri.day} {prayerData.hijri.monthEn}{" "}
+                        {prayerData.hijri.year} AH
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : null}

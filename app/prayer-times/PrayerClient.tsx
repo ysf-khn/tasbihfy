@@ -5,11 +5,15 @@ import LocationDisplay from "@/components/prayer/LocationDisplay";
 import QiblaDirection from "@/components/prayer/QiblaDirection";
 import NextPrayer from "@/components/prayer/NextPrayer";
 import CalculationNote from "@/components/prayer/CalculationNote";
+import MonthlyTimetable from "@/components/prayer/MonthlyTimetable";
+import PrayerTracker from "@/components/prayer/PrayerTracker";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import { usePrayerTimes } from "@/hooks/usePrayerTimes";
+import { useState } from "react";
 
 export default function PrayerClient() {
   const { prayerData, loading, error, refreshPrayerTimes } = usePrayerTimes();
+  const [view, setView] = useState<"today" | "monthly">("today");
 
   const handleLocationSearch = async (locationQuery: string) => {
     // This would need to be implemented in the hook if we want manual location search
@@ -25,10 +29,37 @@ export default function PrayerClient() {
         {/* Header Section */}
         <div className="text-center space-y-2 lg:space-y-1">
           <h1 className="text-3xl lg:text-2xl font-bold text-base-content">Prayer Times</h1>
-          <p className="text-base-content/70 lg:text-sm lg:hidden">
-            Stay connected to your daily prayers
-          </p>
+          {prayerData?.hijri ? (
+            <p className="text-base-content/70 text-sm">
+              {prayerData.hijri.day} {prayerData.hijri.monthEn}{" "}
+              {prayerData.hijri.year} AH
+            </p>
+          ) : (
+            <p className="text-base-content/70 lg:text-sm lg:hidden">
+              Stay connected to your daily prayers
+            </p>
+          )}
         </div>
+
+        {/* View Toggle */}
+        {prayerData && !loading && (
+          <div className="flex justify-center">
+            <div className="tabs tabs-boxed">
+              <button
+                className={`tab ${view === "today" ? "tab-active" : ""}`}
+                onClick={() => setView("today")}
+              >
+                Today
+              </button>
+              <button
+                className={`tab ${view === "monthly" ? "tab-active" : ""}`}
+                onClick={() => setView("monthly")}
+              >
+                Monthly
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Loading State */}
         {loading && (
@@ -67,8 +98,13 @@ export default function PrayerClient() {
           </div>
         )}
 
+        {/* Monthly View */}
+        {prayerData && !loading && view === "monthly" && (
+          <MonthlyTimetable location={prayerData.location} />
+        )}
+
         {/* Prayer Times Content */}
-        {prayerData && !loading && (
+        {prayerData && !loading && view === "today" && (
           <div className="lg:grid lg:grid-cols-3 lg:gap-6 space-y-6 lg:space-y-0">
             {/* Main Content - Prayer Times */}
             <div className="lg:col-span-2 space-y-6 lg:space-y-4">
@@ -87,6 +123,9 @@ export default function PrayerClient() {
                   prayers={prayerData.prayers}
                 />
               )}
+
+              {/* Prayer Tracker */}
+              <PrayerTracker />
 
               <CalculationNote calculation={prayerData.calculation} />
 

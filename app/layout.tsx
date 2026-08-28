@@ -191,13 +191,6 @@ export default function RootLayout({
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
     },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.8",
-      ratingCount: "1200",
-      bestRating: "5",
-      worstRating: "1",
-    },
     publisher: {
       "@type": "Organization",
       name: "Tasbihfy App",

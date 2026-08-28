@@ -112,8 +112,31 @@ export interface PrayerTimeCache {
   countryCode: string | null
   temperature: string | null
   pressure: string | null
+  hijri: Record<string, unknown> | null
+  raw: Record<string, string> | null
   createdAt: Date
   updatedAt: Date
+}
+
+export type TrackedPrayer = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha'
+
+export interface PrayerLog {
+  id: string
+  userId: string
+  date: string // YYYY-MM-DD
+  prayer: TrackedPrayer
+  prayedAt: Date
+}
+
+export interface PrayerNotificationPrefs {
+  enabled: boolean
+  prayers: {
+    fajr: boolean
+    dhuhr: boolean
+    asr: boolean
+    maghrib: boolean
+    isha: boolean
+  }
 }
 
 export interface ReminderPreferences {
@@ -124,6 +147,8 @@ export interface ReminderPreferences {
   timezone: string
   pushSubscription: Record<string, unknown> | null
   lastReminderSent: Date | null
+  prayerNotifications: PrayerNotificationPrefs | null
+  lastPrayerNotificationKey: string | null
   createdAt: Date
   updatedAt: Date
 }

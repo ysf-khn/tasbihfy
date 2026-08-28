@@ -13,6 +13,7 @@ import {
   UserIcon,
   ChartBarIcon,
   CalendarDaysIcon,
+  BookmarkIcon,
 } from "@heroicons/react/24/outline";
 
 // Features organized by category
@@ -67,6 +68,14 @@ const features = [
         icon: HeartIcon,
         color: "text-secondary",
         bgColor: "bg-secondary/10",
+      },
+      {
+        title: "Quran Bookmarks",
+        description: "Your saved verses",
+        href: "/quran/bookmarks",
+        icon: BookmarkIcon,
+        color: "text-success",
+        bgColor: "bg-success/10",
       },
     ],
   },

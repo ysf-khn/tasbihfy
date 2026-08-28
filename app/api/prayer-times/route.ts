@@ -96,6 +96,7 @@ export async function GET(request: NextRequest) {
         prayers: buildPrayers(cachedData),
         qiblaDirection: cachedData.qiblaDirection || "",
         sunrise: cachedData.shurooq,
+        hijri: cachedData.hijri ?? null,
         // Re-derived rather than stored: the rules are a pure function of the
         // country, which the cache row already carries.
         calculation: describeRules(
@@ -142,6 +143,8 @@ export async function GET(request: NextRequest) {
         timezone: timings.timezone,
         country: resolved.country,
         countryCode: resolved.countryCode,
+        hijri: timings.hijri as unknown as Record<string, unknown> | null,
+        raw: timings.raw as unknown as Record<string, string>,
       });
 
       // Clean up old cache entries for this location (keep only today's data)
@@ -164,6 +167,7 @@ export async function GET(request: NextRequest) {
       qiblaDirection: qiblaDirection ?? "",
       sunrise: timings.shurooq,
       calculation: describeRules(rules),
+      hijri: timings.hijri,
     });
   } catch (error) {
     if (error instanceof UpstreamError) {

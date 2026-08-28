@@ -496,28 +496,6 @@ export async function getTafsir(
 }
 
 /**
- * Search verses by text
- */
-export async function searchVersesLegacy(
-  query: string,
-  translationId: number = 131,
-  limit: number = 20
-): Promise<VerseWithTranslations[]> {
-  try {
-    const url = `${QURAN_API_BASE}/search?q=${encodeURIComponent(
-      query
-    )}&translation=${translationId}&limit=${limit}`;
-    const response = await fetchFromProxy(url);
-    const data = await response.json();
-
-    return data.search.results || [];
-  } catch (error) {
-    console.error("Failed to search verses:", error);
-    throw new Error("Search failed. Please try again.");
-  }
-}
-
-/**
  * Get available translation resources
  */
 export function getTranslationResources() {
@@ -820,33 +798,53 @@ export async function getAyahTranslation(
   }
 }
 
+/** One result from the Quran Foundation v4 /search endpoint */
+export interface QuranSearchResult {
+  verse_key: string;
+  /** Matched text with <em> highlight markup */
+  text: string;
+  translations?: { text: string; resource_id?: number; name?: string }[];
+}
+
+export interface QuranSearchResponse {
+  query: string;
+  total_results: number;
+  current_page: number;
+  total_pages: number;
+  results: QuranSearchResult[];
+}
+
 /**
- * Search verses by text
+ * Search verses by text (Quran Foundation v4 /search: q, size, page, language)
  */
 export async function searchVerses(
   query: string,
   options: {
-    translationId?: number;
     language?: string;
-    limit?: number;
+    size?: number;
     page?: number;
   } = {}
-): Promise<any> {
+): Promise<QuranSearchResponse> {
   try {
     const params = new URLSearchParams({
       q: query,
-      ...(options.translationId && {
-        translation: options.translationId.toString(),
-      }),
+      size: String(options.size ?? 20),
       ...(options.language && { language: options.language }),
-      ...(options.limit && { limit: options.limit.toString() }),
-      ...(options.page && { page: options.page.toString() }),
+      ...(options.page && { page: String(options.page) }),
     });
 
     const response = await fetchFromProxy(
       `${QURAN_API_BASE}/search?${params.toString()}`
     );
-    return response.json();
+    const data = await response.json();
+
+    return {
+      query: data.search?.query ?? query,
+      total_results: data.search?.total_results ?? 0,
+      current_page: data.search?.current_page ?? 1,
+      total_pages: data.search?.total_pages ?? 1,
+      results: data.search?.results ?? [],
+    };
   } catch (error) {
     console.error("Search failed:", error);
     throw new Error("Search failed. Please try again.");

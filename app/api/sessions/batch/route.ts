@@ -15,6 +15,10 @@ const updateSchema = z.object({
   count: z.number().int().min(0),
   timestamp: z.number(),
   completed: z.boolean().optional(),
+  localDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
 });
 
 const batchSchema = z.object({
@@ -89,6 +93,7 @@ export async function POST(request: NextRequest) {
                   !existing.completed
                     ? new Date()
                     : existing.completedAt,
+                localDate: update.localDate,
               }
             );
 
@@ -104,6 +109,7 @@ export async function POST(request: NextRequest) {
               userId: session.user.id,
               currentCount: update.count,
               completed: update.completed ?? update.count >= dhikr.targetCount,
+              localDate: update.localDate,
             });
 
             results.push({
@@ -148,6 +154,7 @@ export async function POST(request: NextRequest) {
               currentCount: update.count,
               completed: isCompleted,
               completedAt,
+              localDate: update.localDate,
             }
           );
 

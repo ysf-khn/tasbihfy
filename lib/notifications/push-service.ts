@@ -1,5 +1,5 @@
-// Push notification service - TEMPORARILY DISABLED
-// Re-enable after Cloudflare Pages migration is complete
+// Push notification service — WebCrypto implementation, runs on Cloudflare Workers
+import { sendWebPush, type SendResult } from "./web-push";
 
 // Push subscription interface
 export interface PushSubscription {
@@ -10,28 +10,82 @@ export interface PushSubscription {
   };
 }
 
-/**
- * Send push notification - DISABLED
- */
-export async function sendPushNotification(): Promise<boolean> {
-  console.log("⚠️ Push notifications temporarily disabled");
-  return false;
+export interface NotificationPayload {
+  title: string;
+  body: string;
+  icon?: string;
+  badge?: string;
+  tag?: string;
+  url?: string;
+  data?: Record<string, unknown>;
+  actions?: { action: string; title: string }[];
+  vibrate?: number[];
+}
+
+function withDefaults(payload: NotificationPayload) {
+  return {
+    icon: "/icons/icon-192x192.png",
+    badge: "/icons/icon-72x72.png",
+    vibrate: [200, 100, 200],
+    ...payload,
+  };
 }
 
 /**
- * Send ayah notification - DISABLED
+ * Send a push notification to a single subscription.
+ * Returns the full result so callers can clean up expired subscriptions.
  */
-export async function sendAyahNotification(): Promise<boolean> {
-  console.log("⚠️ Push notifications temporarily disabled");
-  return false;
+export async function sendPushNotification(
+  subscription: PushSubscription,
+  payload: NotificationPayload
+): Promise<SendResult> {
+  try {
+    return await sendWebPush(subscription, withDefaults(payload));
+  } catch (error) {
+    console.error("Failed to send push notification:", error);
+    return { ok: false, expired: false, status: 0 };
+  }
 }
 
 /**
- * Send test notification - DISABLED
+ * Send a test notification
  */
-export async function sendTestNotification(): Promise<boolean> {
-  console.log("⚠️ Push notifications temporarily disabled");
-  return false;
+export async function sendTestNotification(
+  subscription: PushSubscription
+): Promise<SendResult> {
+  return sendPushNotification(subscription, {
+    title: "Tasbihfy",
+    body: "Test notification — your reminders are working!",
+    tag: "test-notification",
+    url: "/",
+  });
+}
+
+/**
+ * Send the same notification to multiple subscriptions
+ */
+export async function sendBatchNotifications(
+  subscriptions: PushSubscription[],
+  payload: NotificationPayload
+): Promise<{
+  successful: number;
+  failed: number;
+  expiredSubscriptions: PushSubscription[];
+}> {
+  const results = await Promise.all(
+    subscriptions.map(async (subscription) => ({
+      subscription,
+      result: await sendPushNotification(subscription, payload),
+    }))
+  );
+
+  return {
+    successful: results.filter((r) => r.result.ok).length,
+    failed: results.filter((r) => !r.result.ok).length,
+    expiredSubscriptions: results
+      .filter((r) => r.result.expired)
+      .map((r) => r.subscription),
+  };
 }
 
 /**
@@ -59,22 +113,6 @@ export function getVapidPublicKey(): string {
     throw new Error("VAPID_PUBLIC_KEY environment variable is not set");
   }
   return process.env.VAPID_PUBLIC_KEY;
-}
-
-/**
- * Send notifications to multiple subscriptions - DISABLED
- */
-export async function sendBatchNotifications(): Promise<{
-  successful: number;
-  failed: number;
-  expiredSubscriptions: PushSubscription[];
-}> {
-  console.log("⚠️ Push notifications temporarily disabled");
-  return {
-    successful: 0,
-    failed: 0,
-    expiredSubscriptions: [],
-  };
 }
 
 /**

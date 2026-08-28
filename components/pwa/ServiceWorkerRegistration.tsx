@@ -1,56 +1,109 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from "react";
 
-export default function ServiceWorkerRegistration({ children }: { children?: React.ReactNode }) {
+export default function ServiceWorkerRegistration({
+  children,
+}: {
+  children?: React.ReactNode;
+}) {
+  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const refreshing = useRef(false);
+
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      // Register service worker
-      registerServiceWorker()
-    }
-  }, [])
+    if (!("serviceWorker" in navigator)) return;
 
-  async function registerServiceWorker() {
-    try {
-      const registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/',
-        updateViaCache: 'none', // Always check for updates
-      })
+    let registration: ServiceWorkerRegistration | undefined;
 
-      console.log('[SW] Service Worker registered successfully:', registration.scope)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        registration?.update().catch(() => {});
+      }
+    };
 
-      // Check for updates on visibility change
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && registration.waiting) {
-          // There's an update waiting, could notify user here
-          console.log('[SW] Update available')
+    const handleControllerChange = () => {
+      // Reload once when the new SW takes over (guard against loops)
+      if (refreshing.current) return;
+      refreshing.current = true;
+      window.location.reload();
+    };
+
+    const trackInstalling = (worker: ServiceWorker | null) => {
+      if (!worker) return;
+      worker.addEventListener("statechange", () => {
+        // "installed" with an existing controller means an update is waiting;
+        // without a controller it's the first install (no prompt needed)
+        if (worker.state === "installed" && navigator.serviceWorker.controller) {
+          setWaitingWorker(worker);
         }
-      })
+      });
+    };
 
-      // Listen for new service worker waiting
-      registration.addEventListener('updatefound', () => {
-        const newWorker = registration.installing
-        if (newWorker) {
-          console.log('[SW] New service worker installing')
+    const register = async () => {
+      try {
+        registration = await navigator.serviceWorker.register("/sw.js", {
+          scope: "/",
+          updateViaCache: "none",
+        });
 
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // New service worker installed and ready
-              console.log('[SW] New version available - refresh to update')
-            }
-          })
+        if (registration.waiting && navigator.serviceWorker.controller) {
+          setWaitingWorker(registration.waiting);
         }
-      })
+        trackInstalling(registration.installing);
+        registration.addEventListener("updatefound", () => {
+          trackInstalling(registration?.installing ?? null);
+        });
+      } catch (error) {
+        console.error("[SW] Service Worker registration failed:", error);
+      }
+    };
 
-      // Listen for the service worker becoming active
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('[SW] New service worker activated')
-      })
+    register();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    navigator.serviceWorker.addEventListener(
+      "controllerchange",
+      handleControllerChange
+    );
 
-    } catch (error) {
-      console.error('[SW] Service Worker registration failed:', error)
-    }
-  }
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      navigator.serviceWorker.removeEventListener(
+        "controllerchange",
+        handleControllerChange
+      );
+    };
+  }, []);
 
-  return <>{children}</>
+  const applyUpdate = () => {
+    if (!waitingWorker) return;
+    setIsUpdating(true);
+    waitingWorker.postMessage({ type: "SKIP_WAITING" });
+  };
+
+  return (
+    <>
+      {children}
+      {waitingWorker && (
+        <div className="toast toast-bottom toast-center z-[100]">
+          <div className="alert bg-base-100 border border-base-300 shadow-lg">
+            <span className="text-sm font-medium">
+              A new version of Tasbihfy is available
+            </span>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={applyUpdate}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <span className="loading loading-spinner loading-xs"></span>
+              ) : (
+                "Refresh"
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }

@@ -362,25 +362,6 @@ export default function UnifiedSettingsDrawer({
 
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium text-sm">
-                Word by Word Translation
-              </div>
-              <div className="text-xs text-base-content/60">
-                Show individual word translations
-              </div>
-            </div>
-            <input
-              type="checkbox"
-              className="toggle toggle-primary"
-              checked={settings.showWordByWord}
-              onChange={(e) =>
-                handleToggleOption("showWordByWord", e.target.checked)
-              }
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
               <div className="font-medium text-sm">Show Verse Numbers</div>
               <div className="text-xs text-base-content/60">
                 Display verse numbers beside text

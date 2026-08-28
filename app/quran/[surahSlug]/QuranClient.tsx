@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { generateSurahSlug } from "@/lib/url-utils";
 import { getSurahInfo } from "@/data/surah-names";
@@ -22,6 +22,7 @@ import {
   useQuranSurah,
   useQuranSurahArabicOnly,
   useLastRead,
+  useQuranBookmarks,
 } from "@/hooks/useQuranData";
 import { useQuranSettings } from "@/hooks/useQuranSettings";
 
@@ -49,7 +50,6 @@ export default function QuranClient({ surahId }: QuranClientProps) {
     return "translation";
   });
   const [showNavDrawer, setShowNavDrawer] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showDebug, setShowDebug] = useState(
     process.env.NODE_ENV === "development"
@@ -74,6 +74,12 @@ export default function QuranClient({ surahId }: QuranClientProps) {
   } = useQuranSurahArabicOnly(surahId, activeTab === "reading");
 
   const { updateLastRead } = useLastRead();
+
+  // The header bookmark marks the start of this surah (verse 1)
+  const { isBookmarked: checkVerseBookmarked, toggleBookmark: toggleVerseBookmark } =
+    useQuranBookmarks();
+  const surahBookmarkKey = `${surahId}:1`;
+  const isBookmarked = checkVerseBookmarked(surahBookmarkKey);
 
   // Progressive loading strategy: show Arabic immediately, load translations in background
   const surahData = activeTab === "translation" ? translationData : arabicData;
@@ -117,24 +123,9 @@ export default function QuranClient({ surahId }: QuranClientProps) {
     settings.selectedScript,
   ]);
 
-  const checkBookmark = useCallback(() => {
-    try {
-      const bookmarks = JSON.parse(
-        localStorage.getItem("quran_bookmarks") || "[]"
-      );
-      const isCurrentBookmarked = bookmarks.some(
-        (b: any) => b.surahId === surahId
-      );
-      setIsBookmarked(isCurrentBookmarked);
-    } catch (error) {
-      console.error("Failed to check bookmark:", error);
-    }
-  }, [surahId]);
-
   useEffect(() => {
     if (surahId && displayData) {
       updateLastRead(surahId, displayData.name_simple);
-      checkBookmark();
 
       // Track surah view with Google Analytics
       window.gtag?.("event", "view_surah", {
@@ -145,7 +136,66 @@ export default function QuranClient({ surahId }: QuranClientProps) {
         surah_name_arabic: displayData.name_arabic,
       });
     }
-  }, [surahId, displayData, updateLastRead, checkBookmark]);
+  }, [surahId, displayData, updateLastRead]);
+
+  // Scroll to #verse-N once the verses have rendered
+  useEffect(() => {
+    if (!displayData) return;
+    const hash = window.location.hash;
+    const match = /^#verse-(\d+)$/.exec(hash);
+    if (!match) return;
+
+    const timer = setTimeout(() => {
+      document
+        .getElementById(`verse-${match[1]}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [displayData, activeTab]);
+
+  // Track the top-most visible verse as the last-read position (debounced)
+  useEffect(() => {
+    if (!displayData || !("IntersectionObserver" in window)) return;
+
+    let saveTimer: ReturnType<typeof setTimeout> | undefined;
+    const visibleVerses = new Set<number>();
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const match = /^verse-(\d+)$/.exec(entry.target.id);
+          if (!match) continue;
+          const verseNumber = Number(match[1]);
+          if (entry.isIntersecting) {
+            visibleVerses.add(verseNumber);
+          } else {
+            visibleVerses.delete(verseNumber);
+          }
+        }
+
+        if (visibleVerses.size === 0) return;
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+          const topVerse = Math.min(...visibleVerses);
+          updateLastRead(surahId, displayData.name_simple, topVerse);
+        }, 1000);
+      },
+      { rootMargin: "0px 0px -60% 0px" }
+    );
+
+    // Anchors render after this effect runs; wait a tick before observing
+    const attachTimer = setTimeout(() => {
+      document
+        .querySelectorAll('[id^="verse-"]')
+        .forEach((el) => observer.observe(el));
+    }, 500);
+
+    return () => {
+      clearTimeout(attachTimer);
+      clearTimeout(saveTimer);
+      observer.disconnect();
+    };
+  }, [displayData, activeTab, surahId, updateLastRead]);
 
   // Save tab preference
   useEffect(() => {
@@ -155,31 +205,12 @@ export default function QuranClient({ surahId }: QuranClientProps) {
   }, [activeTab]);
 
   const toggleBookmark = () => {
-    try {
-      const bookmarks = JSON.parse(
-        localStorage.getItem("quran_bookmarks") || "[]"
-      );
-
-      if (isBookmarked) {
-        // Remove bookmark
-        const filtered = bookmarks.filter((b: any) => b.surahId !== surahId);
-        localStorage.setItem("quran_bookmarks", JSON.stringify(filtered));
-        setIsBookmarked(false);
-      } else {
-        // Add bookmark
-        const newBookmark = {
-          id: `${surahId}_${Date.now()}`,
-          surahId,
-          surahName: displayData?.name_simple || `Surah ${surahId}`,
-          createdAt: new Date().toISOString(),
-        };
-        bookmarks.push(newBookmark);
-        localStorage.setItem("quran_bookmarks", JSON.stringify(bookmarks));
-        setIsBookmarked(true);
-      }
-    } catch (error) {
-      console.error("Failed to toggle bookmark:", error);
-    }
+    toggleVerseBookmark({
+      verseKey: surahBookmarkKey,
+      surahId,
+      verseNumber: 1,
+      surahName: displayData?.name_simple || `Surah ${surahId}`,
+    });
   };
 
   const toggleAudio = () => {

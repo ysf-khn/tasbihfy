@@ -3,6 +3,7 @@ import { getSurahList, getSurahData, getSurahArabicOnly } from '@/lib/quran/api'
 import { Surah, SurahData, QuranScript } from '@/lib/quran/types';
 import { TRANSLATION_RESOURCES } from '@/lib/quran/constants';
 import { useQuranSettings } from './useQuranSettings';
+import { LocalStorageCleanup } from '@/lib/localStorage-cleanup';
 
 // Cache management
 const CACHE_KEY_PREFIX = 'quran_hook_cache_';
@@ -320,58 +321,111 @@ export function useQuranPrefetch() {
   };
 }
 
-// Bookmarks hook
+// Bookmarks hook — canonical verse-level bookmark store
+const BOOKMARKS_KEY = 'quran_verse_bookmarks';
+const BOOKMARKS_CHANGE_EVENT = 'quran-bookmarks-changed';
+
+export interface VerseBookmark {
+  id: string;
+  verseKey: string; // "2:255"
+  surahId: number;
+  verseNumber: number;
+  surahName: string;
+  verseText?: string;
+  translation?: string;
+  createdAt: string;
+}
+
+function readBookmarks(): VerseBookmark[] {
+  try {
+    const saved = localStorage.getItem(BOOKMARKS_KEY);
+    const parsed = saved ? JSON.parse(saved) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error('Failed to load bookmarks:', error);
+    return [];
+  }
+}
+
+function writeBookmarks(bookmarks: VerseBookmark[]) {
+  localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks));
+  // storage events don't fire in the same tab, so broadcast explicitly
+  window.dispatchEvent(new CustomEvent(BOOKMARKS_CHANGE_EVENT));
+}
+
 export function useQuranBookmarks() {
-  const [bookmarks, setBookmarks] = useState<any[]>([]);
+  const [bookmarks, setBookmarks] = useState<VerseBookmark[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadBookmarks = useCallback(() => {
-    try {
-      setLoading(true);
-      const saved = localStorage.getItem('quran_verse_bookmarks');
-      const bookmarksList = saved ? JSON.parse(saved) : [];
-      setBookmarks(bookmarksList);
-    } catch (error) {
-      console.error('Failed to load bookmarks:', error);
-      setBookmarks([]);
-    } finally {
-      setLoading(false);
-    }
+    setBookmarks(readBookmarks());
+    setLoading(false);
   }, []);
 
   useEffect(() => {
+    // Fold any legacy surah-level bookmarks into the verse store first
+    LocalStorageCleanup.migrateSurahBookmarks();
     loadBookmarks();
-    
-    // Listen for bookmark changes
+
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'quran_verse_bookmarks') {
-        loadBookmarks();
-      }
+      if (e.key === BOOKMARKS_KEY) loadBookmarks();
     };
+    const handleLocalChange = () => loadBookmarks();
 
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener(BOOKMARKS_CHANGE_EVENT, handleLocalChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener(BOOKMARKS_CHANGE_EVENT, handleLocalChange);
+    };
   }, [loadBookmarks]);
 
-  const addBookmark = useCallback((bookmark: any) => {
+  const addBookmark = useCallback((bookmark: Omit<VerseBookmark, 'id' | 'createdAt'>) => {
     try {
-      const updated = [...bookmarks, { ...bookmark, id: `${bookmark.verseKey}_${Date.now()}` }];
-      localStorage.setItem('quran_verse_bookmarks', JSON.stringify(updated));
-      setBookmarks(updated);
+      const current = readBookmarks();
+      if (current.some(b => b.verseKey === bookmark.verseKey)) return;
+      writeBookmarks([
+        ...current,
+        {
+          ...bookmark,
+          id: `${bookmark.verseKey}_${Date.now()}`,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
     } catch (error) {
       console.error('Failed to add bookmark:', error);
     }
-  }, [bookmarks]);
+  }, []);
 
-  const removeBookmark = useCallback((bookmarkId: string) => {
+  const removeBookmark = useCallback((verseKey: string) => {
     try {
-      const updated = bookmarks.filter(b => b.id !== bookmarkId);
-      localStorage.setItem('quran_verse_bookmarks', JSON.stringify(updated));
-      setBookmarks(updated);
+      writeBookmarks(readBookmarks().filter(b => b.verseKey !== verseKey));
     } catch (error) {
       console.error('Failed to remove bookmark:', error);
     }
-  }, [bookmarks]);
+  }, []);
+
+  const toggleBookmark = useCallback((bookmark: Omit<VerseBookmark, 'id' | 'createdAt'>): boolean => {
+    try {
+      const current = readBookmarks();
+      if (current.some(b => b.verseKey === bookmark.verseKey)) {
+        writeBookmarks(current.filter(b => b.verseKey !== bookmark.verseKey));
+        return false;
+      }
+      writeBookmarks([
+        ...current,
+        {
+          ...bookmark,
+          id: `${bookmark.verseKey}_${Date.now()}`,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+      return true;
+    } catch (error) {
+      console.error('Failed to toggle bookmark:', error);
+      return false;
+    }
+  }, []);
 
   const isBookmarked = useCallback((verseKey: string) => {
     return bookmarks.some(b => b.verseKey === verseKey);
@@ -382,6 +436,7 @@ export function useQuranBookmarks() {
     loading,
     addBookmark,
     removeBookmark,
+    toggleBookmark,
     isBookmarked,
     refetch: loadBookmarks,
   };

@@ -1,6 +1,10 @@
 import {
+  AladhanHijriDate,
   AladhanQiblaResponse,
   AladhanTimingsResponse,
+  HijriDate,
+  MonthlyTimetableDay,
+  RawPrayerTimings,
   ResolvedLocation,
 } from "@/types/prayer";
 
@@ -141,6 +145,22 @@ export function format12Hour(time: string): string {
   return `${hour12}:${String(minutes).padStart(2, "0")} ${period}`;
 }
 
+/** Strip an Aladhan timezone suffix, e.g. "04:29 (BST)" -> "04:29" */
+function clean24Hour(time: string): string {
+  return time.trim().split(" ")[0];
+}
+
+function toHijriDate(hijri: AladhanHijriDate | undefined): HijriDate | null {
+  if (!hijri?.month) return null;
+  return {
+    day: Number(hijri.day),
+    year: Number(hijri.year),
+    monthNumber: hijri.month.number,
+    monthEn: hijri.month.en,
+    monthAr: hijri.month.ar,
+  };
+}
+
 export interface AladhanTimings {
   fajr: string;
   shurooq: string;
@@ -149,6 +169,9 @@ export interface AladhanTimings {
   maghrib: string;
   isha: string;
   timezone: string | null;
+  hijri: HijriDate | null;
+  /** 24-hour times ("04:29") for notification scheduling */
+  raw: RawPrayerTimings;
 }
 
 export async function fetchPrayerTimings(
@@ -174,7 +197,7 @@ export async function fetchPrayerTimings(
     throw new UpstreamError("Invalid response from prayer times service");
   }
 
-  const { timings, meta } = body.data;
+  const { timings, meta, date: dateInfo } = body.data;
 
   return {
     fajr: format12Hour(timings.Fajr),
@@ -184,7 +207,72 @@ export async function fetchPrayerTimings(
     maghrib: format12Hour(timings.Maghrib),
     isha: format12Hour(timings.Isha),
     timezone: meta?.timezone ?? null,
+    hijri: toHijriDate(dateInfo?.hijri),
+    raw: {
+      fajr: clean24Hour(timings.Fajr),
+      shurooq: clean24Hour(timings.Sunrise),
+      dhuhr: clean24Hour(timings.Dhuhr),
+      asr: clean24Hour(timings.Asr),
+      maghrib: clean24Hour(timings.Maghrib),
+      isha: clean24Hour(timings.Isha),
+    },
   };
+}
+
+/** Raw shape of one https://api.aladhan.com/v1/calendar day */
+interface AladhanCalendarDay {
+  timings: AladhanTimingsResponse["data"]["timings"];
+  date: {
+    gregorian: { date: string }; // DD-MM-YYYY
+    hijri: AladhanHijriDate;
+  };
+}
+
+/**
+ * Full-month timetable from Aladhan /v1/calendar.
+ * Returns one entry per day with formatted 12-hour timings and the hijri date.
+ */
+export async function fetchMonthlyCalendar(
+  latitude: number,
+  longitude: number,
+  month: number,
+  year: number,
+  rules: CalculationRules
+): Promise<MonthlyTimetableDay[]> {
+  const url =
+    `${ALADHAN_BASE}/calendar/${year}/${month}` +
+    `?latitude=${latitude}&longitude=${longitude}` +
+    `&method=${rules.method}&school=${rules.school}`;
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new UpstreamError(`Prayer calendar service returned ${response.status}`);
+  }
+
+  const body: { code: number; data: AladhanCalendarDay[] } =
+    await response.json();
+
+  if (body.code !== 200 || !Array.isArray(body.data)) {
+    throw new UpstreamError("Invalid response from prayer calendar service");
+  }
+
+  return body.data.map((day) => {
+    // Aladhan formats gregorian dates as DD-MM-YYYY
+    const [dd, mm, yyyy] = day.date.gregorian.date.split("-");
+    return {
+      gregorianDate: `${yyyy}-${mm}-${dd}`,
+      hijri: toHijriDate(day.date.hijri),
+      timings: {
+        fajr: format12Hour(day.timings.Fajr),
+        shurooq: format12Hour(day.timings.Sunrise),
+        dhuhr: format12Hour(day.timings.Dhuhr),
+        asr: format12Hour(day.timings.Asr),
+        maghrib: format12Hour(day.timings.Maghrib),
+        isha: format12Hour(day.timings.Isha),
+      },
+    };
+  });
 }
 
 /** Qibla is a separate endpoint; a failure here shouldn't sink the whole request. */

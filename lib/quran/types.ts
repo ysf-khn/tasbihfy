@@ -108,7 +108,6 @@ export interface QuranSettings {
   arabicFontSize: number;
   translationFontSize: number;
   showTransliteration: boolean;
-  showWordByWord: boolean;
   showVerseNumbers?: boolean; // New: optional verse number display
   selectedReciter: string;
   selectedRecitationId: number; // New: selected recitation ID from API
@@ -141,16 +140,6 @@ export interface AudioReciter {
   relative_path: string;
   format: string;
   quality: string;
-}
-
-export interface BookmarkData {
-  id: string;
-  surahId: number;
-  verseNumber: number;
-  surahName: string;
-  verseText: string;
-  note?: string;
-  createdAt: Date;
 }
 
 // API Response types

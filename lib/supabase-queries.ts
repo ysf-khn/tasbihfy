@@ -5,8 +5,10 @@ import type {
   DhikrWithSessions,
   DhikrSessionWithDhikr,
   PrayerLocation,
+  PrayerLog,
   ReminderPreferences,
-  PrayerTimeCache
+  PrayerTimeCache,
+  TrackedPrayer
 } from '@/types/models'
 
 function generateId(): string {
@@ -331,6 +333,7 @@ export async function createDhikrSession(data: {
   userId: string
   currentCount: number
   completed: boolean
+  localDate?: string
 }): Promise<DhikrSessionWithDhikr> {
   const supabase = createServerClient()
 
@@ -350,6 +353,18 @@ export async function createDhikrSession(data: {
     .single()
 
   if (error) throw error
+
+  // Record daily progress (best-effort; a failure never sinks the session write)
+  if ((session as any)?.dhikr) {
+    recordDailyProgress(
+      data.userId,
+      data.dhikrId,
+      data.localDate,
+      data.currentCount,
+      (session as any).dhikr.targetCount,
+      data.completed
+    ).catch((e) => console.warn('Failed to record daily progress:', e))
+  }
 
   const s = session as any
   return {
@@ -382,6 +397,7 @@ export async function updateDhikrSession(
     currentCount: number
     completed: boolean
     completedAt?: Date | null
+    localDate?: string
   }
 ): Promise<DhikrSessionWithDhikr> {
   const supabase = createServerClient()
@@ -407,6 +423,18 @@ export async function updateDhikrSession(
     .single()
 
   if (error) throw error
+
+  // Record daily progress (best-effort; a failure never sinks the session write)
+  if ((session as any)?.dhikr) {
+    recordDailyProgress(
+      userId,
+      (session as any).dhikrId,
+      data.localDate,
+      data.currentCount,
+      (session as any).dhikr.targetCount,
+      data.completed
+    ).catch((e) => console.warn('Failed to record daily progress:', e))
+  }
 
   const s = session as any
   return {
@@ -562,6 +590,8 @@ export async function getCachedPrayerTimes(locationQuery: string, date: Date): P
     countryCode: data.countryCode,
     temperature: data.temperature,
     pressure: data.pressure,
+    hijri: (data.hijri as Record<string, unknown> | null) ?? null,
+    raw: (data.raw as Record<string, string> | null) ?? null,
     createdAt: new Date(data.createdAt),
     updatedAt: new Date(data.updatedAt),
   }
@@ -584,6 +614,8 @@ export async function cachePrayerTimes(data: {
   countryCode?: string | null
   temperature?: string | null
   pressure?: string | null
+  hijri?: Record<string, unknown> | null
+  raw?: Record<string, string> | null
 }): Promise<PrayerTimeCache> {
   const supabase = createServerClient()
 
@@ -608,6 +640,8 @@ export async function cachePrayerTimes(data: {
       countryCode: data.countryCode ?? null,
       temperature: data.temperature ?? null,
       pressure: data.pressure ?? null,
+      hijri: data.hijri ?? null,
+      raw: data.raw ?? null,
       createdAt: now,
       updatedAt: now,
     })
@@ -634,6 +668,8 @@ export async function cachePrayerTimes(data: {
     countryCode: cache.countryCode,
     temperature: cache.temperature,
     pressure: cache.pressure,
+    hijri: (cache.hijri as Record<string, unknown> | null) ?? null,
+    raw: (cache.raw as Record<string, string> | null) ?? null,
     createdAt: new Date(cache.createdAt),
     updatedAt: new Date(cache.updatedAt),
   }
@@ -653,6 +689,22 @@ export async function deleteOldPrayerCache(locationQuery: string, beforeDate: Da
 
 // ========== REMINDER PREFERENCES QUERIES ==========
 
+function mapReminderPreferences(row: any): ReminderPreferences {
+  return {
+    id: row.id,
+    userId: row.userId,
+    reminderEnabled: row.reminderEnabled,
+    reminderTime: row.reminderTime,
+    timezone: row.timezone,
+    pushSubscription: row.pushSubscription as Record<string, unknown> | null,
+    lastReminderSent: row.lastReminderSent ? new Date(row.lastReminderSent) : null,
+    prayerNotifications: row.prayerNotifications ?? null,
+    lastPrayerNotificationKey: row.lastPrayerNotificationKey ?? null,
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+  }
+}
+
 export async function getReminderPreferences(userId: string): Promise<ReminderPreferences | null> {
   const supabase = createServerClient()
 
@@ -664,17 +716,7 @@ export async function getReminderPreferences(userId: string): Promise<ReminderPr
 
   if (error || !data) return null
 
-  return {
-    id: data.id,
-    userId: data.userId,
-    reminderEnabled: data.reminderEnabled,
-    reminderTime: data.reminderTime,
-    timezone: data.timezone,
-    pushSubscription: data.pushSubscription as Record<string, unknown> | null,
-    lastReminderSent: data.lastReminderSent ? new Date(data.lastReminderSent) : null,
-    createdAt: new Date(data.createdAt),
-    updatedAt: new Date(data.updatedAt),
-  }
+  return mapReminderPreferences(data)
 }
 
 export async function upsertReminderPreferences(
@@ -684,6 +726,7 @@ export async function upsertReminderPreferences(
     reminderTime?: string
     timezone?: string
     pushSubscription?: Record<string, unknown> | null
+    prayerNotifications?: Record<string, unknown> | null
   }
 ): Promise<ReminderPreferences> {
   const supabase = createServerClient()
@@ -702,6 +745,7 @@ export async function upsertReminderPreferences(
     if (data.reminderTime !== undefined) updateData.reminderTime = data.reminderTime
     if (data.timezone !== undefined) updateData.timezone = data.timezone
     if (data.pushSubscription !== undefined) updateData.pushSubscription = data.pushSubscription
+    if (data.prayerNotifications !== undefined) updateData.prayerNotifications = data.prayerNotifications
 
     const { data: updated, error } = await supabase
       .from('ReminderPreferences')
@@ -721,6 +765,7 @@ export async function upsertReminderPreferences(
         reminderTime: data.reminderTime ?? '09:00',
         timezone: data.timezone ?? 'UTC',
         pushSubscription: data.pushSubscription ?? null,
+        prayerNotifications: data.prayerNotifications ?? null,
       })
       .select()
       .single()
@@ -728,15 +773,239 @@ export async function upsertReminderPreferences(
     result = created
   }
 
-  return {
-    id: result.id,
-    userId: result.userId,
-    reminderEnabled: result.reminderEnabled,
-    reminderTime: result.reminderTime,
-    timezone: result.timezone,
-    pushSubscription: result.pushSubscription as Record<string, unknown> | null,
-    lastReminderSent: result.lastReminderSent ? new Date(result.lastReminderSent) : null,
-    createdAt: new Date(result.createdAt),
-    updatedAt: new Date(result.updatedAt),
+  return mapReminderPreferences(result)
+}
+
+// Remove a dead push subscription (endpoint returned 404/410)
+export async function clearPushSubscription(userId: string): Promise<void> {
+  const supabase = createServerClient()
+
+  const { error } = await supabase
+    .from('ReminderPreferences')
+    .update({ pushSubscription: null, reminderEnabled: false })
+    .eq('userId', userId)
+
+  if (error) throw error
+}
+
+export async function updateLastReminderSent(userId: string, sentAt: Date): Promise<void> {
+  const supabase = createServerClient()
+
+  const { error } = await supabase
+    .from('ReminderPreferences')
+    .update({ lastReminderSent: sentAt.toISOString() })
+    .eq('userId', userId)
+
+  if (error) throw error
+}
+
+// All users with an active subscription and daily reminders enabled
+export async function getEligibleReminderUsers(): Promise<ReminderPreferences[]> {
+  const supabase = createServerClient()
+
+  const { data, error } = await supabase
+    .from('ReminderPreferences')
+    .select('*')
+    .eq('reminderEnabled', true)
+    .not('pushSubscription', 'is', null)
+
+  if (error) throw error
+
+  return (data ?? []).map(mapReminderPreferences)
+}
+
+// All users with an active subscription and prayer notifications enabled
+export async function getPrayerNotificationUsers(): Promise<ReminderPreferences[]> {
+  const supabase = createServerClient()
+
+  const { data, error } = await supabase
+    .from('ReminderPreferences')
+    .select('*')
+    .eq('prayerNotifications->>enabled', 'true')
+    .not('pushSubscription', 'is', null)
+
+  if (error) throw error
+
+  return (data ?? []).map(mapReminderPreferences)
+}
+
+// ========== DAILY PROGRESS QUERIES ==========
+
+export interface DailyProgressRow {
+  id: string
+  userId: string
+  dhikrId: string
+  date: string // YYYY-MM-DD
+  targetCount: number
+  currentCount: number
+  completed: boolean
+}
+
+function utcDateString(date: Date = new Date()): string {
+  return date.toISOString().split('T')[0]
+}
+
+/**
+ * Upsert the day's progress row for one dhikr. Counts only move forward so a
+ * late-arriving stale sync can't lower them.
+ */
+export async function recordDailyProgress(
+  userId: string,
+  dhikrId: string,
+  localDate: string | undefined,
+  currentCount: number,
+  targetCount: number,
+  completed: boolean
+): Promise<void> {
+  const supabase = createServerClient()
+  const date =
+    localDate && /^\d{4}-\d{2}-\d{2}$/.test(localDate)
+      ? localDate
+      : utcDateString()
+
+  const { data: existing } = await supabase
+    .from('DailyProgress')
+    .select('id, currentCount, completed')
+    .eq('userId', userId)
+    .eq('dhikrId', dhikrId)
+    .eq('date', date)
+    .single()
+
+  const now = new Date().toISOString()
+
+  if (existing) {
+    const { error } = await supabase
+      .from('DailyProgress')
+      .update({
+        currentCount: Math.max(existing.currentCount, currentCount),
+        targetCount,
+        completed: existing.completed || completed,
+        updatedAt: now,
+      })
+      .eq('id', existing.id)
+    if (error) throw error
+  } else {
+    const { error } = await supabase.from('DailyProgress').insert({
+      id: generateId(),
+      userId,
+      dhikrId,
+      date,
+      targetCount,
+      currentCount,
+      completed,
+      createdAt: now,
+      updatedAt: now,
+    })
+    if (error) throw error
   }
+}
+
+export async function getDailyProgressRange(
+  userId: string,
+  from: string,
+  to: string
+): Promise<DailyProgressRow[]> {
+  const supabase = createServerClient()
+
+  const { data, error } = await supabase
+    .from('DailyProgress')
+    .select('*')
+    .eq('userId', userId)
+    .gte('date', from)
+    .lte('date', to)
+    .order('date', { ascending: false })
+
+  if (error) throw error
+
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    userId: row.userId,
+    dhikrId: row.dhikrId,
+    date: row.date,
+    targetCount: row.targetCount,
+    currentCount: row.currentCount,
+    completed: row.completed,
+  }))
+}
+
+// ========== PRAYER LOG QUERIES ==========
+
+function mapPrayerLog(row: any): PrayerLog {
+  return {
+    id: row.id,
+    userId: row.userId,
+    date: row.date,
+    prayer: row.prayer,
+    prayedAt: new Date(row.prayedAt),
+  }
+}
+
+/** Toggle a prayer's logged state for a date. Returns true when now logged. */
+export async function togglePrayerLog(
+  userId: string,
+  date: string,
+  prayer: TrackedPrayer
+): Promise<boolean> {
+  const supabase = createServerClient()
+
+  const { data: existing } = await supabase
+    .from('PrayerLog')
+    .select('id')
+    .eq('userId', userId)
+    .eq('date', date)
+    .eq('prayer', prayer)
+    .single()
+
+  if (existing) {
+    const { error } = await supabase
+      .from('PrayerLog')
+      .delete()
+      .eq('id', existing.id)
+    if (error) throw error
+    return false
+  }
+
+  const { error } = await supabase.from('PrayerLog').insert({
+    id: generateId(),
+    userId,
+    date,
+    prayer,
+    prayedAt: new Date().toISOString(),
+  })
+  if (error) throw error
+  return true
+}
+
+export async function getPrayerLogRange(
+  userId: string,
+  from: string,
+  to: string
+): Promise<PrayerLog[]> {
+  const supabase = createServerClient()
+
+  const { data, error } = await supabase
+    .from('PrayerLog')
+    .select('*')
+    .eq('userId', userId)
+    .gte('date', from)
+    .lte('date', to)
+    .order('date', { ascending: false })
+
+  if (error) throw error
+
+  return (data ?? []).map(mapPrayerLog)
+}
+
+export async function updateLastPrayerNotificationKey(
+  userId: string,
+  key: string
+): Promise<void> {
+  const supabase = createServerClient()
+
+  const { error } = await supabase
+    .from('ReminderPreferences')
+    .update({ lastPrayerNotificationKey: key })
+    .eq('userId', userId)
+
+  if (error) throw error
 }

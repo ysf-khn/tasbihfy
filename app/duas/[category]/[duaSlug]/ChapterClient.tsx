@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeftIcon, BookmarkIcon, ShareIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon, HeartIcon, ShareIcon } from "@heroicons/react/24/outline";
+import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
+import { useDuaFavorites } from "@/hooks/useDuaFavorites";
 
 // Declare gtag type for Google Analytics tracking
 declare global {
@@ -32,6 +34,7 @@ interface ChapterClientProps {
 export default function ChapterClient({ chapter }: ChapterClientProps) {
   const router = useRouter();
   const [fontSize, setFontSize] = useState(16);
+  const { isFavorite, toggleFavorite } = useDuaFavorites();
 
   // Track page view with Google Analytics
   useEffect(() => {
@@ -127,6 +130,27 @@ export default function ChapterClient({ chapter }: ChapterClientProps) {
               className="card bg-base-100 border border-base-300 shadow-sm"
             >
               <div className="card-body p-6">
+                {/* Favorite Toggle */}
+                <div className="flex justify-end -mb-2">
+                  <button
+                    onClick={() =>
+                      toggleFavorite(chapter.id, dua.id ?? index, chapter.title)
+                    }
+                    className="btn btn-ghost btn-sm btn-circle"
+                    aria-label={
+                      isFavorite(chapter.id, dua.id ?? index)
+                        ? "Remove from favorites"
+                        : "Add to favorites"
+                    }
+                  >
+                    {isFavorite(chapter.id, dua.id ?? index) ? (
+                      <HeartIconSolid className="w-5 h-5 text-error" />
+                    ) : (
+                      <HeartIcon className="w-5 h-5 text-base-content/50" />
+                    )}
+                  </button>
+                </div>
+
                 {/* Arabic Text */}
                 <div className="mb-4">
                   <p

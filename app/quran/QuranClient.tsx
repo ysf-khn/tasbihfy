@@ -2,10 +2,17 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { BookOpenIcon } from "@heroicons/react/24/outline";
+import {
+  BookOpenIcon,
+  BookmarkIcon,
+  MagnifyingGlassIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import SurahCard from "@/components/quran/SurahCard";
+import SearchResults from "@/components/quran/SearchResults";
 import { useQuranSurahList, useLastRead } from "@/hooks/useQuranData";
+import { searchVerses, type QuranSearchResponse } from "@/lib/quran/api";
 import { generateSurahSlug } from "@/lib/url-utils";
 
 // Declare gtag type for Google Analytics tracking
@@ -22,6 +29,68 @@ export default function QuranClient() {
   const [showDebug, setShowDebug] = useState(
     process.env.NODE_ENV === "development"
   );
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResponse, setSearchResponse] =
+    useState<QuranSearchResponse | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  const trimmedQuery = searchQuery.trim();
+
+  // Instant client-side surah-name filter
+  const filteredSurahs =
+    trimmedQuery.length > 0
+      ? surahs.filter(
+          (surah) =>
+            surah.name.toLowerCase().includes(trimmedQuery.toLowerCase()) ||
+            surah.transliteration
+              ?.toLowerCase()
+              .includes(trimmedQuery.toLowerCase()) ||
+            surah.translation
+              ?.toLowerCase()
+              .includes(trimmedQuery.toLowerCase()) ||
+            String(surah.id) === trimmedQuery
+        )
+      : surahs;
+
+  // Debounced verse search against the API (3+ characters)
+  useEffect(() => {
+    if (trimmedQuery.length < 3) {
+      setSearchResponse(null);
+      setSearchError(null);
+      setIsSearching(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const response = await searchVerses(trimmedQuery, { size: 20 });
+        if (!cancelled) {
+          setSearchResponse(response);
+          setSearchError(null);
+          window.gtag?.("event", "quran_search", {
+            event_category: "engagement",
+            event_label: trimmedQuery,
+          });
+        }
+      } catch (error: any) {
+        if (!cancelled) {
+          setSearchResponse(null);
+          setSearchError(error.message || "Search failed");
+        }
+      } finally {
+        if (!cancelled) setIsSearching(false);
+      }
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [trimmedQuery]);
 
   // Track page view with Google Analytics
   useEffect(() => {
@@ -100,19 +169,71 @@ export default function QuranClient() {
       <div className="container mx-auto px-4 max-w-4xl pt-4">
         {/* Header */}
         <div className="mb-4">
-          <div className="flex items-center gap-3 mb-4">
-            <BookOpenIcon className="w-8 h-8 text-base-content" />
-            <h1 className="text-3xl font-bold text-base-content">Al Quran</h1>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <BookOpenIcon className="w-8 h-8 text-base-content" />
+              <h1 className="text-3xl font-bold text-base-content">Al Quran</h1>
+            </div>
+            <Link
+              href="/quran/bookmarks"
+              className="btn btn-ghost btn-sm gap-2"
+            >
+              <BookmarkIcon className="w-5 h-5" />
+              <span className="hidden sm:inline">Bookmarks</span>
+            </Link>
           </div>
+
+          {/* Search */}
+          <label className="input input-bordered flex items-center gap-2 w-full">
+            <MagnifyingGlassIcon className="w-5 h-5 text-base-content/50" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search surahs or verses..."
+              className="grow"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
+              >
+                <XMarkIcon className="w-5 h-5 text-base-content/50" />
+              </button>
+            )}
+          </label>
         </div>
 
+        {/* Verse Search Results */}
+        {trimmedQuery.length >= 3 && (
+          <div className="mb-6">
+            {isSearching && (
+              <div className="flex justify-center py-4">
+                <span className="loading loading-spinner loading-md text-primary"></span>
+              </div>
+            )}
+            {searchError && !isSearching && (
+              <div className="alert alert-warning text-sm">
+                <span>{searchError}</span>
+              </div>
+            )}
+            {searchResponse && !isSearching && (
+              <SearchResults
+                results={searchResponse.results}
+                query={trimmedQuery}
+                totalResults={searchResponse.total_results}
+              />
+            )}
+          </div>
+        )}
+
         {/* Last Read Section */}
-        {lastRead && (
+        {!trimmedQuery && lastRead && (
           <div className="mb-4">
             <h2 className="text-lg font-semibold mb-3 text-base-content">
               Last Read
             </h2>
-            <div className="card bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
+            <div className="card bg-primary/10 border border-primary/20">
               <div className="card-body p-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -120,11 +241,17 @@ export default function QuranClient() {
                       {lastRead.surahName}
                     </h3>
                     <p className="text-sm text-base-content/70">
-                      Continue reading
+                      {lastRead.verseNumber
+                        ? `Continue from verse ${lastRead.verseNumber}`
+                        : "Continue reading"}
                     </p>
                   </div>
                   <Link
-                    href={`/quran/${generateSurahSlug(lastRead.surahId)}`}
+                    href={`/quran/${generateSurahSlug(lastRead.surahId)}${
+                      lastRead.verseNumber
+                        ? `#verse-${lastRead.verseNumber}`
+                        : ""
+                    }`}
                     className="btn btn-primary btn-sm"
                   >
                     Continue
@@ -136,7 +263,7 @@ export default function QuranClient() {
         )}
 
         {/* Popular Surahs */}
-        <div className="mb-4">
+        <div className="mb-4" hidden={!!trimmedQuery}>
           <div className="flex flex-wrap gap-2">
             {[
               { id: 18, name: "Al-Kahf" },
@@ -168,9 +295,11 @@ export default function QuranClient() {
         {/* Surah List */}
         <>
           <div className="divide-y divide-gray-200">
-            {surahs.length > 0 ? (
-              surahs.map((surah) => <SurahCard key={surah.id} surah={surah} />)
-            ) : (
+            {filteredSurahs.length > 0 ? (
+              filteredSurahs.map((surah) => (
+                <SurahCard key={surah.id} surah={surah} />
+              ))
+            ) : trimmedQuery ? null : (
               <div className="text-center py-8">
                 <div className="alert alert-warning max-w-md mx-auto">
                   <p>No Surahs found.</p>

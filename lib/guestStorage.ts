@@ -20,6 +20,13 @@ export interface GuestSession {
 
 const GUEST_DHIKRS_KEY = 'tasbihfy-guest-dhikrs';
 const GUEST_SESSIONS_KEY = 'tasbihfy-guest-sessions';
+const GUEST_DAILY_TOTALS_KEY = 'tasbihfy-guest-daily-totals';
+const DAILY_TOTALS_RETENTION_DAYS = 180;
+
+function localDateString(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
 
 export class GuestStorage {
   static getDhikrs(): GuestDhikr[] {
@@ -106,13 +113,52 @@ export class GuestStorage {
     return sessions.find(s => s.dhikrId === dhikrId && !s.completed) || null;
   }
 
+  /** Per-date dhikr count totals, for guest history and streaks */
+  static getDailyTotals(): Record<string, number> {
+    if (typeof window === 'undefined') return {};
+
+    try {
+      const stored = localStorage.getItem(GUEST_DAILY_TOTALS_KEY);
+      const parsed = stored ? JSON.parse(stored) : {};
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? parsed
+        : {};
+    } catch {
+      return {};
+    }
+  }
+
+  static recordDailyDelta(delta: number): void {
+    if (typeof window === 'undefined' || delta <= 0) return;
+
+    try {
+      const totals = this.getDailyTotals();
+      const today = localDateString();
+      totals[today] = (totals[today] || 0) + delta;
+
+      // Trim entries beyond the retention window
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - DAILY_TOTALS_RETENTION_DAYS);
+      const cutoffStr = cutoff.toISOString().split('T')[0];
+      for (const date of Object.keys(totals)) {
+        if (date < cutoffStr) delete totals[date];
+      }
+
+      localStorage.setItem(GUEST_DAILY_TOTALS_KEY, JSON.stringify(totals));
+    } catch (error) {
+      console.warn('Failed to record guest daily total:', error);
+    }
+  }
+
   static saveSession(session: Omit<GuestSession, 'id'>): GuestSession {
     const sessions = this.getSessions();
-    
+
     // Look for existing session
     const existingIndex = sessions.findIndex(s => s.dhikrId === session.dhikrId && !s.completed);
-    
+
     if (existingIndex !== -1) {
+      const previousCount = sessions[existingIndex].currentCount;
+      this.recordDailyDelta(session.currentCount - previousCount);
       // Update existing session
       sessions[existingIndex] = {
         ...sessions[existingIndex],
@@ -123,12 +169,13 @@ export class GuestStorage {
       return sessions[existingIndex];
     } else {
       // Create new session
+      this.recordDailyDelta(session.currentCount);
       const newSession: GuestSession = {
         ...session,
         id: `guest-session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         lastUpdated: Date.now(),
       };
-      
+
       sessions.push(newSession);
       this.saveSessions(sessions);
       return newSession;
@@ -140,10 +187,11 @@ export class GuestStorage {
     const sessionIndex = sessions.findIndex(s => s.dhikrId === dhikrId && !s.completed);
     
     if (sessionIndex !== -1) {
+      this.recordDailyDelta(count - sessions[sessionIndex].currentCount);
       sessions[sessionIndex].currentCount = count;
       sessions[sessionIndex].completed = count >= targetCount;
       sessions[sessionIndex].lastUpdated = Date.now();
-      
+
       this.saveSessions(sessions);
       return sessions[sessionIndex];
     } else {

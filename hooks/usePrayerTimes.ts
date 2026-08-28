@@ -189,6 +189,7 @@ export function usePrayerTimes(): UsePrayerTimesResult {
                 longitude: data.location.longitude,
                 timezone: data.location.timezone,
                 country: data.location.country,
+                countryCode: data.location.countryCode,
               }),
             });
           } catch (error) {

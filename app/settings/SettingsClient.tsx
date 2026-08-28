@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { signOut } from "@/lib/auth-client";
+import { useVibrationSetting } from "@/hooks/useVibrationSetting";
 
 // Declare gtag type for Google Analytics tracking
 declare global {
@@ -15,11 +15,9 @@ import ArabicTextControls from "@/components/ui/ArabicTextControls";
 import ReminderSettings from "@/components/notifications/ReminderSettings";
 import Link from "next/link";
 import {
-  ChevronLeftIcon,
   ChevronRightIcon,
+  DevicePhoneMobileIcon,
   HeartIcon,
-  ChartBarIcon,
-  BellIcon,
   InformationCircleIcon,
   EnvelopeIcon,
 } from "@heroicons/react/24/outline";
@@ -63,6 +61,7 @@ type SettingsSection = {
 
 export default function SettingsClient() {
   const { user } = useAuth();
+  const { isVibrationEnabled, setVibrationEnabled } = useVibrationSetting();
 
   const handleSignOut = async () => {
     // Track user logout
@@ -73,33 +72,28 @@ export default function SettingsClient() {
     await signOut();
   };
 
-  // Auth-specific settings sections
-  const authSettingSections: SettingsSection[] = user
-    ? [
-        {
-          title: "GENERAL",
-          items: [
-            {
-              type: "button",
-              icon: HeartIcon,
-              label: "Favorites",
-              hasChevron: true,
-              onClick: () => console.log("Favorites clicked"),
-            },
-            {
-              type: "button",
-              icon: ChartBarIcon,
-              label: "Daily Goal",
-              hasChevron: true,
-              onClick: () => console.log("Daily Goal clicked"),
-            },
-          ],
-        },
-      ]
-    : [];
-
   const settingSections: SettingsSection[] = [
-    ...authSettingSections,
+    {
+      title: "GENERAL",
+      items: [
+        {
+          type: "toggle",
+          icon: DevicePhoneMobileIcon,
+          label: "Vibration",
+          hasToggle: true,
+          toggleValue: isVibrationEnabled,
+          onToggle: setVibrationEnabled,
+        },
+        {
+          type: "link",
+          icon: HeartIcon,
+          label: "Favorite Duas",
+          href: "/duas",
+          subtitle: "Your saved supplications",
+          hasChevron: true,
+        },
+      ],
+    },
     {
       title: "ABOUT",
       items: [

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQuranBookmarks } from "@/hooks/useQuranData";
 import {
   PlayIcon,
   PauseIcon,
@@ -26,13 +27,17 @@ interface AyahCardProps {
 }
 
 export default function AyahCard({ verse, surahData }: AyahCardProps) {
-  const [isBookmarked, setIsBookmarked] = useState(false);
   const [showTafsir, setShowTafsir] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   const { generateAndShare, isGenerating, cardRef } = useShareImage();
 
   // Use the API's verse_key directly, or construct it as fallback
   const verseKey = verse.verse_key || `${surahData.id}:${verse.verse_number || verse.id}`;
+
+  // Shared bookmark store (synced across components via the hook)
+  const { isBookmarked: checkBookmarked, toggleBookmark: toggleStoredBookmark } =
+    useQuranBookmarks();
+  const isBookmarked = checkBookmarked(verseKey);
 
   // Settings for font styling and script selection
   const { getArabicStyles, getTranslationStyles, getScriptFieldName, getSelectedScript } = useQuranSettings();
@@ -83,38 +88,14 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
   };
 
   const toggleBookmark = () => {
-    try {
-      const bookmarks = JSON.parse(
-        localStorage.getItem("quran_verse_bookmarks") || "[]"
-      );
-
-      if (isBookmarked) {
-        // Remove bookmark
-        const filtered = bookmarks.filter((b: any) => b.verseKey !== verseKey);
-        localStorage.setItem("quran_verse_bookmarks", JSON.stringify(filtered));
-        setIsBookmarked(false);
-      } else {
-        // Add bookmark
-        const newBookmark = {
-          id: `${verseKey}_${Date.now()}`,
-          verseKey,
-          surahId: surahData.id,
-          verseNumber: verse.verse_number,
-          surahName: surahData.name_simple,
-          verseText: verse.text_uthmani,
-          translation: verse.translations?.[0]?.text || "",
-          createdAt: new Date().toISOString(),
-        };
-        bookmarks.push(newBookmark);
-        localStorage.setItem(
-          "quran_verse_bookmarks",
-          JSON.stringify(bookmarks)
-        );
-        setIsBookmarked(true);
-      }
-    } catch (error) {
-      console.error("Failed to toggle bookmark:", error);
-    }
+    toggleStoredBookmark({
+      verseKey,
+      surahId: surahData.id,
+      verseNumber: verse.verse_number,
+      surahName: surahData.name_simple,
+      verseText: verse.text_uthmani,
+      translation: verse.translations?.[0]?.text || "",
+    });
   };
 
   const toggleAudio = async () => {

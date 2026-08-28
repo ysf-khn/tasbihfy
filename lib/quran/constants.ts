@@ -1022,7 +1022,6 @@ export const DEFAULT_QURAN_SETTINGS = {
   arabicFontSize: 18,
   translationFontSize: 16,
   showTransliteration: true,
-  showWordByWord: false,
   showVerseNumbers: true,
   selectedReciter: "mishari-al-afasy", // Legacy field for backward compatibility
   selectedRecitationId: 7, // Default to Mishari Rashid al-`Afasy (ID: 7)

@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import { duaCategories, createSlug } from "@/lib/url-utils";
+import { useDuaFavorites } from "@/hooks/useDuaFavorites";
 
 // Declare gtag type for Google Analytics tracking
 declare global {
@@ -31,6 +33,12 @@ export default function DuasPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [hisnulMuslim, setHisnulMuslim] = useState<HisnulMuslimData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { favorites } = useDuaFavorites();
+
+  // Chapters that contain at least one favorited dua
+  const favoriteChapterIds = Array.from(
+    new Set(favorites.map((f) => f.chapterId))
+  );
 
   // Track page view with Google Analytics
   useEffect(() => {
@@ -116,6 +124,50 @@ export default function DuasPage() {
             />
           </div>
         </div>
+
+        {/* Favorites */}
+        {!searchTerm && favoriteChapterIds.length > 0 && hisnulMuslim && (
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <HeartIconSolid className="w-5 h-5 text-error" />
+              Favorites
+            </h2>
+            <div className="space-y-2">
+              {favoriteChapterIds.map((chapterId) => {
+                const chapter = hisnulMuslim.chapters.find(
+                  (c) => c.id === chapterId
+                );
+                if (!chapter) return null;
+                const category =
+                  duaCategories[chapter.id as keyof typeof duaCategories] ||
+                  "general";
+                const count = favorites.filter(
+                  (f) => f.chapterId === chapterId
+                ).length;
+                return (
+                  <Link
+                    key={chapterId}
+                    href={`/duas/${category}/${createSlug(chapter.title)}`}
+                    className="block"
+                  >
+                    <div className="card bg-base-100 border border-error/30 hover:border-error/60 hover:shadow-md transition-all duration-200">
+                      <div className="card-body p-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-medium text-base-content">
+                            {chapter.title}
+                          </h3>
+                          <span className="badge badge-ghost badge-sm px-3">
+                            {count} favorite{count === 1 ? "" : "s"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Chapter List */}
         <div className="space-y-2">

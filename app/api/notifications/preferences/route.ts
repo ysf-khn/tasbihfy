@@ -18,6 +18,18 @@ const preferencesSchema = z.object({
     .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
     .optional(),
   timezone: z.string().optional(),
+  prayerNotifications: z
+    .object({
+      enabled: z.boolean(),
+      prayers: z.object({
+        fajr: z.boolean(),
+        dhuhr: z.boolean(),
+        asr: z.boolean(),
+        maghrib: z.boolean(),
+        isha: z.boolean(),
+      }),
+    })
+    .optional(),
 });
 
 // GET: Retrieve user's current reminder preferences
@@ -47,6 +59,7 @@ export async function GET(request: NextRequest) {
       timezone: reminderPreferences?.timezone || "UTC",
       hasSubscription: !!reminderPreferences?.pushSubscription,
       lastReminderSent: reminderPreferences?.lastReminderSent,
+      prayerNotifications: reminderPreferences?.prayerNotifications ?? null,
     };
 
     console.log(
@@ -90,7 +103,8 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const validatedData = preferencesSchema.parse(body);
 
-    const { reminderEnabled, reminderTime, timezone } = validatedData;
+    const { reminderEnabled, reminderTime, timezone, prayerNotifications } =
+      validatedData;
 
     console.log(
       `📱 Updating preferences for user ${session.user.id}:`,
@@ -104,6 +118,7 @@ export async function PUT(request: NextRequest) {
         reminderEnabled,
         reminderTime,
         timezone,
+        prayerNotifications,
       }
     );
 
@@ -123,6 +138,7 @@ export async function PUT(request: NextRequest) {
         timezone: reminderPreferences.timezone,
         hasSubscription: !!reminderPreferences.pushSubscription,
         lastReminderSent: reminderPreferences.lastReminderSent,
+        prayerNotifications: reminderPreferences.prayerNotifications ?? null,
       },
     });
   } catch (error) {

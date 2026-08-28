@@ -6,8 +6,12 @@
 
 const DHIKR_SESSION_PREFIX = 'dhikr-session-';
 const TEMP_DHIKR_PREFIX = 'temp-dhikr-';
-const BOOKMARK_KEYS = ['quran_bookmarks', 'quran_verse_bookmarks'];
+const BOOKMARK_KEYS = ['quran_verse_bookmarks'];
+const LEGACY_SURAH_BOOKMARKS_KEY = 'quran_bookmarks';
+const VERSE_BOOKMARKS_KEY = 'quran_verse_bookmarks';
 const GUEST_SESSIONS_KEY = 'tasbihfy-guest-sessions';
+const PRAYER_LOG_KEY = 'prayer_log';
+const PRAYER_LOG_RETENTION_DAYS = 180;
 
 // Storage limits
 const MAX_BOOKMARKS = 100;
@@ -168,6 +172,93 @@ export class LocalStorageCleanup {
   }
   
   /**
+   * One-time migration: convert legacy surah-level bookmarks into verse-1
+   * bookmarks in the canonical verse bookmark store
+   */
+  static migrateSurahBookmarks(): number {
+    if (typeof window === 'undefined') return 0;
+
+    try {
+      const legacy = localStorage.getItem(LEGACY_SURAH_BOOKMARKS_KEY);
+      if (!legacy) return 0;
+
+      const surahBookmarks = JSON.parse(legacy);
+      if (!Array.isArray(surahBookmarks)) {
+        localStorage.removeItem(LEGACY_SURAH_BOOKMARKS_KEY);
+        return 0;
+      }
+
+      const verseBookmarks = JSON.parse(
+        localStorage.getItem(VERSE_BOOKMARKS_KEY) || '[]'
+      );
+      const existingKeys = new Set(
+        (Array.isArray(verseBookmarks) ? verseBookmarks : []).map(
+          (b: any) => b.verseKey
+        )
+      );
+
+      let migrated = 0;
+      for (const bookmark of surahBookmarks) {
+        if (!bookmark?.surahId) continue;
+        const verseKey = `${bookmark.surahId}:1`;
+        if (existingKeys.has(verseKey)) continue;
+        verseBookmarks.push({
+          id: `${verseKey}_${Date.now()}_${migrated}`,
+          verseKey,
+          surahId: bookmark.surahId,
+          verseNumber: 1,
+          surahName: bookmark.surahName || `Surah ${bookmark.surahId}`,
+          createdAt: bookmark.createdAt || new Date().toISOString(),
+        });
+        existingKeys.add(verseKey);
+        migrated++;
+      }
+
+      localStorage.setItem(VERSE_BOOKMARKS_KEY, JSON.stringify(verseBookmarks));
+      localStorage.removeItem(LEGACY_SURAH_BOOKMARKS_KEY);
+      return migrated;
+    } catch (error) {
+      console.warn('Failed to migrate surah bookmarks:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Trim guest prayer log entries older than the retention window
+   */
+  static cleanupPrayerLog(): number {
+    if (typeof window === 'undefined') return 0;
+
+    try {
+      const data = localStorage.getItem(PRAYER_LOG_KEY);
+      if (!data) return 0;
+
+      const logs = JSON.parse(data);
+      if (!logs || typeof logs !== 'object' || Array.isArray(logs)) return 0;
+
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - PRAYER_LOG_RETENTION_DAYS);
+      const cutoffStr = cutoff.toISOString().split('T')[0];
+
+      let removed = 0;
+      for (const date of Object.keys(logs)) {
+        if (date < cutoffStr) {
+          delete logs[date];
+          removed++;
+        }
+      }
+
+      if (removed > 0) {
+        localStorage.setItem(PRAYER_LOG_KEY, JSON.stringify(logs));
+      }
+      return removed;
+    } catch (error) {
+      console.warn('Failed to cleanup prayer log:', error);
+      return 0;
+    }
+  }
+
+  /**
    * Get localStorage usage statistics
    */
   static getStorageStats(): StorageStats {
@@ -212,6 +303,7 @@ export class LocalStorageCleanup {
     tempDhikrs: number;
     bookmarks: number;
     guestSessions: number;
+    prayerLog: number;
     totalCleaned: number;
   } {
     const results = {
@@ -219,11 +311,12 @@ export class LocalStorageCleanup {
       tempDhikrs: this.cleanupTempDhikrs(),
       bookmarks: this.limitBookmarks(),
       guestSessions: this.cleanupGuestSessions(),
+      prayerLog: this.cleanupPrayerLog(),
       totalCleaned: 0
     };
-    
-    results.totalCleaned = results.dhikrSessions + results.tempDhikrs + 
-                          results.bookmarks + results.guestSessions;
+
+    results.totalCleaned = results.dhikrSessions + results.tempDhikrs +
+                          results.bookmarks + results.guestSessions + results.prayerLog;
     
     console.log('localStorage cleanup completed:', results);
     return results;

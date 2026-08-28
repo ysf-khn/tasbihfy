@@ -3,8 +3,131 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
+import { GuestStorage } from "@/lib/guestStorage";
 import type { Dhikr, DhikrSession } from "@/types/models";
 import { Bars3Icon } from "@heroicons/react/24/outline";
+import { FireIcon } from "@heroicons/react/24/solid";
+
+const HISTORY_DAYS = 30;
+
+function localDateString(date: Date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function daysAgo(days: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d;
+}
+
+/** Consecutive days with any dhikr activity, ending today or yesterday */
+function computeStreak(totals: Record<string, number>): number {
+  let streak = 0;
+  let offset = (totals[localDateString()] ?? 0) > 0 ? 0 : 1;
+  for (;;) {
+    const date = localDateString(daysAgo(offset));
+    if ((totals[date] ?? 0) > 0) {
+      streak++;
+      offset++;
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+/** Per-date dhikr totals: authed users from the API, guests from localStorage */
+function useDhikrHistory(user: unknown) {
+  const [totals, setTotals] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      if (!user) {
+        setTotals(GuestStorage.getDailyTotals());
+        return;
+      }
+      try {
+        const from = localDateString(daysAgo(HISTORY_DAYS));
+        const to = localDateString();
+        const response = await fetch(`/api/daily-progress?from=${from}&to=${to}`);
+        if (!response.ok) return;
+        const data = await response.json();
+        if (cancelled) return;
+        const map: Record<string, number> = {};
+        for (const row of data.progress ?? []) {
+          map[row.date] = (map[row.date] || 0) + row.currentCount;
+        }
+        setTotals(map);
+      } catch (error) {
+        console.error("Failed to load dhikr history:", error);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const streak = computeStreak(totals);
+  const rangeTotal = Object.values(totals).reduce((sum, n) => sum + n, 0);
+  const strip = Array.from({ length: 14 }, (_, i) => {
+    const date = localDateString(daysAgo(13 - i));
+    return { date, count: totals[date] ?? 0 };
+  });
+
+  return { streak, rangeTotal, strip };
+}
+
+function HistoryCard({ user }: { user: unknown }) {
+  const { streak, rangeTotal, strip } = useDhikrHistory(user);
+  const maxCount = Math.max(...strip.map((d) => d.count), 1);
+
+  return (
+    <div className="bg-base-100 rounded-2xl p-6 shadow-sm border border-base-200 space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-base-content">Your Streak</h2>
+        <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-warning/15 text-warning">
+          <FireIcon className="w-4 h-4" />
+          <span className="text-sm font-semibold">
+            {streak} day{streak === 1 ? "" : "s"}
+          </span>
+        </div>
+      </div>
+
+      {/* Last 14 days activity strip */}
+      <div className="flex items-end justify-between gap-1 h-16">
+        {strip.map((day) => (
+          <div
+            key={day.date}
+            className="flex-1 flex flex-col items-center gap-1"
+            title={`${day.date}: ${day.count}`}
+          >
+            <div
+              className={`w-full rounded-sm ${
+                day.count > 0 ? "bg-primary" : "bg-base-300"
+              }`}
+              style={{
+                height: `${Math.max((day.count / maxCount) * 48, 4)}px`,
+              }}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-between text-xs text-base-content/50">
+        <span>2 weeks ago</span>
+        <span>Today</span>
+      </div>
+
+      <div className="text-sm text-base-content/70">
+        <span className="font-semibold text-base-content">{rangeTotal}</span>{" "}
+        counts in the last {HISTORY_DAYS} days
+      </div>
+    </div>
+  );
+}
 
 interface DhikrWithSession extends Dhikr {
   sessions: DhikrSession[];
@@ -121,27 +244,32 @@ export default function DailyClient() {
 
       <div className="container mx-auto px-4 py-6 space-y-6 pt-4">
         {!user ? (
-          <div className="text-center py-16 space-y-6">
-            <div className="space-y-3">
-              <Bars3Icon className="w-16 h-16 text-base-content/40 mx-auto" />
-              <h3 className="text-2xl font-bold text-base-content">
-                Track Your Progress
-              </h3>
-              <p className="text-base-content/70 max-w-md mx-auto">
-                Sign in to track your daily dhikr progress, set goals, and view
-                your spiritual journey analytics.
-              </p>
-            </div>
-            <div className="space-y-4">
-              <a href="/login" className="btn btn-primary">
-                Sign In to Track Progress
-              </a>
-              <p className="text-sm text-base-content/60">
-                Don't have an account?{" "}
-                <a href="/register" className="link link-primary">
-                  Create one for free
+          <div className="space-y-6">
+            {/* Guest history from local storage */}
+            <HistoryCard user={null} />
+
+            <div className="text-center py-8 space-y-6">
+              <div className="space-y-3">
+                <Bars3Icon className="w-16 h-16 text-base-content/40 mx-auto" />
+                <h3 className="text-2xl font-bold text-base-content">
+                  Track Your Progress
+                </h3>
+                <p className="text-base-content/70 max-w-md mx-auto">
+                  Your streak is saved on this device. Sign in to sync your
+                  progress across devices and never lose it.
+                </p>
+              </div>
+              <div className="space-y-4">
+                <a href="/login" className="btn btn-primary">
+                  Sign In to Sync Progress
                 </a>
-              </p>
+                <p className="text-sm text-base-content/60">
+                  Don't have an account?{" "}
+                  <a href="/register" className="link link-primary">
+                    Create one for free
+                  </a>
+                </p>
+              </div>
             </div>
           </div>
         ) : loading ? (
@@ -175,6 +303,9 @@ export default function DailyClient() {
           </div>
         ) : (
           <>
+            {/* Streak & History */}
+            <HistoryCard user={user} />
+
             {/* Daily Summary */}
             <div className="bg-base-100 rounded-2xl p-6 shadow-sm border border-base-200">
               <div className="space-y-4">

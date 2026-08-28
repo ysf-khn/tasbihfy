@@ -1,3 +1,30 @@
+/** Hijri date as returned by Aladhan (day/year are strings on the wire) */
+export interface AladhanHijriDate {
+  date: string;
+  day: string;
+  year: string;
+  month: { number: number; en: string; ar: string };
+}
+
+/** App-facing hijri date */
+export interface HijriDate {
+  day: number;
+  year: number;
+  monthNumber: number;
+  monthEn: string;
+  monthAr: string;
+}
+
+/** 24-hour prayer timings, used for notification scheduling */
+export interface RawPrayerTimings {
+  fajr: string;
+  shurooq: string;
+  dhuhr: string;
+  asr: string;
+  maghrib: string;
+  isha: string;
+}
+
 /** Raw shape of https://api.aladhan.com/v1/timings */
 export interface AladhanTimingsResponse {
   code: number;
@@ -17,6 +44,7 @@ export interface AladhanTimingsResponse {
     date: {
       readable: string;
       gregorian: { date: string };
+      hijri: AladhanHijriDate;
     };
     meta: {
       latitude: number;
@@ -79,6 +107,15 @@ export interface PrayerTimesData {
   sunrise: string;
   /** Optional: absent from PrayerTimesData cached in localStorage before this shipped. */
   calculation?: CalculationInfo;
+  /** Optional: absent from older cached payloads. */
+  hijri?: HijriDate | null;
+}
+
+/** One day in the monthly timetable */
+export interface MonthlyTimetableDay {
+  gregorianDate: string; // YYYY-MM-DD
+  hijri: HijriDate | null;
+  timings: RawPrayerTimings; // formatted 12-hour display strings
 }
 
 export type PrayerName = 'fajr' | 'shurooq' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';

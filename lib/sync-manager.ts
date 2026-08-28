@@ -8,6 +8,13 @@ export interface SyncUpdate {
   count: number
   timestamp: number
   completed?: boolean
+  /** Client-local YYYY-MM-DD, so daily progress lands on the user's day */
+  localDate?: string
+}
+
+function localDateString(): string {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 }
 
 interface SyncManagerConfig {
@@ -35,6 +42,8 @@ class SyncManager {
    * Deduplicates updates for the same session, keeping only the latest
    */
   addToQueue(update: SyncUpdate): void {
+    update.localDate ??= localDateString()
+
     // Deduplicate: remove any existing update for the same session
     if (update.sessionId) {
       this.queue = this.queue.filter(

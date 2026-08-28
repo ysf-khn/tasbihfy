@@ -103,7 +103,6 @@ export function useQuranSettings() {
   });
 
   const shouldShowTransliteration = () => settings.showTransliteration;
-  const shouldShowWordByWord = () => settings.showWordByWord;
   const shouldAutoScroll = () => settings.autoScroll;
   const shouldShowVerseNumbers = () => settings.showVerseNumbers ?? true;
   const shouldRepeatVerse = () => settings.repeatVerse ?? false;
@@ -143,7 +142,6 @@ export function useQuranSettings() {
     getArabicStyles,
     getTranslationStyles,
     shouldShowTransliteration,
-    shouldShowWordByWord,
     shouldAutoScroll,
     shouldShowVerseNumbers,
     shouldRepeatVerse,
