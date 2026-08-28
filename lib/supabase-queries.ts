@@ -738,9 +738,11 @@ export async function upsertReminderPreferences(
     .eq('userId', userId)
     .single()
 
+  const now = new Date().toISOString()
+
   let result
   if (existing) {
-    const updateData: Record<string, unknown> = {}
+    const updateData: Record<string, unknown> = { updatedAt: now }
     if (data.reminderEnabled !== undefined) updateData.reminderEnabled = data.reminderEnabled
     if (data.reminderTime !== undefined) updateData.reminderTime = data.reminderTime
     if (data.timezone !== undefined) updateData.timezone = data.timezone
@@ -766,6 +768,8 @@ export async function upsertReminderPreferences(
         timezone: data.timezone ?? 'UTC',
         pushSubscription: data.pushSubscription ?? null,
         prayerNotifications: data.prayerNotifications ?? null,
+        createdAt: now,
+        updatedAt: now,
       })
       .select()
       .single()
