@@ -75,15 +75,12 @@ export default function BottomNav() {
             <Link
               key={item.path}
               href={item.path}
-              className={`relative flex flex-col items-center px-4 py-2 rounded-xl transition-colors duration-200 ${
+              className={`flex flex-col items-center px-4 py-2 rounded-xl transition-colors duration-200 ${
                 active
                   ? "text-primary"
                   : "text-base-content/55 hover:text-base-content"
               }`}
             >
-              {active && (
-                <span className="absolute -top-[11px] left-1/2 -translate-x-1/2 w-1.5 h-1.5 rotate-45 bg-secondary" />
-              )}
               <IconComponent className="w-6 h-6 mb-1" />
               <span
                 className={`text-xs ${active ? "font-semibold" : "font-medium"}`}
