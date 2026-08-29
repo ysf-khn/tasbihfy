@@ -225,7 +225,7 @@ export default function QuranClient({ surahId }: QuranClientProps) {
           {/* Surah Header Skeleton */}
           <div className="relative mb-6 rounded-2xl overflow-hidden bg-primary text-primary-content h-40">
             <div className="absolute inset-0 pattern-star pattern-fade-left [--pattern-opacity:0.10]" aria-hidden="true" />
-            <div className="relative z-10 flex items-center justify-between h-full p-6">
+            <div className="relative z-10 flex items-center justify-between h-full p-5 sm:p-6">
               <div className="flex-1">
                 <div className="h-6 bg-primary-content/30 rounded w-32 mb-2 animate-pulse"></div>
                 <div className="h-4 bg-primary-content/20 rounded w-24 mb-3 animate-pulse"></div>
@@ -382,27 +382,27 @@ export default function QuranClient({ surahId }: QuranClientProps) {
         {/* Surah Header */}
         <div className="relative mb-6 rounded-2xl overflow-hidden bg-primary text-primary-content">
           <div className="absolute inset-0 pattern-star pattern-fade-left [--pattern-opacity:0.10]" aria-hidden="true" />
-          <div className="relative flex items-center justify-between gap-4 p-6">
+          <div className="relative flex items-center justify-between gap-3 p-5 sm:gap-4 sm:p-6">
             {/* Text Content - Left Side */}
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold mb-1">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl font-bold mb-1 sm:text-2xl">
                 {displayData.name_simple}
               </h1>
-              <p className="text-lg opacity-85 mb-3">
+              <p className="text-base opacity-85 mb-3 sm:text-lg">
                 {displayData.translated_name?.name || "The Opening"}
               </p>
-              <div className="flex items-center gap-2 text-sm opacity-75">
-                <span className="font-medium">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm opacity-75">
+                <span className="font-medium whitespace-nowrap">
                   {displayData.verses_count} Verses
                 </span>
                 <span className="ornament-diamond scale-50 bg-secondary" />
-                <span className="capitalize font-medium">
+                <span className="capitalize font-medium whitespace-nowrap">
                   {displayData.revelation_place}
                 </span>
               </div>
             </div>
             {/* Arabic Calligraphy - Right Side */}
-            <div className="arabic-display text-4xl sm:text-5xl text-secondary shrink-0 pl-2">
+            <div className="arabic-display min-w-0 shrink text-3xl text-secondary sm:text-5xl">
               {displayData.name_arabic}
             </div>
           </div>
