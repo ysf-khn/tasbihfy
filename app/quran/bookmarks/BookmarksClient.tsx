@@ -6,8 +6,11 @@ import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import { useQuranBookmarks, type VerseBookmark } from "@/hooks/useQuranData";
 import { cleanTranslationText } from "@/lib/quran/text-utils";
 import { generateSurahSlug } from "@/lib/url-utils";
+import { useArabicScriptClass } from "@/hooks/useArabicScriptClass";
 
 export default function BookmarksClient() {
+  const scriptClass = useArabicScriptClass();
+
   const { bookmarks, loading, removeBookmark } = useQuranBookmarks();
 
   // Group by surah, newest bookmark first within each group
@@ -94,7 +97,7 @@ export default function BookmarksClient() {
                             className="block space-y-2"
                           >
                             {bookmark.verseText && (
-                              <p className="text-right text-lg font-arabic leading-relaxed text-base-content">
+                              <p className={`text-right text-lg font-arabic leading-relaxed text-base-content ${scriptClass}`}>
                                 {bookmark.verseText}
                               </p>
                             )}

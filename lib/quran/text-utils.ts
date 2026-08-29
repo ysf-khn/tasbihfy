@@ -37,6 +37,30 @@ export function cleanTranslationText(text: string): string {
 }
 
 /**
+ * Strip characters that only render inside a Quran mushaf font from Arabic text
+ * that is leaving the app (clipboard, share sheet).
+ *
+ * The IndoPak script encodes its ruku' markers and a handful of waqf signs in
+ * the Private Use Area (U+E000-U+F8FF), which every general-purpose font draws
+ * as a tofu box. The standard Unicode pause marks the text also carries
+ * (U+06D6-U+06DC, U+0614, U+0615, U+06E9) are kept — those render fine
+ * elsewhere. Uthmani text contains none of this and passes through unchanged.
+ */
+export function cleanArabicForExport(text: string): string {
+  if (!text) return text;
+
+  return text
+    // Mushaf-font-only ornaments and waqf signs.
+    .replace(/[\uE000-\uF8FF]/g, "")
+    // Zero-width and bidi marks used for line breaking inside the mushaf.
+    .replace(/[\u200B\u200F\uFEFF]/g, "")
+    // En/em spaces used for justification collapse to a normal space.
+    .replace(/[\u2002\u2003]/g, " ")
+    .replace(/ {2,}/g, " ")
+    .trim();
+}
+
+/**
  * Convert a number string to Unicode superscript characters
  */
 function convertToSuperscript(numberStr: string): string {

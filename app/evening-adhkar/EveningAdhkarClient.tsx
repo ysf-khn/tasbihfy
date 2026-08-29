@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { eveningAdhkar } from "@/data/evening-adhkar";
+import { useArabicScriptClass } from "@/hooks/useArabicScriptClass";
 import {
   MoonIcon,
   BookOpenIcon,
@@ -18,6 +19,8 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function EveningAdhkarClient() {
+  const scriptClass = useArabicScriptClass();
+
   const router = useRouter();
   const [completedItems, setCompletedItems] = useState<Set<number>>(new Set());
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
@@ -241,7 +244,7 @@ export default function EveningAdhkarClient() {
 
                   {/* Arabic Text */}
                   <div className="bg-base-200 rounded-lg p-4 mb-4">
-                    <p className="text-xl md:text-2xl text-center leading-loose font-arabic-naskh" dir="rtl">
+                    <p className={`text-xl md:text-2xl text-center leading-loose font-arabic-naskh ${scriptClass}`} dir="rtl">
                       {dhikr.arabic}
                     </p>
                   </div>

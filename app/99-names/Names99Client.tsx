@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { names99Allah } from "@/data/99-names";
+import { useArabicScriptClass } from "@/hooks/useArabicScriptClass";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import Link from "next/link";
 
 export default function Names99Client() {
+  const scriptClass = useArabicScriptClass();
+
   const [searchTerm, setSearchTerm] = useState("");
 
   // Filter names based on search term
@@ -23,7 +26,7 @@ export default function Names99Client() {
       <div className="container mx-auto px-4 py-6 space-y-6 pt-4">
         {/* Header */}
         <div className="text-center space-y-4">
-          <div className="arabic-display text-3xl text-primary">
+          <div className={`arabic-display text-3xl text-primary ${scriptClass}`}>
             أَسْمَاءُ ٱللَّٰهِ ٱلْحُسْنَىٰ
           </div>
           <h1 className="heading-ornate-center text-3xl font-bold text-base-content">
@@ -72,7 +75,7 @@ export default function Names99Client() {
                 </div>
 
                 <div className="text-center space-y-2">
-                  <h3 className="text-3xl arabic-display text-primary">
+                  <h3 className={`text-3xl arabic-display text-primary ${scriptClass}`}>
                     {name.arabic}
                   </h3>
                   <p className="font-semibold text-base-content">

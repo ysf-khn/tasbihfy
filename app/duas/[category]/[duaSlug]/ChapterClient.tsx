@@ -6,6 +6,7 @@ import { ArrowLeftIcon, HeartIcon, ShareIcon } from "@heroicons/react/24/outline
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import { useDuaFavorites } from "@/hooks/useDuaFavorites";
+import { useArabicScriptClass } from "@/hooks/useArabicScriptClass";
 
 // Declare gtag type for Google Analytics tracking
 declare global {
@@ -32,6 +33,8 @@ interface ChapterClientProps {
 }
 
 export default function ChapterClient({ chapter }: ChapterClientProps) {
+  const scriptClass = useArabicScriptClass();
+
   const router = useRouter();
   const [fontSize, setFontSize] = useState(16);
   const { isFavorite, toggleFavorite } = useDuaFavorites();
@@ -88,7 +91,7 @@ export default function ChapterClient({ chapter }: ChapterClientProps) {
               {chapter.title}
             </h1>
             {chapter.arabicTitle && (
-              <h2 className="text-xl font-arabic text-base-content/80 mb-2">
+              <h2 className={`text-xl font-arabic text-base-content/80 mb-2 ${scriptClass}`}>
                 {chapter.arabicTitle}
               </h2>
             )}
@@ -154,7 +157,7 @@ export default function ChapterClient({ chapter }: ChapterClientProps) {
                 {/* Arabic Text */}
                 <div className="mb-4">
                   <p
-                    className="text-right font-arabic leading-loose text-base-content"
+                    className={`text-right font-arabic leading-loose text-base-content ${scriptClass}`}
                     style={{ fontSize: `${fontSize + 2}px` }}
                     dir="rtl"
                   >

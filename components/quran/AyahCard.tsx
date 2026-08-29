@@ -16,7 +16,7 @@ import { VerseWithTranslations, SurahData } from "@/lib/quran/types";
 import { getTranslationById } from "@/lib/quran/translations-data";
 import { useQuranAudioPlayer } from "./QuranAudioContext";
 import WordByWordArabic from "./WordByWordArabic";
-import { cleanTranslationText } from "@/lib/quran/text-utils";
+import { cleanArabicForExport, cleanTranslationText } from "@/lib/quran/text-utils";
 import { useQuranSettings } from "@/hooks/useQuranSettings";
 import TafsirModal from "./TafsirModal";
 import { useShareImage } from "@/hooks/useShareImage";
@@ -81,6 +81,9 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
     
     const translation = verse.translations?.[0]?.text || "";
     const cleanTranslation = cleanTranslationText(translation);
+    // IndoPak's ornaments live in the Private Use Area, so they'd land as tofu
+    // boxes in whatever app the verse is shared into.
+    arabicText = cleanArabicForExport(arabicText);
     const reference = `Quran ${verseKey} • ${surahData.name_simple}`;
 
     await generateAndShare({
@@ -204,7 +207,7 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
                 if (!arabicText) {
                   arabicText = verse.text_uthmani || verse.text_simple || verse.text_imlaei || (verse as any).text_indopak || (verse as any).text_uthmani_simple || "";
                 }
-                copyToClipboard(arabicText);
+                copyToClipboard(cleanArabicForExport(arabicText));
               }}
               className="btn btn-ghost btn-sm btn-square"
               title="Copy Arabic"

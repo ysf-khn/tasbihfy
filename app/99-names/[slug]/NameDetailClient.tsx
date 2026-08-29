@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { names99Allah } from "@/data/99-names";
+import { useArabicScriptClass } from "@/hooks/useArabicScriptClass";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import Link from "next/link";
 import {
@@ -17,6 +18,8 @@ interface NameDetailClientProps {
 }
 
 export default function NameDetailClient({ name }: NameDetailClientProps) {
+  const scriptClass = useArabicScriptClass();
+
   const [count, setCount] = useState(0);
   const [isCountingMode, setIsCountingMode] = useState(false);
 
@@ -67,7 +70,7 @@ export default function NameDetailClient({ name }: NameDetailClientProps) {
 
             {/* Arabic Text */}
             <div className="space-y-4">
-              <h1 className="text-6xl arabic-display text-base-content">
+              <h1 className={`text-6xl arabic-display text-base-content ${scriptClass}`}>
                 {name.arabic}
               </h1>
               <h2 className="text-3xl font-bold text-base-content">
@@ -157,7 +160,7 @@ export default function NameDetailClient({ name }: NameDetailClientProps) {
                 <p className="text-base-content/70">
                   Enable counting mode to start reciting {name.transliteration}
                 </p>
-                <div className="text-4xl arabic-display text-base-content">
+                <div className={`text-4xl arabic-display text-base-content ${scriptClass}`}>
                   {name.arabic}
                 </div>
               </div>

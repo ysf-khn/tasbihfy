@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { duroodShareefCollection, duroodBenefits } from "@/data/durood-shareef";
+import { useArabicScriptClass } from "@/hooks/useArabicScriptClass";
 import {
   HeartIcon,
   BookOpenIcon,
@@ -17,6 +18,8 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function DuroodShareefClient() {
+  const scriptClass = useArabicScriptClass();
+
   const router = useRouter();
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -195,7 +198,7 @@ export default function DuroodShareefClient() {
 
                   {/* Arabic Text */}
                   <div className="bg-base-200 rounded-lg p-4 mb-4">
-                    <p className="text-lg md:text-xl text-center leading-loose font-arabic-naskh" dir="rtl">
+                    <p className={`text-lg md:text-xl text-center leading-loose font-arabic-naskh ${scriptClass}`} dir="rtl">
                       {durood.arabic}
                     </p>
                   </div>

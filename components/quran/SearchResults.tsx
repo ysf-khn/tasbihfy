@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { generateSurahSlug } from "@/lib/url-utils";
 import type { QuranSearchResult } from "@/lib/quran/api";
+import { useArabicScriptClass } from "@/hooks/useArabicScriptClass";
 
 interface SearchResultsProps {
   results: QuranSearchResult[];
@@ -26,6 +27,8 @@ export default function SearchResults({
   query,
   totalResults,
 }: SearchResultsProps) {
+  const scriptClass = useArabicScriptClass();
+
   if (results.length === 0) {
     return (
       <div className="card bg-base-100 border border-base-200">
@@ -80,7 +83,7 @@ function SearchResultCard({ result }: { result: QuranSearchResult }) {
           <p
             className={
               isArabic
-                ? "text-right text-lg font-arabic leading-relaxed text-base-content"
+                ? `text-right text-lg font-arabic leading-relaxed text-base-content ${scriptClass}`
                 : "text-sm text-base-content leading-relaxed"
             }
             dir={isArabic ? "rtl" : "ltr"}

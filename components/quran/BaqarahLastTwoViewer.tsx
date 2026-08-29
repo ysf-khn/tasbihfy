@@ -159,7 +159,9 @@ export default function BaqarahLastTwoViewer() {
               <div className="border-t border-base-200 pt-4 space-y-4">
                 {/* Arabic Text */}
                 <p
-                  className="text-2xl md:text-3xl font-arabic text-base-content leading-loose text-center"
+                  className={`text-2xl md:text-3xl font-arabic text-base-content leading-loose text-center${
+                    settings.selectedScript === "indopak" ? " script-indopak" : ""
+                  }`}
                   dir="rtl"
                 >
                   {getArabicText()}

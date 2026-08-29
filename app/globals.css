@@ -150,6 +150,44 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* IndoPak script font.
+   quran.foundation's `text_indopak` encodes its waqf signs and the end-of-ayah
+   ornament in the Private Use Area (U+E000-U+E0FF), which Amiri, Noto Naskh and
+   Scheherazade all render as tofu boxes. Only an IndoPak font maps them. */
+@font-face {
+  font-family: "IndoPak Nastaleeq";
+  src: url("/fonts/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2") format("woff2"),
+    url("/fonts/indopak-nastaleeq-waqf-lazim-v4.2.1.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Applied alongside .quran-arabic / .font-arabic when the reader's selected
+   script is IndoPak. Nastaleeq slopes downward, so it needs the extra leading. */
+.script-indopak,
+.quran-arabic.script-indopak,
+.font-arabic.script-indopak {
+  font-family: "IndoPak Nastaleeq", var(--font-arabic-nastaliq),
+    "Noto Nastaliq Urdu", serif;
+  line-height: 2.6;
+  letter-spacing: 0;
+}
+
+/* Verse-number badges sit inside the Arabic container, and Nastaleeq numerals
+   are too thin and too tall-lined to read at badge size — keep them in Naskh. */
+.script-indopak .verse-marker {
+  font-family: var(--font-amiri), "Noto Naskh Arabic", serif;
+  line-height: 1;
+}
+
+@media (max-width: 640px) {
+  .quran-arabic.script-indopak,
+  .font-arabic.script-indopak {
+    line-height: 2.4;
+  }
+}
+
 /* Verse number styling */
 .verse-number {
   display: inline-flex;

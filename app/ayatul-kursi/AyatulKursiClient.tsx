@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useArabicScriptClass } from "@/hooks/useArabicScriptClass";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -20,7 +21,13 @@ export default function AyatulKursiClient() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
 
-  const arabicText = "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ";
+  // 2:255 in both scripts, so the reader gets the orthography they chose and
+  // not just a different typeface over Uthmani spelling.
+  const arabicTextUthmani = "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ";
+  const arabicTextIndopak = "اللّٰهُ لَاۤ اِلٰهَ اِلَّا هُوَ الۡحَـىُّ الۡقَيُّوۡمُۚ  لَا تَاۡخُذُهٗ سِنَةٌ وَّلَا نَوۡمٌ​ؕ لَهٗ مَا فِى السَّمٰوٰتِ وَمَا فِى الۡاَرۡضِ​ؕ مَنۡ ذَا الَّذِىۡ يَشۡفَعُ عِنۡدَهٗۤ اِلَّا بِاِذۡنِهٖ​ؕ يَعۡلَمُ مَا بَيۡنَ اَيۡدِيۡهِمۡ وَمَا خَلۡفَهُمۡ​ۚ وَلَا يُحِيۡطُوۡنَ بِشَىۡءٍ مِّنۡ عِلۡمِهٖۤ اِلَّا بِمَا شَآءَ ۚ وَسِعَ كُرۡسِيُّهُ السَّمٰوٰتِ وَالۡاَرۡضَ​​ۚ وَلَا يَـــُٔوۡدُهٗ حِفۡظُهُمَا ​ۚ وَ هُوَ الۡعَلِىُّ الۡعَظِيۡمُ‏";
+
+  const scriptClass = useArabicScriptClass();
+  const arabicText = scriptClass ? arabicTextIndopak : arabicTextUthmani;
 
   const transliteration = "Allahu laa ilaaha illaa Huwal Hayyul Qayyoom. Laa ta'khuzuhoo sinatunw wa laa nawm. Lahoo maa fis samaawaati wa maa fil ard. Man zal lazee yashfa'u 'indahooo illaa bi-iznih. Ya'lamu maa baina aydeehim wa maa khalfahum. Wa laa yuheetoona bi shai'im min 'ilmiheee illaa bimaa shaa'. Wasi'a Kursiyyuhus samaawaati wal ard. Wa laa ya'ooduhoo hifzuhumaa. Wa Huwal 'Aliyyul 'Azeem.";
 
@@ -149,7 +156,7 @@ export default function AyatulKursiClient() {
           <div className="card-body">
             {/* Arabic Text */}
             <div className="py-8 px-4 bg-base-200 rounded-lg mb-6">
-              <p className="text-2xl md:text-3xl text-center leading-loose font-arabic-naskh" dir="rtl">
+              <p className={`text-2xl md:text-3xl text-center leading-loose font-arabic-naskh ${scriptClass}`} dir="rtl">
                 {arabicText}
               </p>
             </div>

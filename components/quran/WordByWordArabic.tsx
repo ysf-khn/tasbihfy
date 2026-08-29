@@ -42,6 +42,11 @@ export default function WordByWordArabic({
 }: WordByWordArabicProps) {
   const [selectedPosition, setSelectedPosition] = useState<number | null>(null);
 
+  // IndoPak text carries its waqf signs in the Private Use Area, so it only
+  // renders without tofu boxes in an IndoPak font.
+  const scriptClass =
+    scriptFieldName === "text_indopak" ? " script-indopak" : "";
+
   // A manual selection shouldn't linger once the recitation has moved on.
   useEffect(() => {
     if (activeWordPosition !== null) setSelectedPosition(null);
@@ -49,7 +54,7 @@ export default function WordByWordArabic({
 
   if (words.length === 0) {
     return (
-      <p className="quran-arabic text-base-content verse-card" style={style} dir="rtl">
+      <p className={`quran-arabic${scriptClass} text-base-content verse-card`} style={style} dir="rtl">
         {fallbackText}
       </p>
     );
@@ -62,7 +67,7 @@ export default function WordByWordArabic({
 
   return (
     <>
-      <p className="quran-arabic text-base-content verse-card" style={style} dir="rtl">
+      <p className={`quran-arabic${scriptClass} text-base-content verse-card`} style={style} dir="rtl">
         {words.map((word) => {
           const isActive = word.position === activeWordPosition;
           const isSelected = word.position === selectedPosition;
@@ -108,7 +113,7 @@ export default function WordByWordArabic({
           className="mt-3 flex min-h-[2.5rem] flex-wrap items-baseline gap-x-3 gap-y-1 rounded-lg bg-base-200 px-3 py-2"
           aria-live="polite"
         >
-          <span className="quran-arabic text-lg text-primary" dir="rtl">
+          <span className={`quran-arabic${scriptClass} text-lg text-primary`} dir="rtl">
             {wordText(glossWord, scriptFieldName)}
           </span>
           {glossWord.transliteration?.text && (

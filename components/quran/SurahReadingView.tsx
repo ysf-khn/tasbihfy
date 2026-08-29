@@ -29,6 +29,9 @@ export default function SurahReadingView({ surahData }: SurahReadingViewProps) {
   } = useQuranAudioPlayer();
 
   const scriptFieldName = getScriptFieldName();
+  // IndoPak encodes its waqf signs in the Private Use Area; only an IndoPak
+  // font maps them, everything else draws tofu boxes.
+  const scriptClass = scriptFieldName === "text_indopak" ? " script-indopak" : "";
 
   return (
     <div className="reading-view">
@@ -48,10 +51,11 @@ export default function SurahReadingView({ surahData }: SurahReadingViewProps) {
       <div className="card bg-base-100 border border-base-200">
         <div className="card-body p-8 md:p-12">
           <div
-            className="quran-arabic text-base-content leading-loose"
+            className={`quran-arabic${scriptClass} text-base-content leading-loose`}
             style={{
               ...getArabicStyles(),
-              lineHeight: '2.5',
+              // Nastaleeq slopes downward and needs more room between lines.
+              lineHeight: scriptClass ? '2.9' : '2.5',
               direction: 'rtl',
               textAlign: 'justify',
               textAlignLast: 'center',
