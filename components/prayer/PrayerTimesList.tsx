@@ -7,6 +7,38 @@ interface PrayerTimesListProps {
   prayers: PrayerTime[];
 }
 
+/** Resolve a "5:42 am" style string against a given day. */
+function toDateTime(day: Date, prayerTime: string): Date {
+  const dateTime = new Date(`${day.toDateString()} ${prayerTime}`);
+
+  // Handle 24-hour format vs 12-hour format
+  if (prayerTime.includes('am') || prayerTime.includes('pm')) {
+    const [time, period] = prayerTime.split(' ');
+    const [hours, minutes] = time.split(':').map(Number);
+    let adjustedHours = hours;
+
+    if (period === 'pm' && hours !== 12) {
+      adjustedHours += 12;
+    } else if (period === 'am' && hours === 12) {
+      adjustedHours = 0;
+    }
+
+    dateTime.setHours(adjustedHours, minutes, 0, 0);
+  }
+
+  return dateTime;
+}
+
+function formatCountdown(ms: number): string {
+  const hours = Math.floor(ms / (1000 * 60 * 60));
+  const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
+}
+
 export default function PrayerTimesList({ prayers }: PrayerTimesListProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -18,172 +50,121 @@ export default function PrayerTimesList({ prayers }: PrayerTimesListProps) {
     return () => clearInterval(interval);
   }, []);
 
-  const getPrayerStatus = (prayerTime: string) => {
-    const now = currentTime;
-    const today = now.toDateString();
-    const prayerDateTime = new Date(`${today} ${prayerTime}`);
-    
-    // Handle 24-hour format vs 12-hour format
-    if (prayerTime.includes('am') || prayerTime.includes('pm')) {
-      const [time, period] = prayerTime.split(' ');
-      const [hours, minutes] = time.split(':').map(Number);
-      let adjustedHours = hours;
-      
-      if (period === 'pm' && hours !== 12) {
-        adjustedHours += 12;
-      } else if (period === 'am' && hours === 12) {
-        adjustedHours = 0;
-      }
-      
-      prayerDateTime.setHours(adjustedHours, minutes, 0, 0);
+  const now = currentTime;
+  const schedule = prayers
+    .map((prayer) => ({ prayer, at: toDateTime(now, prayer.time) }))
+    .sort((a, b) => a.at.getTime() - b.at.getTime());
+
+  /**
+   * The prayer whose window we're standing in — the one you'd actually be
+   * praying right now, which is what the card should point at. Fajr's window
+   * closes at sunrise, so between sunrise and Dhuhr no prayer is in effect and
+   * nothing is marked current. Before the day's first entry, last night's Isha
+   * is still running.
+   */
+  const started = schedule.filter((entry) => entry.at <= now);
+  const inEffect =
+    started.length > 0
+      ? started[started.length - 1]
+      : schedule.filter((entry) => entry.prayer.name !== 'shurooq').pop();
+  const currentName =
+    inEffect && inEffect.prayer.name !== 'shurooq' ? inEffect.prayer.name : null;
+
+  // Sunrise isn't a prayer, so it never counts as the one coming up.
+  const upcoming = schedule.find(
+    (entry) => entry.at > now && entry.prayer.name !== 'shurooq'
+  );
+
+  let nextName: string | null = upcoming?.prayer.name ?? null;
+  let timeUntilNext = upcoming ? upcoming.at.getTime() - now.getTime() : 0;
+
+  // Nothing left today: the next prayer is tomorrow's Fajr.
+  if (!upcoming) {
+    const fajr = prayers.find((prayer) => prayer.name === 'fajr');
+    if (fajr) {
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      nextName = fajr.name;
+      timeUntilNext = toDateTime(tomorrow, fajr.time).getTime() - now.getTime();
     }
+  }
 
-    const isPast = now > prayerDateTime;
-    const timeDiff = Math.abs(now.getTime() - prayerDateTime.getTime());
-    const isClose = timeDiff <= 30 * 60 * 1000; // Within 30 minutes
-
-    return { isPast, isClose, timeDiff };
-  };
-
-  const getNextPrayer = () => {
-    const now = currentTime;
-    let nextPrayer = null;
-    let minTimeDiff = Infinity;
-
-    prayers.forEach((prayer) => {
-      if (prayer.name === 'shurooq') return; // Skip sunrise as it's not a prayer time
-      
-      const { isPast, timeDiff } = getPrayerStatus(prayer.time);
-      
-      if (!isPast && timeDiff < minTimeDiff) {
-        minTimeDiff = timeDiff;
-        nextPrayer = prayer;
-      }
-    });
-
-    // If no prayer found for today, next is Fajr tomorrow
-    if (!nextPrayer) {
-      nextPrayer = prayers.find(p => p.name === 'fajr') || null;
-    }
-
-    return nextPrayer;
-  };
-
-  const nextPrayer = getNextPrayer();
+  const countdown = timeUntilNext > 0 ? formatCountdown(timeUntilNext) : '';
 
   return (
     <div className="card bg-base-100 border border-base-300">
       <div className="card-body">
         <h2 className="card-title heading-ornate text-xl lg:text-2xl mb-4 lg:mb-6">Today's Prayer Times</h2>
-        
+
         <div className="space-y-3 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0">
-          {prayers.map((prayer, index) => {
-            const { isPast, isClose } = getPrayerStatus(prayer.time);
-            const isNext = nextPrayer?.name === prayer.name;
+          {schedule.map(({ prayer, at }) => {
             const isNotPrayer = prayer.name === 'shurooq';
+            const isCurrent = prayer.name === currentName;
+            const isNext = prayer.name === nextName;
+            const isPast = at <= now && !isCurrent;
 
             return (
               <div
                 key={prayer.name}
-                className={`p-4 lg:p-3 rounded-xl border transition-all duration-200 text-center lg:text-center relative ${
-                  isNext && !isNotPrayer
-                    ? 'bg-primary text-primary-content border-primary ring-2 ring-secondary/60 ring-offset-2 ring-offset-base-100'
+                className={`p-4 lg:p-3 rounded-xl border transition-all duration-200 text-center lg:text-center relative overflow-hidden ${
+                  isCurrent
+                    ? 'bg-primary text-primary-content border-primary shadow-md'
+                    : isNext
+                    ? 'bg-base-100 text-base-content border-primary/60 ring-1 ring-primary/25'
                     : isPast
-                    ? 'bg-base-200 text-base-content/70 border-base-300'
-                    : isClose && !isNotPrayer
-                    ? 'bg-warning text-warning-content border-warning'
-                    : isNotPrayer
-                    ? 'bg-accent text-accent-content border-accent'
-                    : 'bg-base-100 text-base-content border-base-300 hover:border-base-content/20'
+                    ? 'bg-base-200 text-base-content/60 border-base-300'
+                    : 'bg-base-100 text-base-content border-base-300'
                 } flex items-center justify-between lg:block lg:flex-none lg:justify-start lg:items-start`}
               >
-                {/* Mobile Layout */}
-                <div className="flex items-center space-x-4 lg:hidden">
-                  {/* Prayer Icon */}
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    isNext && !isNotPrayer
-                      ? 'bg-primary-content/20'
-                      : isPast && !isNotPrayer
-                      ? 'bg-base-300'
-                      : isNotPrayer
-                      ? 'bg-accent-content/20'
-                      : 'bg-base-200 border border-base-300'
-                  }`}>
-                    {isNotPrayer ? (
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 2L15.09 8.26L22 9L16 14.74L17.18 21.02L10 17.77L2.82 21.02L4 14.74L-2 9L4.91 8.26L10 2Z" />
-                      </svg>
-                    ) : isPast ? (
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    ) : (
-                      <div className={`w-4 h-4 rounded-full ${
-                        isNext ? 'bg-current animate-pulse' : 'bg-current opacity-50'
-                      }`}></div>
-                    )}
-                  </div>
+                {/* The lattice marks the prayer in effect at a glance, at every
+                    width — it inherits currentColor, so it reads as cream on the
+                    evergreen tile. */}
+                {isCurrent && (
+                  <div
+                    className="absolute inset-0 pattern-star pattern-fade-edges [--pattern-tile:56px]"
+                    aria-hidden="true"
+                  />
+                )}
 
-                  <div className="flex-1">
-                    <div className="text-xl font-arabic font-bold mb-1">
-                      {prayer.arabicName}
-                    </div>
-                    <div className="text-sm capitalize font-medium opacity-80">
-                      {prayer.name}
-                    </div>
+                {/* Mobile Layout */}
+                <div className="relative flex-1 text-left lg:hidden">
+                  <div className="text-xl font-arabic font-bold mb-1">
+                    {prayer.arabicName}
+                  </div>
+                  <div className="text-sm capitalize font-medium opacity-80">
+                    {prayer.name}
                   </div>
                 </div>
 
-                <div className="flex flex-col items-end space-y-2 lg:hidden">
+                <div className="relative flex flex-col items-end space-y-2 lg:hidden">
                   <div className="text-2xl font-bold tabular-nums text-right">
                     {prayer.time}
                   </div>
 
-                  <div className="flex space-x-2">
-                    {isNext && !isNotPrayer && (
-                      <div className="flex items-center px-2 py-1 rounded-full bg-primary-content text-primary">
-                        <div className="w-1.5 h-1.5 bg-current rounded-full mr-1.5 animate-pulse"></div>
-                        <span className="text-xs font-semibold">NEXT</span>
-                      </div>
-                    )}
+                  {isCurrent && (
+                    <div className="flex items-center px-2 py-1 rounded-full bg-primary-content text-primary">
+                      <div className="w-1.5 h-1.5 bg-current rounded-full mr-1.5 animate-pulse"></div>
+                      <span className="text-xs font-semibold">NOW</span>
+                    </div>
+                  )}
 
-                    {isNotPrayer && (
-                      <div className="flex items-center px-2 py-1 rounded-full bg-accent-content text-accent">
-                        <span className="text-xs font-semibold">SUNRISE</span>
-                      </div>
-                    )}
-                  </div>
+                  {isNext && !isCurrent && countdown && (
+                    <div className="px-2 py-1 rounded-full border border-primary/40 text-primary">
+                      <span className="text-xs font-semibold tabular-nums">
+                        in {countdown}
+                      </span>
+                    </div>
+                  )}
+
+                  {isNotPrayer && (
+                    <div className="px-2 py-1 rounded-full border border-base-content/20 text-base-content/60">
+                      <span className="text-xs font-semibold">SUNRISE</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Desktop Layout - Compact Vertical */}
-                <div className="hidden lg:block">
-                  {/* Status Indicator */}
-                  <div className="flex justify-center mb-2">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      isNext && !isNotPrayer
-                        ? 'bg-primary-content/20'
-                        : isPast && !isNotPrayer
-                        ? 'bg-base-300'
-                        : isNotPrayer
-                        ? 'bg-accent-content/20'
-                        : 'bg-base-200 border border-base-300'
-                    }`}>
-                      {isNotPrayer ? (
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 2L15.09 8.26L22 9L16 14.74L17.18 21.02L10 17.77L2.82 21.02L4 14.74L-2 9L4.91 8.26L10 2Z" />
-                        </svg>
-                      ) : isPast ? (
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      ) : (
-                        <div className={`w-3 h-3 rounded-full ${
-                          isNext ? 'bg-current animate-pulse' : 'bg-current opacity-50'
-                        }`}></div>
-                      )}
-                    </div>
-                  </div>
-
+                <div className="relative hidden lg:block">
                   {/* Arabic Name */}
                   <div className="text-lg font-arabic font-bold mb-1 leading-tight">
                     {prayer.arabicName}
@@ -199,17 +180,26 @@ export default function PrayerTimesList({ prayers }: PrayerTimesListProps) {
                     {prayer.time}
                   </div>
 
-                  {/* Status Badge */}
-                  <div className="flex justify-center">
-                    {isNext && !isNotPrayer && (
+                  {/* Status Badge. The row keeps its height when empty so the
+                      badged tiles don't sit taller than the rest of the grid.
+                      The countdown lives in the banner above on desktop, so the
+                      upcoming tile only has to say which one it is. */}
+                  <div className="flex justify-center min-h-6">
+                    {isCurrent && (
                       <div className="inline-flex items-center px-2 py-1 rounded-full bg-primary-content text-primary">
                         <div className="w-1 h-1 bg-current rounded-full mr-1 animate-pulse"></div>
+                        <span className="text-xs font-semibold">NOW</span>
+                      </div>
+                    )}
+
+                    {isNext && !isCurrent && (
+                      <div className="inline-flex items-center px-2 py-1 rounded-full border border-primary/40 text-primary">
                         <span className="text-xs font-semibold">NEXT</span>
                       </div>
                     )}
 
                     {isNotPrayer && (
-                      <div className="inline-flex items-center px-2 py-1 rounded-full bg-accent-content text-accent">
+                      <div className="inline-flex items-center px-2 py-1 rounded-full border border-base-content/20 text-base-content/60">
                         <span className="text-xs font-semibold">SUNRISE</span>
                       </div>
                     )}
@@ -219,7 +209,7 @@ export default function PrayerTimesList({ prayers }: PrayerTimesListProps) {
             );
           })}
         </div>
-        
+
         <div className="divider lg:hidden"></div>
 
         <div className="text-center text-sm text-base-content/60 lg:hidden">

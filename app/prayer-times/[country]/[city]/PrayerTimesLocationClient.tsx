@@ -134,8 +134,11 @@ export default function PrayerTimesLocationClient({
 
         {prayerData && (
           <>
-            {/* Next Prayer */}
-            <NextPrayer prayers={prayerData.prayers} />
+            {/* Next Prayer (desktop only: on mobile the countdown lives on the
+                next prayer's tile in the times card) */}
+            <div className="hidden lg:block">
+              <NextPrayer prayers={prayerData.prayers} />
+            </div>
 
             {/* Prayer Times List */}
             <PrayerTimesList prayers={prayerData.prayers} />

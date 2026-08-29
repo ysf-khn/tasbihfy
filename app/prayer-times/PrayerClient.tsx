@@ -25,7 +25,7 @@ export default function PrayerClient() {
     <div className="min-h-screen bg-base-200">
       <UnifiedHeader showSignIn={true} />
 
-      <div className="container mx-auto px-4 py-6 lg:py-4 max-w-7xl space-y-6 lg:space-y-4">
+      <div className="container mx-auto px-4 py-6 lg:py-4 max-w-4xl space-y-6 lg:space-y-4">
         {/* Header Section */}
         <div className="text-center space-y-2 lg:space-y-1">
           <h1 className="heading-ornate-center text-3xl lg:text-2xl font-bold text-base-content">Prayer Times</h1>
@@ -41,21 +41,50 @@ export default function PrayerClient() {
           )}
         </div>
 
-        {/* View Toggle */}
+        {/* Control bar: everything that acts on the page, on one line, so the
+            location no longer floats mid-page and Refresh isn't orphaned. */}
         {prayerData && !loading && (
-          <div className="flex justify-center">
-            <div className="tabs tabs-boxed">
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-between">
+            {prayerData.location ? (
+              <LocationDisplay
+                currentLocation={prayerData.location.name}
+                onLocationChange={handleLocationSearch}
+                loading={loading}
+              />
+            ) : (
+              <div className="hidden sm:block" />
+            )}
+
+            <div className="flex items-center gap-2">
+              <div className="tabs tabs-boxed">
+                <button
+                  className={`tab ${view === "today" ? "tab-active" : ""}`}
+                  onClick={() => setView("today")}
+                >
+                  Today
+                </button>
+                <button
+                  className={`tab ${view === "monthly" ? "tab-active" : ""}`}
+                  onClick={() => setView("monthly")}
+                >
+                  Monthly
+                </button>
+              </div>
+
               <button
-                className={`tab ${view === "today" ? "tab-active" : ""}`}
-                onClick={() => setView("today")}
+                onClick={refreshPrayerTimes}
+                className="btn btn-ghost btn-sm btn-circle"
+                disabled={loading}
+                title="Refresh prayer times"
+                aria-label="Refresh prayer times"
               >
-                Today
-              </button>
-              <button
-                className={`tab ${view === "monthly" ? "tab-active" : ""}`}
-                onClick={() => setView("monthly")}
-              >
-                Monthly
+                {loading ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                )}
               </button>
             </div>
           </div>
@@ -105,65 +134,27 @@ export default function PrayerClient() {
 
         {/* Prayer Times Content */}
         {prayerData && !loading && view === "today" && (
-          <div className="lg:grid lg:grid-cols-3 lg:gap-6 space-y-6 lg:space-y-0">
-            {/* Main Content - Prayer Times */}
-            <div className="lg:col-span-2 space-y-6 lg:space-y-4">
-              {/* Location Display */}
-              {prayerData.location && (
-                <LocationDisplay
-                  currentLocation={prayerData.location.name}
-                  onLocationChange={handleLocationSearch}
-                  loading={loading}
-                />
-              )}
-
-              {/* Prayer Times List */}
-              {prayerData.prayers && (
-                <PrayerTimesList
-                  prayers={prayerData.prayers}
-                />
-              )}
-
-              {/* Prayer Tracker */}
-              <PrayerTracker />
-
-              <CalculationNote calculation={prayerData.calculation} />
-
-              {/* Qibla Direction (Mobile Only) */}
-              {prayerData.qiblaDirection && (
-                <QiblaDirection direction={prayerData.qiblaDirection} />
-              )}
-            </div>
-
-            {/* Sidebar - Next Prayer */}
-            <div className="space-y-6 lg:space-y-4">
-              {/* Next Prayer Card */}
-              {prayerData.prayers && (
-                <div className="sticky top-24">
-                  <NextPrayer prayers={prayerData.prayers} />
-                </div>
-              )}
-
-              {/* Refresh Button */}
-              <div className="text-center lg:text-left">
-                <button
-                  onClick={refreshPrayerTimes}
-                  className="btn btn-outline btn-sm w-full lg:w-auto"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <span className="loading loading-spinner loading-sm"></span>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  )}
-                  Refresh
-                </button>
+          <div className="space-y-6 lg:space-y-4">
+            {/* Next Prayer (desktop only: on mobile the countdown lives on the
+                next prayer's tile in the times card) */}
+            {prayerData.prayers && (
+              <div className="hidden lg:block">
+                <NextPrayer prayers={prayerData.prayers} />
               </div>
-            </div>
+            )}
+
+            {prayerData.prayers && <PrayerTimesList prayers={prayerData.prayers} />}
+
+            <PrayerTracker />
+
+            {prayerData.qiblaDirection && (
+              <QiblaDirection direction={prayerData.qiblaDirection} />
+            )}
+
+            <CalculationNote calculation={prayerData.calculation} />
           </div>
         )}
+
       </div>
     </div>
   );

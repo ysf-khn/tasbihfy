@@ -114,39 +114,45 @@ export default function NextPrayer({ prayers }: NextPrayerProps) {
   return (
     <div className="card bg-primary text-primary-content shadow-lg border-0 relative overflow-hidden">
       <div className="absolute inset-0 pattern-star pattern-fade-edges [--pattern-tile:64px]" aria-hidden="true" />
-      <div className="card-body text-center p-6 lg:p-4 relative">
-        <div className="flex items-center justify-center space-x-3 mb-4 lg:mb-3">
-          <div className="p-2 lg:p-1 bg-primary-content/10 rounded-full">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 lg:h-5 lg:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h2 className="text-xl lg:text-lg font-semibold tracking-wide">Next Prayer</h2>
+
+      {/* A banner rather than a column: the times grid below already names the
+          next prayer, so this only has to carry the countdown, and a tall card
+          beside that grid left a third of the page empty. */}
+      <div className="card-body relative flex-row flex-wrap items-center justify-between gap-x-8 gap-y-4 p-5">
+        <div className="flex items-center gap-4">
+          <span className="text-4xl font-arabic font-bold leading-none">
+            {nextPrayer.arabicName}
+          </span>
+          <span>
+            <span className="block text-xs font-medium uppercase tracking-widest text-primary-content/70">
+              Next Prayer
+            </span>
+            <span className="block text-lg font-medium capitalize">
+              {nextPrayer.name}
+            </span>
+          </span>
         </div>
 
-        <div className="space-y-4 lg:space-y-2">
-          <div className="space-y-1">
-            <div className="text-4xl lg:text-2xl font-arabic font-bold leading-tight">{nextPrayer.arabicName}</div>
-            <div className="text-lg lg:text-sm font-medium capitalize text-primary-content/90">{nextPrayer.name}</div>
-          </div>
-
-          <div className="text-3xl lg:text-xl font-bold tracking-wide">{nextPrayer.time}</div>
-
-          {timeUntilNext && (
-            <div className="bg-base-300/20 backdrop-blur-sm rounded-xl p-4 lg:p-2 mt-6 lg:mt-3 border border-base-300/30">
-              <div className="text-sm lg:text-xs font-medium text-primary-content/80 mb-1">Time Remaining</div>
-              <div className="text-2xl lg:text-lg font-mono font-bold tracking-wider">{timeUntilNext}</div>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-6 lg:mt-3 lg:hidden">
-          <div className="inline-flex items-center px-3 py-1 rounded-full bg-secondary/20 border border-secondary/30">
-            <div className="w-2 h-2 bg-secondary rounded-full mr-2 animate-pulse"></div>
-            <span className="text-sm font-medium text-secondary-content">
-              {timeUntilNext ? 'Upcoming' : 'Now'}
+        <div className="flex items-center gap-6">
+          <div className="text-right">
+            <span className="block text-xs font-medium uppercase tracking-widest text-primary-content/70">
+              At
+            </span>
+            <span className="block text-2xl font-bold tabular-nums">
+              {nextPrayer.time}
             </span>
           </div>
+
+          {timeUntilNext && (
+            <div className="rounded-xl border border-base-300/30 bg-base-300/20 px-4 py-2 text-right backdrop-blur-sm">
+              <span className="block text-xs font-medium uppercase tracking-widest text-primary-content/70">
+                Time Remaining
+              </span>
+              <span className="block text-2xl font-mono font-bold tabular-nums tracking-wider">
+                {timeUntilNext}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>

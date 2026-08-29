@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { VerseWord } from "@/lib/quran/types";
 
 interface WordByWordArabicProps {
@@ -47,11 +47,6 @@ export default function WordByWordArabic({
   const scriptClass =
     scriptFieldName === "text_indopak" ? " script-indopak" : "";
 
-  // A manual selection shouldn't linger once the recitation has moved on.
-  useEffect(() => {
-    if (activeWordPosition !== null) setSelectedPosition(null);
-  }, [activeWordPosition]);
-
   if (words.length === 0) {
     return (
       <p className={`quran-arabic${scriptClass} text-base-content verse-card`} style={style} dir="rtl">
@@ -60,9 +55,10 @@ export default function WordByWordArabic({
     );
   }
 
-  const glossPosition = selectedPosition ?? activeWordPosition;
-  const glossWord = glossPosition
-    ? words.find((word) => word.position === glossPosition)
+  // The gloss is tap-only: following the recitation word by word turned the
+  // panel into a flicker of text nobody could read.
+  const glossWord = selectedPosition
+    ? words.find((word) => word.position === selectedPosition)
     : undefined;
 
   return (
@@ -92,11 +88,13 @@ export default function WordByWordArabic({
               // Colour alone carries the highlight: a background swatch on
               // every recited word is noisy against Arabic script, and any
               // weight or size change would reflow the line as it moves.
+              // Primary green sat too close to the body text to read, so the
+              // recited word takes the far lighter secondary gold.
               className={`cursor-pointer transition-colors duration-150 ${
                 isActive
-                  ? "text-primary"
-                  : isSelected
                   ? "text-secondary"
+                  : isSelected
+                  ? "text-primary"
                   : "hover:text-base-content/60"
               }`}
             >

@@ -20,6 +20,7 @@ import NightlyRecitationsCard from "@/components/nightly/NightlyRecitationsCard"
 import TodayStrip from "@/components/home/TodayStrip";
 import SeasonalAdhkar from "@/components/home/SeasonalAdhkar";
 import PrayerTimetableCompact from "@/components/prayer/PrayerTimetableCompact";
+import PrayerCheckRow from "@/components/home/PrayerCheckRow";
 
 /**
  * Everything the primary navigation does NOT already reach. Tasbih, Prayer
@@ -49,13 +50,18 @@ function HeroBand({ prayerData, loading, error, nextPrayer }: HeroBandProps) {
   );
 
   return (
-    <Link href="/prayer-times" className="block">
-      <div className="relative overflow-hidden rounded-2xl bg-primary text-primary-content">
-        <div
-          className="absolute inset-0 pattern-star pattern-fade-top"
-          aria-hidden="true"
-        />
-        <div className="relative px-5 py-6 sm:px-8 sm:py-8">
+    <div className="relative overflow-hidden rounded-2xl bg-primary text-primary-content">
+      <div
+        className="absolute inset-0 pattern-star pattern-fade-top"
+        aria-hidden="true"
+      />
+
+      {/* Only this half links through to the full page: the check row below
+          holds buttons, which can't legally nest inside an anchor. */}
+      <Link
+        href="/prayer-times"
+        className="relative block px-5 py-6 sm:px-8 sm:py-8"
+      >
           {loading ? (
             <div className="flex items-center gap-3 py-4">
               <div className="loading loading-spinner loading-sm" />
@@ -145,9 +151,10 @@ function HeroBand({ prayerData, loading, error, nextPrayer }: HeroBandProps) {
               </span>
             </div>
           )}
-        </div>
-      </div>
-    </Link>
+      </Link>
+
+      <PrayerCheckRow />
+    </div>
   );
 }
 

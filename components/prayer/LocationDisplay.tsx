@@ -58,7 +58,7 @@ export default function LocationDisplay({ currentLocation, onLocationChange, loa
 
   if (isEditing) {
     return (
-      <div className="bg-base-100 border border-base-300 rounded-lg p-4 mb-6">
+      <div className="w-full bg-base-100 border border-base-300 rounded-lg p-4">
         {showFallbackMessage && (
           <div className="alert alert-warning mb-4">
             <InformationCircleIcon className="h-5 w-5" />
@@ -92,7 +92,7 @@ export default function LocationDisplay({ currentLocation, onLocationChange, loa
   }
 
   return (
-    <div className="flex items-center justify-center mb-6">
+    <div className="flex w-full items-center justify-center sm:w-auto sm:justify-start">
       <div className="flex items-center bg-base-100 border border-base-300 rounded-lg px-4 py-2 shadow-sm">
         <MapPinIcon className="h-4 w-4 text-primary mr-2" />
         <span className="text-sm font-medium text-base-content mr-3">
