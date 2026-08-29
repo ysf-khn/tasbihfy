@@ -1,5 +1,4 @@
-﻿import React from 'react';
-import Image from 'next/image';
+import React from 'react';
 
 interface ShareableCardProps {
   arabicText: string;
@@ -27,7 +26,10 @@ export const ShareableCard = React.forwardRef<HTMLDivElement, ShareableCardProps
           <div className="flex items-center justify-center mb-12">
             <div className="flex items-center gap-6">
               <div className="relative w-20 h-20">
-                <Image
+                {/* Plain img, not next/image: html-to-image rasterises this
+                    card, and the optimizer URL only redirects to the same
+                    asset anyway. eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src="/tasbihfy_logo.jpeg"
                   alt="Tasbihfy Logo"
                   width={80}
