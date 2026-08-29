@@ -55,3 +55,7 @@ LOCAL_TESTING.md
 
 
 .wrangler/
+/dist/
+.vinext/
+
+.dev.vars
