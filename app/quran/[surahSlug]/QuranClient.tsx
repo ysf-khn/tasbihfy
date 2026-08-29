@@ -15,7 +15,12 @@ import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import QuranNavigationDrawer from "@/components/ui/QuranNavigationDrawer";
 import AyahCard from "@/components/quran/AyahCard";
 import SurahReadingView from "@/components/quran/SurahReadingView";
-import AudioPlayer from "@/components/quran/AudioPlayer";
+import SurahAudioPlayer from "@/components/quran/SurahAudioPlayer";
+import { QuranAudioProvider } from "@/components/quran/QuranAudioContext";
+import {
+  SurahPlayButton,
+  AudioFollower,
+} from "@/components/quran/SurahPlayButton";
 import {
   useQuranSurah,
   useQuranSurahArabicOnly,
@@ -48,7 +53,6 @@ export default function QuranClient({ surahId }: QuranClientProps) {
     return "translation";
   });
   const [showNavDrawer, setShowNavDrawer] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [showDebug, setShowDebug] = useState(
     process.env.NODE_ENV === "development"
   );
@@ -211,11 +215,6 @@ export default function QuranClient({ surahId }: QuranClientProps) {
     });
   };
 
-  const toggleAudio = () => {
-    setIsPlaying(!isPlaying);
-    // Audio playback will be handled by AudioPlayer component
-  };
-
   // Handle loading state - but show progressive data if available
   if (loading && !progressiveData) {
     return (
@@ -375,6 +374,7 @@ export default function QuranClient({ surahId }: QuranClientProps) {
   }
 
   return (
+    <QuranAudioProvider surahId={surahId} surahName={displayData.name_simple}>
     <div className="min-h-screen bg-base-200 pb-20">
       <UnifiedHeader title="Quran" showSignIn={true} />
 
@@ -485,22 +485,7 @@ export default function QuranClient({ surahId }: QuranClientProps) {
               </span>
             </button>
 
-            {/* <button
-              onClick={toggleAudio}
-              className={`btn btn-sm ${
-                isPlaying ? "btn-secondary" : "btn-ghost"
-              }`}
-              title={isPlaying ? "Pause audio" : "Play audio"}
-            >
-              {isPlaying ? (
-                <PauseIcon className="w-4 h-4" />
-              ) : (
-                <PlayIcon className="w-4 h-4" />
-              )}
-              <span className="hidden sm:inline ml-2">
-                {isPlaying ? "Pause" : "Play"}
-              </span>
-            </button> */}
+            <SurahPlayButton />
           </div>
         </div>
 
@@ -679,14 +664,11 @@ export default function QuranClient({ surahId }: QuranClientProps) {
         onSettingsClick={() => {}}
       />
 
-      {/* Audio Player */}
-      {isPlaying && (
-        <AudioPlayer
-          surahId={surahId}
-          verses={displayData.verses}
-          onStop={() => setIsPlaying(false)}
-        />
-      )}
+      {/* Keeps the recited verse in view and clears room for the player bar */}
+      <AudioFollower />
+
+      <SurahAudioPlayer surahName={displayData.name_simple} />
     </div>
+    </QuranAudioProvider>
   );
 }

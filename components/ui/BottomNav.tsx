@@ -65,7 +65,10 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 w-full z-50 bg-base-100/95 backdrop-blur-md border-t border-secondary/30">
+    <div
+      data-bottom-nav
+      className="lg:hidden fixed bottom-0 left-0 right-0 w-full z-50 bg-base-100/95 backdrop-blur-md border-t border-secondary/30"
+    >
       <div className="flex justify-around items-center py-2.5 px-2 pb-[calc(0.625rem+env(safe-area-inset-bottom))]">
         {navItems.map((item) => {
           const active = isActive(item.path);

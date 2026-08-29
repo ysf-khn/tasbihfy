@@ -130,6 +130,42 @@ export interface Recitation {
 export interface AudioFile {
   verse_key: string;
   url: string; // Relative path like "AbdulBaset/Mujawwad/mp3/001001.mp3"
+  /**
+   * Per-word timings, present only when the request asks for `fields=segments`
+   * and the recitation has them. Each entry is
+   * [segmentIndex, wordPosition (1-based), startMs, endMs].
+   * Some recitations return 3-tuples ([wordPosition, startMs, endMs]) instead,
+   * so always normalise via `parseSegments` in lib/quran/audio-segments.ts.
+   */
+  segments?: number[][];
+}
+
+/** A single word of a verse, from the API's `words=true` expansion. */
+export interface VerseWord {
+  id: number;
+  position: number; // 1-based, matches the word position in an AudioFile segment
+  char_type_name: "word" | "end" | string; // "end" is the verse-number glyph
+  text?: string;
+  text_uthmani?: string;
+  text_uthmani_simple?: string;
+  text_indopak?: string;
+  text_imlaei?: string;
+  translation?: { text: string; language_name: string };
+  transliteration?: { text: string; language_name: string };
+}
+
+/** A playlist entry: one verse's audio plus its word timings. */
+export interface AudioTrack {
+  verseKey: string;
+  verseNumber: number;
+  url: string; // absolute CDN url
+  segments: WordSegment[];
+}
+
+export interface WordSegment {
+  position: number; // 1-based word position
+  startMs: number;
+  endMs: number;
 }
 
 // Legacy interface - keeping for backward compatibility

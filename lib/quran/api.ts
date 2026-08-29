@@ -27,8 +27,11 @@ import {
   Recitation,
   AudioFile,
   QuranScript,
+  AudioTrack,
+  VerseWord,
 } from "./types";
 import { constructAudioUrl } from "./recitations-data";
+import { parseSegments } from "./audio-segments";
 
 // Cache interface for localStorage
 interface CacheItem<T> {
@@ -599,6 +602,90 @@ export async function getChapterRecitation(
     );
     throw new Error(`Unable to load recitation for chapter ${chapterId}`);
   }
+}
+
+/**
+ * Build the full playback queue for a surah in a single request.
+ *
+ * `fields=segments` returns per-word millisecond timings alongside each audio
+ * file, so one call covers both "what do I play next" and "which word is
+ * sounding right now" for the whole surah. Prefetching this on surah load is
+ * what makes Next/Prev instant instead of a round-trip per verse.
+ */
+export async function getSurahAudioTracks(
+  recitationId: number,
+  surahId: number
+): Promise<AudioTrack[]> {
+  const cacheKey = getCacheKey("audio_tracks", `${recitationId}_${surahId}`);
+  const cached = getFromCache<AudioTrack[]>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const response = await fetchFromProxy(
+    `${QURAN_API_BASE}/recitations/${recitationId}/by_chapter/${surahId}?per_page=286&fields=segments`
+  );
+  const data: { audio_files?: AudioFile[] } = await response.json();
+
+  const tracks: AudioTrack[] = (data.audio_files || [])
+    .filter((file) => file.url)
+    .map((file) => ({
+      verseKey: file.verse_key,
+      verseNumber: Number(file.verse_key.split(":")[1]) || 0,
+      url: constructAudioUrl(file.url),
+      segments: parseSegments(file.segments),
+    }))
+    .sort((a, b) => a.verseNumber - b.verseNumber);
+
+  if (tracks.length > 0) {
+    setCache(cacheKey, tracks, CACHE_DURATION.SURAH_DATA);
+  }
+
+  return tracks;
+}
+
+/**
+ * Fetch the word-by-word breakdown for a single verse.
+ *
+ * Deliberately per-verse: `words=true` over a whole surah is ~2.1MB for
+ * Al-Baqarah versus 163KB without, and `word_fields` does not trim it. A single
+ * verse is ~14KB, so words are pulled lazily for the verse being recited (and
+ * the next one) rather than up front. Results are cached for the session.
+ */
+const wordCache = new Map<string, VerseWord[]>();
+const wordRequests = new Map<string, Promise<VerseWord[]>>();
+
+export async function getVerseWords(verseKey: string): Promise<VerseWord[]> {
+  const cached = wordCache.get(verseKey);
+  if (cached) return cached;
+
+  const inFlight = wordRequests.get(verseKey);
+  if (inFlight) return inFlight;
+
+  const request = (async () => {
+    try {
+      const response = await fetchFromProxy(
+        `${QURAN_API_BASE}/verses/by_key/${verseKey}?words=true` +
+          `&word_fields=text_uthmani,text_uthmani_simple,text_indopak,text_imlaei`
+      );
+      const data = await response.json();
+      // Drop the trailing "end" glyph (the verse-number marker); it has no
+      // timing segment and is already rendered separately.
+      const words: VerseWord[] = (data.verse?.words || []).filter(
+        (word: VerseWord) => word.char_type_name === "word"
+      );
+      wordCache.set(verseKey, words);
+      return words;
+    } catch (error) {
+      console.error(`Failed to fetch words for ${verseKey}:`, error);
+      return [];
+    } finally {
+      wordRequests.delete(verseKey);
+    }
+  })();
+
+  wordRequests.set(verseKey, request);
+  return request;
 }
 
 /**

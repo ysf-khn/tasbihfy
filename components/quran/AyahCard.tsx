@@ -14,7 +14,8 @@ import {
 import { BookmarkIcon as BookmarkIconSolid } from "@heroicons/react/24/solid";
 import { VerseWithTranslations, SurahData } from "@/lib/quran/types";
 import { getTranslationById } from "@/lib/quran/translations-data";
-import { useQuranAudio } from "@/hooks/useQuranAudio";
+import { useQuranAudioPlayer } from "./QuranAudioContext";
+import WordByWordArabic from "./WordByWordArabic";
 import { cleanTranslationText } from "@/lib/quran/text-utils";
 import { useQuranSettings } from "@/hooks/useQuranSettings";
 import TafsirModal from "./TafsirModal";
@@ -42,16 +43,20 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
   // Settings for font styling and script selection
   const { getArabicStyles, getTranslationStyles, getScriptFieldName, getSelectedScript } = useQuranSettings();
 
-  // Audio functionality
+  // Shared surah playback (one <audio> for the whole page)
   const {
-    togglePlayPause,
-    isCurrentlyPlaying,
-    isCurrentlyLoading,
+    playVerse,
+    currentVerseKey,
+    activeWordPosition,
+    currentWords,
+    isPlaying: playerIsPlaying,
+    isLoading: playerIsLoading,
     error: audioError,
-  } = useQuranAudio();
+  } = useQuranAudioPlayer();
 
-  const isPlaying = isCurrentlyPlaying(verseKey);
-  const isLoadingAudio = isCurrentlyLoading(verseKey);
+  const isCurrent = currentVerseKey === verseKey;
+  const isPlaying = isCurrent && playerIsPlaying;
+  const isLoadingAudio = isCurrent && playerIsLoading;
 
   // Debug info removed to prevent excessive console logging during audio playback
 
@@ -98,20 +103,16 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
     });
   };
 
-  const toggleAudio = async () => {
-    try {
-      await togglePlayPause(verseKey);
-    } catch (error) {
-      console.error("Failed to toggle audio:", error);
-    }
+  const toggleAudio = () => {
+    playVerse(verse.verse_number);
   };
 
   return (
     <div
       id={`verse-${verse.verse_number}`}
-      className={`card bg-base-100 border scroll-mt-24 ${
-        isPlaying 
-          ? "border-primary border-2 bg-primary/5 shadow-lg shadow-primary/20 animate-pulse" 
+      className={`card bg-base-100 border scroll-mt-24 transition-colors ${
+        isCurrent
+          ? "border-primary border-2 shadow-lg shadow-primary/20"
           : "border-base-200"
       }`}
     >
@@ -122,7 +123,7 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
             {/* Verse Number Circle */}
             <div className="w-10 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center relative">
               <span className="text-xs font-bold text-primary">{verseKey}</span>
-              {isPlaying && (
+              {isCurrent && (
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse flex items-center justify-center">
                   <div className="w-1.5 h-1.5 bg-primary-content rounded-full"></div>
                 </div>
@@ -280,14 +281,17 @@ export default function AyahCard({ verse, surahData }: AyahCardProps) {
             }
             
             if (arabicText) {
+              // Only the verse being recited renders as individual words: the
+              // word breakdown is fetched per verse, so every other verse keeps
+              // the cheap single-string rendering.
               return (
-                <p 
-                  className="quran-arabic text-base-content verse-card"
+                <WordByWordArabic
+                  words={isCurrent ? currentWords : []}
+                  scriptFieldName={scriptFieldName}
+                  fallbackText={arabicText}
+                  activeWordPosition={isCurrent ? activeWordPosition : null}
                   style={getArabicStyles()}
-                  dir="rtl"
-                >
-                  {arabicText}
-                </p>
+                />
               );
             } else {
               return (
