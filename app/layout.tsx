@@ -13,7 +13,7 @@ import ServiceWorkerRegistration from "@/components/pwa/ServiceWorkerRegistratio
 import LayoutClient from "@/components/layout/LayoutClient";
 import { ThemeProvider } from "next-themes";
 
-import { GoogleAnalytics } from "@next/third-parties/google";
+import Script from "next/script";
 import StructuredData from "@/components/seo/StructuredData";
 
 const bricolageGrotesque = Bricolage_Grotesque({
@@ -263,8 +263,18 @@ export default function RootLayout({
             </ServiceWorkerRegistration>
           </Providers>
         </ThemeProvider>
+        {/* GA4 via next/script — @next/third-parties does not SSR under vinext */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-70LYJPKZN7"
+          strategy="afterInteractive"
+        />
+        <Script id="ga4-init" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-70LYJPKZN7');`}
+        </Script>
       </body>
-      <GoogleAnalytics gaId="G-70LYJPKZN7" />
     </html>
   );
 }
