@@ -90,7 +90,7 @@ export const ShareableCard = React.forwardRef<HTMLDivElement, ShareableCardProps
                   color: '#0d5c47',
                 }}
               >
-                â€” {reference}
+                — {reference}
               </p>
             </div>
           </div>
@@ -106,7 +106,7 @@ export const ShareableCard = React.forwardRef<HTMLDivElement, ShareableCardProps
                   fontWeight: '500',
                 }}
               >
-                {type === 'verse' ? 'ðŸ“– Share the Quran' : 'ðŸ¤² Share Islamic Duas'} â€¢ tasbihfy.com
+                {type === 'verse' ? '📖 Share the Quran' : '🤲 Share Islamic Duas'} • tasbihfy.com
               </p>
             </div>
           </div>
