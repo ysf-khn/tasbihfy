@@ -30,11 +30,20 @@ export function useQuranSettings() {
       const isNewUser = !savedSettings;
       let finalSettings: QuranSettings = { ...DEFAULT_QURAN_SETTINGS };
 
+      let seededScript = false;
+
       if (savedSettings) {
         const parsed = JSON.parse(savedSettings);
         finalSettings = { ...DEFAULT_QURAN_SETTINGS, ...parsed };
+
+        // Settings saved before script selection existed: seed it from region
+        // rather than leaving them on the Uthmani fallback.
+        if (!parsed.selectedScript) {
+          finalSettings.selectedScript = getRegionDefaultScript();
+          seededScript = true;
+        }
       } else {
-        // NEW USER: Set region-based script default (IndoPak for India/Pakistan/Bangladesh)
+        // NEW USER: Set region-based script default (IndoPak for the subcontinent)
         finalSettings.selectedScript = getRegionDefaultScript();
       }
 
@@ -51,7 +60,7 @@ export function useQuranSettings() {
       setSettings(finalSettings);
 
       // Save settings for new users to persist the region-based choice
-      if (isNewUser) {
+      if (isNewUser || seededScript) {
         try {
           localStorage.setItem('quran_settings', JSON.stringify(finalSettings));
         } catch (error) {
