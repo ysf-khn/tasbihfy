@@ -238,7 +238,7 @@ export default function QuranClient() {
               Last Read
             </h2>
             <div className="card bg-primary text-primary-content relative overflow-hidden">
-              <div className="absolute inset-0 pattern-star" aria-hidden="true" />
+              <div className="absolute inset-0 pattern-star-dense pattern-fade-top" aria-hidden="true" />
               <div className="card-body p-4 relative">
                 <div className="flex items-center justify-between">
                   <div>

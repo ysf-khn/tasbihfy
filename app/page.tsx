@@ -90,7 +90,7 @@ function HeroBand() {
   return (
     <Link href="/prayer-times" className="block">
       <div className="relative overflow-hidden rounded-2xl bg-primary text-primary-content">
-        <div className="absolute inset-0 pattern-star" aria-hidden="true" />
+        <div className="absolute inset-0 pattern-star pattern-fade-top" aria-hidden="true" />
         <div className="relative px-5 py-6 sm:px-8 sm:py-8">
           {prayerLoading ? (
             <div className="flex items-center gap-3 py-4">

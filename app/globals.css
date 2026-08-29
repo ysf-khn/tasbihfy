@@ -219,18 +219,81 @@ body {
 }
 
 /*
- * Geometric identity — the 8-pointed star (rub el hizb) as a repeating
- * lattice. Gold at low opacity so it sits quietly on both ivory and
- * dark-evergreen grounds.
+ * Geometric identity - the rub el hizb (8-pointed star) as a true
+ * edge-to-edge tessellation. The star is a single 16-vertex polygon
+ * (outer radius R, inner radius 0.765R), sized so its four axial points
+ * land exactly on the tile edges: tiling makes neighbouring stars touch
+ * tip-to-tip and the leftover negative space resolves into the classic
+ * four-armed cross. Small diamonds sit at the cross centres.
+ *
+ * Drawn as a MASK, not a baked-colour background, so the lattice takes
+ * `currentColor` from whatever it sits on - gold on ivory, cream on
+ * evergreen - instead of one muddy hardcoded hex. A second mask layer
+ * fades the lattice away from the corner where copy lives.
  */
-.pattern-star {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'%3E%3Cg fill='none' stroke='%23c39a2c' stroke-opacity='0.14'%3E%3Crect x='22' y='22' width='28' height='28'/%3E%3Crect x='22' y='22' width='28' height='28' transform='rotate(45 36 36)'/%3E%3Ccircle cx='36' cy='36' r='4'/%3E%3Ccircle cx='0' cy='0' r='3'/%3E%3Ccircle cx='72' cy='0' r='3'/%3E%3Ccircle cx='0' cy='72' r='3'/%3E%3Ccircle cx='72' cy='72' r='3'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 72px 72px;
+.pattern-star,
+.pattern-star-dense {
+  --pattern-tile: 80px;
+  --pattern-opacity: 0.16;
+  --pattern-fade: radial-gradient(
+    125% 125% at 100% 0%,
+    #000 0%,
+    #000 30%,
+    transparent 82%
+  );
+  background-color: currentColor;
+  opacity: var(--pattern-opacity);
+  pointer-events: none;
+
+  -webkit-mask-image: var(--pattern-star-svg), var(--pattern-fade);
+  mask-image: var(--pattern-star-svg), var(--pattern-fade);
+  -webkit-mask-size: var(--pattern-tile) var(--pattern-tile), cover;
+  mask-size: var(--pattern-tile) var(--pattern-tile), cover;
+  -webkit-mask-repeat: repeat, no-repeat;
+  mask-repeat: repeat, no-repeat;
+  -webkit-mask-position: center, center;
+  mask-position: center, center;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+.pattern-star,
+.pattern-star-dense {
+  --pattern-star-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='none' stroke='%23fff' stroke-width='1.25' stroke-linejoin='round'%3E%3Cpath d='M80 40L68.3 51.7 68.3 68.3 51.7 68.3 40 80 28.3 68.3 11.7 68.3 11.7 51.7 0 40 11.7 28.3 11.7 11.7 28.3 11.7 40 0 51.7 11.7 68.3 11.7 68.3 28.3Z'/%3E%3Cpath d='M0 8.3 8.3 0M71.7 0 80 8.3M80 71.7 71.7 80M8.3 80 0 71.7'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 .pattern-star-dense {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke='%23c39a2c' stroke-opacity='0.18'%3E%3Crect x='15' y='15' width='18' height='18'/%3E%3Crect x='15' y='15' width='18' height='18' transform='rotate(45 24 24)'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 48px 48px;
+  --pattern-tile: 52px;
+  --pattern-opacity: 0.13;
+}
+
+/*
+ * Fade modifiers. The lattice is a depth device, not a legibility fix
+ * (cream at 0.1-0.16 against solid type on evergreen has enormous
+ * contrast headroom) - so the fade is chosen to suit where each panel
+ * puts its copy. These must stay AFTER .pattern-star: both are
+ * single-class selectors, so source order decides which --pattern-fade
+ * wins.
+ */
+
+/* Copy at both ends of a wide band: light from above, footer rule clean */
+.pattern-fade-top {
+  --pattern-fade: linear-gradient(#000 0%, #000 22%, transparent 96%);
+}
+
+/* Centred stack: lattice lives in the corners, clears the middle */
+.pattern-fade-edges {
+  --pattern-fade: radial-gradient(72% 58% at 50% 46%, transparent 0%, #000 100%);
+}
+
+/* Copy left, gold calligraphy right: dissolve before it reaches the gold */
+.pattern-fade-left {
+  --pattern-fade: radial-gradient(115% 130% at 0% 0%, #000 0%, #000 28%, transparent 84%);
+}
+
+/* Opt out of the fade entirely when the panel has no copy over it */
+.pattern-flat {
+  --pattern-fade: linear-gradient(#000, #000);
 }
 
 /* Ornamental divider: gold rule with a centered diamond */
@@ -316,27 +379,40 @@ body {
   line-height: 1.9;
 }
 
-/* 8-pointed Star shape for Surah cards */
+/*
+ * 8-pointed star tile (surah numbers, feature icons, brand mark).
+ * The old version stacked two rounded squares, which reads as a soft
+ * octagon blob. This is the real rub el hizb outline: 8 sharp points,
+ * inner radius = 0.765 x outer, clipped from the box so any background
+ * (flat, tinted, image) takes the shape.
+ */
 .star-8 {
   position: relative;
-  transform: rotate(0deg);
-  border-radius: 4px;
+  --star-8-path: polygon(
+    100% 50%, 85.4% 64.6%, 85.4% 85.4%, 64.6% 85.4%,
+    50% 100%, 35.4% 85.4%, 14.6% 85.4%, 14.6% 64.6%,
+    0% 50%, 14.6% 35.4%, 14.6% 14.6%, 35.4% 14.6%,
+    50% 0%, 64.6% 14.6%, 85.4% 14.6%, 85.4% 35.4%
+  );
+  -webkit-clip-path: var(--star-8-path);
+  clip-path: var(--star-8-path);
 }
 
-.star-8:before {
+/*
+ * Hairline outline variant. clip-path eats normal borders, so the rule is
+ * an inset copy of the shape sitting under the content.
+ */
+.star-8-outline::before {
   content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 100%;
-  background: inherit;
-  border: inherit;
-  border-radius: 4px;
-  transform: rotate(45deg);
+  inset: 1px;
+  background-color: color-mix(in oklch, var(--color-secondary) 12%, var(--color-base-100));
+  -webkit-clip-path: var(--star-8-path);
+  clip-path: var(--star-8-path);
 }
 
-.star-8 > span {
+.star-8 > span,
+.star-8 > svg {
   position: relative;
   z-index: 1;
 }

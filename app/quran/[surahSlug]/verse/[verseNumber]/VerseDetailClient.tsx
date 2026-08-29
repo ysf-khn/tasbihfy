@@ -232,7 +232,7 @@ export default function VerseDetailClient({
             {/* Arabic Text - Enhanced Presentation */}
             <div className="relative">
               <div className="relative text-center py-12 px-4 rounded-xl bg-base-200/60 frame-gold">
-                <p className="text-3xl sm:text-4xl lg:text-5xl leading-relaxed lg:leading-loose arabic-text text-base-content font-arabic" dir="rtl">
+                <p className="text-3xl sm:text-4xl lg:text-5xl leading-relaxed lg:leading-loose text-base-content font-arabic" dir="rtl">
                   {arabicText}
                 </p>
               </div>

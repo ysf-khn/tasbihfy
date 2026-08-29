@@ -248,7 +248,7 @@ function DhikrContent() {
       <div className="min-h-screen bg-base-200">
         <UnifiedHeader showSignIn={true} />
         <div>
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-2xl mx-auto px-4 sm:px-6">
             <DhikrCounter
               dhikrName="Instant Tasbih"
               targetCount={0}
@@ -315,7 +315,7 @@ function DhikrContent() {
       <div className="min-h-screen bg-base-200">
         <UnifiedHeader showSignIn={true} />
         <div>
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-2xl mx-auto px-4 sm:px-6">
             <DhikrCounter
               dhikrName={dhikrName}
               targetCount={targetCount}
@@ -364,7 +364,7 @@ function DhikrContent() {
       <UnifiedHeader showSignIn={true} />
       <div>
         {/* Content */}
-        <div className="p-4 sm:p-6 space-y-6 pb-48">
+        <div className="container mx-auto max-w-4xl p-4 sm:p-6 space-y-6 pb-48">
           {/* Favorites Section */}
           {favoritesDhikrs.length > 0 && (
             <div className="space-y-3 sm:space-y-4">

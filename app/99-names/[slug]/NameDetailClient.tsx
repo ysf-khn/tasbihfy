@@ -4,6 +4,13 @@ import { useState } from "react";
 import { names99Allah } from "@/data/99-names";
 import UnifiedHeader from "@/components/ui/UnifiedHeader";
 import Link from "next/link";
+import {
+  BookOpenIcon,
+  ClockIcon,
+  DocumentTextIcon,
+  HeartIcon,
+  SparklesIcon,
+} from "@heroicons/react/24/outline";
 
 interface NameDetailClientProps {
   name: typeof names99Allah[0];
@@ -38,7 +45,7 @@ export default function NameDetailClient({ name }: NameDetailClientProps) {
         showSignIn={true}
       />
 
-      <div className="container mx-auto px-4 py-6 space-y-6 pt-4">
+      <div className="container mx-auto max-w-3xl px-4 py-6 space-y-6 pt-4">
         {/* Breadcrumb */}
         <div className="breadcrumbs text-sm">
           <ul>
@@ -60,7 +67,7 @@ export default function NameDetailClient({ name }: NameDetailClientProps) {
 
             {/* Arabic Text */}
             <div className="space-y-4">
-              <h1 className="text-6xl arabic-text text-base-content">
+              <h1 className="text-6xl arabic-display text-base-content">
                 {name.arabic}
               </h1>
               <h2 className="text-3xl font-bold text-base-content">
@@ -84,7 +91,7 @@ export default function NameDetailClient({ name }: NameDetailClientProps) {
         <div className="card bg-base-100 shadow-sm">
           <div className="card-body">
             <h3 className="card-title text-base-content mb-4">
-              <span className="text-primary">✨</span>
+              <HeartIcon className="w-5 h-5 text-primary" />
               Spiritual Benefits
             </h3>
             <p className="text-base-content/80 leading-relaxed">
@@ -98,7 +105,7 @@ export default function NameDetailClient({ name }: NameDetailClientProps) {
           <div className="card-body">
             <div className="flex items-center justify-between mb-4">
               <h3 className="card-title text-base-content">
-                <span className="text-primary">📿</span>
+                <SparklesIcon className="w-5 h-5 text-primary" />
                 Dhikr Counter
               </h3>
               <div className="form-control">
@@ -115,9 +122,9 @@ export default function NameDetailClient({ name }: NameDetailClientProps) {
             </div>
 
             {isCountingMode ? (
-              <div className="text-center space-y-6">
+              <div className="space-y-6">
                 {/* Counter Display */}
-                <div className="bg-base-200 rounded-lg p-8">
+                <div className="bg-base-200 rounded-lg p-8 text-center">
                   <div className="text-6xl font-bold text-primary mb-2">
                     {count}
                   </div>
@@ -126,30 +133,31 @@ export default function NameDetailClient({ name }: NameDetailClientProps) {
                   </div>
                 </div>
 
-                {/* Count Button */}
-                <button
-                  onClick={handleCount}
-                  className="btn btn-primary btn-lg w-full max-w-xs"
-                >
-                  Recite {name.transliteration}
-                </button>
-
-                {/* Reset Button */}
-                {count > 0 && (
+                {/* Count + Reset, stacked and centred */}
+                <div className="flex flex-col items-center gap-3">
                   <button
-                    onClick={resetCount}
-                    className="btn btn-outline btn-sm"
+                    onClick={handleCount}
+                    className="btn btn-primary btn-lg w-full max-w-xs"
                   >
-                    Reset Counter
+                    Recite {name.transliteration}
                   </button>
-                )}
+
+                  {count > 0 && (
+                    <button
+                      onClick={resetCount}
+                      className="btn btn-ghost btn-sm"
+                    >
+                      Reset Counter
+                    </button>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="text-center space-y-4">
                 <p className="text-base-content/70">
                   Enable counting mode to start reciting {name.transliteration}
                 </p>
-                <div className="text-4xl arabic-text text-base-content">
+                <div className="text-4xl arabic-display text-base-content">
                   {name.arabic}
                 </div>
               </div>
@@ -198,21 +206,21 @@ export default function NameDetailClient({ name }: NameDetailClientProps) {
             <h3 className="card-title text-base-content mb-4">
               Continue Your Spiritual Journey
             </h3>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <Link href="/" className="btn btn-outline btn-sm">
-                <span className="text-primary">📿</span>
+                <SparklesIcon className="w-4 h-4 text-primary" />
                 Dhikr Counter
               </Link>
               <Link href="/duas" className="btn btn-outline btn-sm">
-                <span className="text-primary">🤲</span>
+                <DocumentTextIcon className="w-4 h-4 text-primary" />
                 Daily Duas
               </Link>
               <Link href="/quran" className="btn btn-outline btn-sm">
-                <span className="text-primary">📖</span>
+                <BookOpenIcon className="w-4 h-4 text-primary" />
                 Read Quran
               </Link>
               <Link href="/prayer-times" className="btn btn-outline btn-sm">
-                <span className="text-primary">🕐</span>
+                <ClockIcon className="w-4 h-4 text-primary" />
                 Prayer Times
               </Link>
             </div>

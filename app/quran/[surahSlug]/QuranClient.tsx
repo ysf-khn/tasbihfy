@@ -224,8 +224,8 @@ export default function QuranClient({ surahId }: QuranClientProps) {
 
         <div className="container mx-auto px-4 py-6 max-w-4xl pt-4">
           {/* Surah Header Skeleton */}
-          <div className="relative mb-6 rounded-2xl overflow-hidden bg-primary h-40">
-            <div className="absolute inset-0 pattern-star" aria-hidden="true" />
+          <div className="relative mb-6 rounded-2xl overflow-hidden bg-primary text-primary-content h-40">
+            <div className="absolute inset-0 pattern-star pattern-fade-left [--pattern-opacity:0.10]" aria-hidden="true" />
             <div className="relative z-10 flex items-center justify-between h-full p-6">
               <div className="flex-1">
                 <div className="h-6 bg-primary-content/30 rounded w-32 mb-2 animate-pulse"></div>
@@ -381,7 +381,7 @@ export default function QuranClient({ surahId }: QuranClientProps) {
       <div className="container mx-auto px-4 py-6 max-w-4xl pt-4">
         {/* Surah Header */}
         <div className="relative mb-6 rounded-2xl overflow-hidden bg-primary text-primary-content">
-          <div className="absolute inset-0 pattern-star" aria-hidden="true" />
+          <div className="absolute inset-0 pattern-star pattern-fade-left [--pattern-opacity:0.10]" aria-hidden="true" />
           <div className="relative flex items-center justify-between gap-4 p-6">
             {/* Text Content - Left Side */}
             <div className="flex-1">

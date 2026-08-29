@@ -64,7 +64,7 @@ export default function Names99Client() {
             >
               <div className="card-body p-4">
                 <div className="flex items-center justify-start mb-2">
-                  <span className="star-8 bg-secondary/15 border border-secondary/40 w-6 h-6 flex items-center justify-center">
+                  <span className="star-8 star-8-outline bg-secondary/55 w-6 h-6 flex items-center justify-center">
                     <span className="text-[0.65rem] font-bold text-primary">
                       {name.id}
                     </span>

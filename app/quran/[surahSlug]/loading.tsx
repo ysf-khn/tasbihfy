@@ -7,8 +7,8 @@ export default function Loading() {
 
       <div className="container mx-auto px-4 py-6 max-w-4xl pt-4">
         {/* Surah Header Skeleton */}
-        <div className="relative mb-6 rounded-2xl overflow-hidden bg-primary h-40">
-          <div className="absolute inset-0 pattern-star" aria-hidden="true" />
+        <div className="relative mb-6 rounded-2xl overflow-hidden bg-primary text-primary-content h-40">
+          <div className="absolute inset-0 pattern-star pattern-fade-left [--pattern-opacity:0.10]" aria-hidden="true" />
 
           {/* Header Content Skeleton */}
           <div className="relative z-10 h-full flex items-center justify-between p-6">
