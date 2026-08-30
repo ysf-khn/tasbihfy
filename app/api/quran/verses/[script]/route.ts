@@ -1,3 +1,4 @@
+import { withEdgeCache } from "@/lib/http/edge-cache";
 import {
   getAccessToken,
   getClientId,
@@ -5,7 +6,7 @@ import {
 } from "@/lib/quran/token-manager";
 import { QURAN_SCRIPTS } from "@/lib/quran/constants";
 
-export async function GET(
+async function handler(
   request: Request,
   { params }: { params: Promise<{ script: string }> }
 ) {
@@ -99,3 +100,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withEdgeCache(handler);

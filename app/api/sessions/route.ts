@@ -8,6 +8,14 @@ import {
 } from "@/lib/supabase-queries";
 import { z } from "zod";
 
+
+/**
+ * Per-user data. Without an explicit directive browsers apply heuristic
+ * caching to these responses, which is never right for an authenticated
+ * payload.
+ */
+const PRIVATE_NO_STORE = { "Cache-Control": "private, no-store" } as const;
+
 const createSessionSchema = z.object({
   dhikrId: z.string(),
   currentCount: z.number().int().min(0).optional().default(0),
@@ -44,10 +52,13 @@ export async function GET(request: NextRequest) {
     const dhikrSession = await getActiveSession(dhikrId, session.user.id);
 
     // Always return dhikr data, with or without session
-    return NextResponse.json({
-      session: dhikrSession,
-      dhikr: dhikr,
-    });
+    return NextResponse.json(
+      {
+        session: dhikrSession,
+        dhikr: dhikr,
+      },
+      { headers: PRIVATE_NO_STORE }
+    );
   } catch (error) {
     console.error("Error fetching session by dhikr:", error);
     return NextResponse.json(

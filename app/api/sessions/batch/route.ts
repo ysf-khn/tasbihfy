@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import {
-  getDhikrByIdSimple,
+  getDhikrsByIds,
   getActiveSession,
   createDhikrSession,
   updateDhikrSession,
@@ -51,18 +51,23 @@ export async function POST(request: NextRequest) {
 
     const results: BatchResult[] = [];
 
+    // One query for every dhikr this flush touches. These were previously
+    // fetched one per update inside the loop, so a ten-item flush spent ten
+    // sequential round trips before doing any real work. Dhikrs don't change
+    // during the request, so a single upfront lookup is equivalent.
+    const dhikrsById = await getDhikrsByIds(
+      Array.from(new Set(updates.map((u) => u.dhikrId))),
+      session.user.id
+    );
+
     // Process updates sequentially to maintain order
-    // Group by dhikrId to optimize
     for (let i = 0; i < updates.length; i++) {
       const update = updates[i];
 
       try {
         if (update.type === "session_create") {
           // Verify dhikr belongs to user
-          const dhikr = await getDhikrByIdSimple(
-            update.dhikrId,
-            session.user.id
-          );
+          const dhikr = dhikrsById.get(update.dhikrId);
 
           if (!dhikr) {
             results.push({
@@ -120,10 +125,7 @@ export async function POST(request: NextRequest) {
           }
         } else if (update.type === "session_update" && update.sessionId) {
           // Get dhikr for target check
-          const dhikr = await getDhikrByIdSimple(
-            update.dhikrId,
-            session.user.id
-          );
+          const dhikr = dhikrsById.get(update.dhikrId);
 
           if (!dhikr) {
             results.push({

@@ -41,8 +41,10 @@ interface CacheItem<T> {
 }
 
 // Generic cache functions
+const QURAN_CACHE_PREFIX = "quran_";
+
 function getCacheKey(prefix: string, id?: string | number): string {
-  return `quran_${prefix}${id ? `_${id}` : ""}`;
+  return `${QURAN_CACHE_PREFIX}${prefix}${id ? `_${id}` : ""}`;
 }
 
 /**
@@ -95,34 +97,134 @@ async function fetchTranslationsForVerse(
   return translations;
 }
 
+function parseCacheItem(raw: string | null): CacheItem<unknown> | null {
+  if (!raw) return null;
+  try {
+    const item = JSON.parse(raw);
+    if (
+      item &&
+      typeof item === "object" &&
+      typeof item.expires === "number" &&
+      typeof item.timestamp === "number" &&
+      "data" in item
+    ) {
+      return item as CacheItem<unknown>;
+    }
+  } catch {
+    // Not ours, or not JSON.
+  }
+  return null;
+}
+
 function getFromCache<T>(key: string): T | null {
   try {
-    const cached = localStorage.getItem(key);
-    if (!cached) return null;
+    const item = parseCacheItem(localStorage.getItem(key));
+    if (!item) return null;
 
-    const item: CacheItem<T> = JSON.parse(cached);
     if (Date.now() > item.expires) {
       localStorage.removeItem(key);
       return null;
     }
 
-    return item.data;
+    return item.data as T;
   } catch {
     return null;
   }
 }
 
-function setCache<T>(key: string, data: T, duration: number): void {
-  try {
-    const item: CacheItem<T> = {
-      data,
-      timestamp: Date.now(),
-      expires: Date.now() + duration,
-    };
-    localStorage.setItem(key, JSON.stringify(item));
-  } catch (error) {
-    console.warn("Failed to cache data:", error);
+function isQuotaError(error: unknown): boolean {
+  return (
+    error instanceof DOMException &&
+    (error.name === "QuotaExceededError" ||
+      error.name === "NS_ERROR_DOM_QUOTA_REACHED" ||
+      error.code === 22 ||
+      error.code === 1014)
+  );
+}
+
+/**
+ * Every `quran_*` key holding a CacheItem, ordered for eviction: expired
+ * entries first, then least recently written. The shape check is what keeps
+ * bookmarks, last-read and settings (also `quran_*`) out of the list.
+ */
+function evictableCacheKeys(exclude: string): string[] {
+  const entries: { key: string; expired: boolean; timestamp: number }[] = [];
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith(QURAN_CACHE_PREFIX) || key === exclude) continue;
+
+    const item = parseCacheItem(localStorage.getItem(key));
+    if (!item) continue;
+
+    entries.push({
+      key,
+      expired: Date.now() > item.expires,
+      timestamp: item.timestamp,
+    });
   }
+
+  return entries
+    .sort((a, b) =>
+      a.expired === b.expired
+        ? a.timestamp - b.timestamp
+        : Number(b.expired) - Number(a.expired)
+    )
+    .map((entry) => entry.key);
+}
+
+function setCache<T>(key: string, data: T, duration: number): void {
+  const item: CacheItem<T> = {
+    data,
+    timestamp: Date.now(),
+    expires: Date.now() + duration,
+  };
+  const payload = JSON.stringify(item);
+
+  try {
+    localStorage.setItem(key, payload);
+    return;
+  } catch (error) {
+    if (!isQuotaError(error)) {
+      console.warn("Failed to cache data:", error);
+      return;
+    }
+  }
+
+  // Out of quota. Without this the write fails silently and caching stays
+  // broken for the rest of that user's life on the device, so drop cached
+  // Quran payloads (expired first, then oldest) until the write lands.
+  const victims = evictableCacheKeys(key);
+
+  for (const victim of victims) {
+    localStorage.removeItem(victim);
+    try {
+      localStorage.setItem(key, payload);
+      return;
+    } catch (error) {
+      if (!isQuotaError(error)) {
+        console.warn("Failed to cache data:", error);
+        return;
+      }
+    }
+  }
+
+  console.warn(
+    `Failed to cache ${key}: storage full after evicting ${victims.length} entries`
+  );
+}
+
+/**
+ * Arabic-only surah payload if it is already cached, for rendering something
+ * immediately while the translated payload is still in flight.
+ */
+export function readCachedSurahArabic(
+  surahId: number,
+  script: QuranScript = "uthmani"
+): SurahData | null {
+  return getFromCache<SurahData>(
+    getCacheKey("surah_arabic", `${surahId}_${script}`)
+  );
 }
 
 // Simplified fetch for our proxy API (no retries needed since it's local)
@@ -939,15 +1041,17 @@ export async function searchVerses(
 }
 
 /**
- * Clear all cache
+ * Drop every cached Quran payload. The shape check keeps bookmarks, last-read
+ * and settings — also `quran_*` keys — out of it; the previous version cleared
+ * the whole prefix and took the user's bookmarks with it.
  */
-export function clearQuranCache(): void {
+export function clearQuranCache(): number {
   try {
-    const keys = Object.keys(localStorage).filter((key) =>
-      key.startsWith("quran_")
-    );
+    const keys = evictableCacheKeys("");
     keys.forEach((key) => localStorage.removeItem(key));
+    return keys.length;
   } catch (error) {
     console.warn("Failed to clear cache:", error);
+    return 0;
   }
 }

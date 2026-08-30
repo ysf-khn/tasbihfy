@@ -294,6 +294,7 @@ export type Database = {
           asr: string
           maghrib: string
           isha: string
+          locationName: string | null
           qiblaDirection: string | null
           latitude: string | null
           longitude: string | null
@@ -302,6 +303,8 @@ export type Database = {
           countryCode: string | null
           temperature: string | null
           pressure: string | null
+          hijri: Json | null
+          raw: Json | null
           createdAt: string
           updatedAt: string
         }
@@ -315,6 +318,7 @@ export type Database = {
           asr: string
           maghrib: string
           isha: string
+          locationName?: string | null
           qiblaDirection?: string | null
           latitude?: string | null
           longitude?: string | null
@@ -323,6 +327,8 @@ export type Database = {
           countryCode?: string | null
           temperature?: string | null
           pressure?: string | null
+          hijri?: Json | null
+          raw?: Json | null
           createdAt?: string
           updatedAt?: string
         }
@@ -336,6 +342,7 @@ export type Database = {
           asr?: string
           maghrib?: string
           isha?: string
+          locationName?: string | null
           qiblaDirection?: string | null
           latitude?: string | null
           longitude?: string | null
@@ -344,6 +351,8 @@ export type Database = {
           countryCode?: string | null
           temperature?: string | null
           pressure?: string | null
+          hijri?: Json | null
+          raw?: Json | null
           createdAt?: string
           updatedAt?: string
         }

@@ -1,48 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
-import { getSurahList, getSurahData, getSurahArabicOnly } from '@/lib/quran/api';
-import { Surah, SurahData, QuranScript } from '@/lib/quran/types';
-import { TRANSLATION_RESOURCES } from '@/lib/quran/constants';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  getSurahList,
+  getSurahData,
+  getSurahArabicOnly,
+  clearQuranCache,
+} from '@/lib/quran/api';
+import { Surah, SurahData } from '@/lib/quran/types';
 import { useQuranSettings } from './useQuranSettings';
 import { LocalStorageCleanup } from '@/lib/localStorage-cleanup';
-
-// Cache management
-const CACHE_KEY_PREFIX = 'quran_hook_cache_';
-const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
-
-interface CachedData<T> {
-  data: T;
-  timestamp: number;
-}
-
-function getCachedData<T>(key: string): T | null {
-  try {
-    const cached = localStorage.getItem(CACHE_KEY_PREFIX + key);
-    if (!cached) return null;
-
-    const { data, timestamp }: CachedData<T> = JSON.parse(cached);
-    
-    if (Date.now() - timestamp > CACHE_DURATION) {
-      localStorage.removeItem(CACHE_KEY_PREFIX + key);
-      return null;
-    }
-
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-function setCachedData<T>(key: string, data: T): void {
-  try {
-    const cachedData: CachedData<T> = {
-      data,
-      timestamp: Date.now(),
-    };
-    localStorage.setItem(CACHE_KEY_PREFIX + key, JSON.stringify(cachedData));
-  } catch (error) {
-    console.warn('Failed to cache data:', error);
-  }
-}
 
 export function useQuranSurahList() {
   const [surahs, setSurahs] = useState<Surah[]>([]);
@@ -58,27 +23,12 @@ export function useQuranSurahList() {
       setLoading(true);
       setError(null);
 
-      // Try cache first
-      const cached = getCachedData<Surah[]>('surahs');
-      if (cached) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('✅ useQuranSurahList: Using cached surahs:', cached.length);
-        }
-        setSurahs(cached);
-        setLoading(false);
-        return;
-      }
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('📡 useQuranSurahList: Fetching from API');
-      }
       const data = await getSurahList();
       if (process.env.NODE_ENV === 'development') {
         console.log('✅ useQuranSurahList: API response:', data.length, 'surahs');
       }
       
       setSurahs(data);
-      setCachedData('surahs', data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load Surahs';
       console.error('❌ useQuranSurahList: Error loading surahs:', err);
@@ -107,17 +57,24 @@ export function useQuranSurah(surahId: number, translationIds: number[] = [], en
   const [error, setError] = useState<string | null>(null);
   
   // Get selected script from settings
-  const { getSelectedScript } = useQuranSettings();
+  const { getSelectedScript, isLoading: settingsLoading } = useQuranSettings();
   const selectedScript = getSelectedScript();
 
   // Create stable dependency for translation IDs and script
   const translationIdsKey = translationIds.join(',');
+
+  // Monotonic request token: a slower earlier fetch must not overwrite the
+  // result of a newer one when the user switches surah or translation quickly.
+  const requestRef = useRef(0);
 
   const loadSurah = useCallback(async () => {
     if (!enabled) {
       setLoading(false);
       return;
     }
+
+    const requestId = ++requestRef.current;
+    const isStale = () => requestRef.current !== requestId;
 
     if (process.env.NODE_ENV === 'development') {
       console.log(`🔄 useQuranSurah: Loading surah ${surahId} with translation IDs:`, translationIds, 'enabled:', enabled);
@@ -140,23 +97,13 @@ export function useQuranSurah(surahId: number, translationIds: number[] = [], en
         console.log(`📋 useQuranSurah: Translation IDs:`, translationIds, 'Script:', selectedScript);
       }
 
-      const cacheKey = `surah_${surahId}_${translationIdsKey}_${selectedScript}`;
-
-      // Try cache first
-      const cached = getCachedData<SurahData>(cacheKey);
-      if (cached) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`✅ useQuranSurah: Using cached data for surah ${surahId}`);
-        }
-        setSurahData(cached);
-        setLoading(false);
-        return;
-      }
-
+      // No cache read here: getSurahData owns the localStorage cache (7-day
+      // TTL, keyed on surah + translations + script).
       if (process.env.NODE_ENV === 'development') {
         console.log(`📡 useQuranSurah: Fetching surah ${surahId} from API with BATCH OPTIMIZATION - translation IDs:`, translationIds, 'and script:', selectedScript);
       }
       const data = await getSurahData(surahId, translationIds, selectedScript);
+      if (isStale()) return;
       if (process.env.NODE_ENV === 'development') {
         console.log(`✅ useQuranSurah: BATCH API response for surah ${surahId}:`, {
           verses: data.verses?.length || 0,
@@ -166,25 +113,35 @@ export function useQuranSurah(surahId: number, translationIds: number[] = [], en
       }
 
       setSurahData(data);
-      setCachedData(cacheKey, data);
     } catch (err) {
+      if (isStale()) return;
       const errorMessage = err instanceof Error ? err.message : `Failed to load Surah ${surahId}`;
       console.error(`❌ useQuranSurah: Error loading surah ${surahId}:`, err);
       setError(errorMessage);
       setSurahData(null); // Clear any existing data
     } finally {
-      setLoading(false);
+      if (!isStale()) setLoading(false);
     }
   }, [surahId, translationIdsKey, selectedScript, enabled]);
 
   useEffect(() => {
-    if (enabled) {
-      loadSurah();
-    } else {
+    if (!enabled) {
       // When disabled, clear loading state immediately
       setLoading(false);
+      return;
     }
-  }, [loadSurah, enabled]);
+
+    // Settings are read from localStorage inside an effect, so the first
+    // render still holds the defaults. Fetching now would download an entire
+    // surah in the wrong translations/script for anyone who changed them,
+    // every single page load, and then immediately refetch.
+    if (settingsLoading) {
+      setLoading(true);
+      return;
+    }
+
+    loadSurah();
+  }, [loadSurah, enabled, settingsLoading]);
 
   return {
     surahData,
@@ -200,15 +157,21 @@ export function useQuranSurahArabicOnly(surahId: number, enabled: boolean = true
   const [error, setError] = useState<string | null>(null);
   
   // Get selected script from settings
-  const { getSelectedScript } = useQuranSettings();
+  const { getSelectedScript, isLoading: settingsLoading } = useQuranSettings();
   const selectedScript = getSelectedScript();
-  
+
+  // See useQuranSurah: guards against an older response landing last.
+  const requestRef = useRef(0);
+
   const loadSurah = useCallback(async () => {
     if (!enabled) {
       setLoading(false);
       return;
     }
-    
+
+    const requestId = ++requestRef.current;
+    const isStale = () => requestRef.current !== requestId;
+
     if (process.env.NODE_ENV === 'development') {
       console.log(`🔄 useQuranSurahArabicOnly: Loading surah ${surahId} (Arabic only) with script: ${selectedScript}`);
     }
@@ -225,23 +188,12 @@ export function useQuranSurahArabicOnly(surahId: number, enabled: boolean = true
       setLoading(true);
       setError(null);
       
-      const cacheKey = `surah_arabic_${surahId}_${selectedScript}`;
-      
-      // Try cache first
-      const cached = getCachedData<SurahData>(cacheKey);
-      if (cached) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`✅ useQuranSurahArabicOnly: Using cached data for surah ${surahId}`);
-        }
-        setSurahData(cached);
-        setLoading(false);
-        return;
-      }
-
+      // getSurahArabicOnly reads and writes the shared Quran cache.
       if (process.env.NODE_ENV === 'development') {
         console.log(`📡 useQuranSurahArabicOnly: Fetching surah ${surahId} from API (Arabic only) with script: ${selectedScript}`);
       }
       const data = await getSurahArabicOnly(surahId, selectedScript);
+      if (isStale()) return;
       if (process.env.NODE_ENV === 'development') {
         console.log(`✅ useQuranSurahArabicOnly: API response for surah ${surahId}:`, {
           verses: data.verses?.length || 0,
@@ -250,22 +202,29 @@ export function useQuranSurahArabicOnly(surahId: number, enabled: boolean = true
       }
       
       setSurahData(data);
-      setCachedData(cacheKey, data);
     } catch (err) {
+      if (isStale()) return;
       const errorMessage = err instanceof Error ? err.message : `Failed to load Surah ${surahId}`;
       console.error(`❌ useQuranSurahArabicOnly: Error loading surah ${surahId}:`, err);
       setError(errorMessage);
       setSurahData(null); // Clear any existing data
     } finally {
-      setLoading(false);
+      if (!isStale()) setLoading(false);
     }
   }, [surahId, selectedScript, enabled]);
 
   useEffect(() => {
-    if (enabled) {
-      loadSurah();
+    if (!enabled) return;
+
+    // The script comes from localStorage-backed settings, so fetching before
+    // they load pulls the wrong script for anyone not on the default.
+    if (settingsLoading) {
+      setLoading(true);
+      return;
     }
-  }, [loadSurah, enabled]);
+
+    loadSurah();
+  }, [loadSurah, enabled, settingsLoading]);
 
   return {
     surahData,
@@ -277,38 +236,33 @@ export function useQuranSurahArabicOnly(surahId: number, enabled: boolean = true
 
 // Prefetch hook for performance
 export function useQuranPrefetch() {
-  const prefetchSurah = useCallback(async (surahId: number, translationLanguages: string[] = ['english']) => {
+  const { settings, getSelectedScript } = useQuranSettings();
+  const selectedScript = getSelectedScript();
+  const translationIdsKey = Array.from(settings.selectedTranslations || []).join(',');
+
+  // Warms exactly the key the reader will look up: same surah, same
+  // translations, same script. Anything else is a download nobody reads.
+  const prefetchSurah = useCallback(async (surahId: number) => {
+    if (surahId < 1 || surahId > 114) return;
+
     try {
-      const translationIds = translationLanguages.map(
-        lang => TRANSLATION_RESOURCES[lang as keyof typeof TRANSLATION_RESOURCES]?.id
-      ).filter(Boolean);
-      
-      const cacheKey = `surah_${surahId}_${translationIds.join(',')}`;
-      
-      // Only prefetch if not already cached
-      if (!getCachedData<SurahData>(cacheKey)) {
-        const data = await getSurahData(surahId, translationIds);
-        setCachedData(cacheKey, data);
-      }
+      const translationIds = translationIdsKey
+        ? translationIdsKey.split(',').map(Number)
+        : [];
+      await getSurahData(surahId, translationIds, selectedScript);
     } catch (error) {
       console.warn(`Failed to prefetch surah ${surahId}:`, error);
     }
-  }, []);
+  }, [translationIdsKey, selectedScript]);
 
-  const prefetchAdjacentSurahs = useCallback((currentSurahId: number, translationLanguages: string[] = ['english']) => {
-    // Prefetch previous and next surahs
-    if (currentSurahId > 1) {
-      prefetchSurah(currentSurahId - 1, translationLanguages);
-    }
-    if (currentSurahId < 114) {
-      prefetchSurah(currentSurahId + 1, translationLanguages);
-    }
+  const prefetchAdjacentSurahs = useCallback((currentSurahId: number) => {
+    prefetchSurah(currentSurahId - 1);
+    prefetchSurah(currentSurahId + 1);
   }, [prefetchSurah]);
 
   const clearCache = useCallback(() => {
     try {
-      const keys = Object.keys(localStorage).filter(key => key.startsWith(CACHE_KEY_PREFIX));
-      keys.forEach(key => localStorage.removeItem(key));
+      clearQuranCache();
     } catch (error) {
       console.warn('Failed to clear Quran cache:', error);
     }

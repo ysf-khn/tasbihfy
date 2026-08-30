@@ -11,7 +11,7 @@ import {
 import {
   getEligibleReminderUsers,
   getPrayerNotificationUsers,
-  getPrayerLocation,
+  getPrayerLocationsByUserIds,
   getCachedPrayerTimes,
   cachePrayerTimes,
   clearPushSubscription,
@@ -19,6 +19,7 @@ import {
   updateLastPrayerNotificationKey,
 } from "@/lib/supabase-queries";
 import { fetchPrayerTimings } from "@/lib/prayer/aladhan";
+import { prayerCacheKey } from "@/lib/prayer/location";
 import { getCalculationRules } from "@/lib/prayer/calculation-methods";
 import type { RawPrayerTimings } from "@/types/prayer";
 import type { TrackedPrayer } from "@/types/models";
@@ -144,13 +145,19 @@ export async function POST(request: NextRequest) {
     // One Aladhan/cache lookup per unique location per tick
     const timingsByLocation = new Map<string, RawPrayerTimings | null>();
 
+    // Locations get the same treatment the timings already had: one query for
+    // the whole tick instead of one per user inside the loop.
+    const locationsByUserId = await getPrayerLocationsByUserIds(
+      prayerUsers.map((prefs) => prefs.userId)
+    );
+
     for (const prefs of prayerUsers) {
       try {
         if (!validatePushSubscription(prefs.pushSubscription)) continue;
         const enabled = prefs.prayerNotifications?.prayers;
         if (!enabled) continue;
 
-        const location = await getPrayerLocation(prefs.userId);
+        const location = locationsByUserId.get(prefs.userId);
         if (!location?.latitude || !location?.longitude) continue;
 
         const timezone = location.timezone || prefs.timezone;
@@ -162,7 +169,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Today's raw (24-hour) timings for this location, from cache or Aladhan
-        const locationKey = `${location.latitude},${location.longitude}`;
+        const locationKey = prayerCacheKey(location.latitude, location.longitude);
         const cacheMapKey = `${locationKey}|${local.date}`;
         let raw = timingsByLocation.get(cacheMapKey);
 

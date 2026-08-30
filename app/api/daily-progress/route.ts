@@ -5,6 +5,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDailyProgressRange } from "@/lib/supabase-queries";
 
+
+/**
+ * Per-user data. Without an explicit directive browsers apply heuristic
+ * caching to these responses, which is never right for an authenticated
+ * payload.
+ */
+const PRIVATE_NO_STORE = { "Cache-Control": "private, no-store" } as const;
+
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function GET(request: NextRequest) {
@@ -26,7 +34,7 @@ export async function GET(request: NextRequest) {
     }
 
     const progress = await getDailyProgressRange(session.user.id, from, to);
-    return NextResponse.json({ progress });
+    return NextResponse.json({ progress }, { headers: PRIVATE_NO_STORE });
   } catch (error) {
     console.error("Daily progress GET error:", error);
     return NextResponse.json(

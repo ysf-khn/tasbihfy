@@ -59,7 +59,11 @@ export async function GET(request: Request) {
       data.verse?.verse_key
     );
 
-    return Response.json(data);
+    return Response.json(data, {
+      // The whole point of this route is a different verse each time, so it is
+      // the one Quran endpoint that must never be cached.
+      headers: { "Cache-Control": "no-store" },
+    });
   } catch (error) {
     console.error("❌ /api/quran/verses/random: Error:", error);
     return new Response(

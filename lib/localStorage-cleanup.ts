@@ -8,6 +8,7 @@ const DHIKR_SESSION_PREFIX = 'dhikr-session-';
 const TEMP_DHIKR_PREFIX = 'temp-dhikr-';
 const BOOKMARK_KEYS = ['quran_verse_bookmarks'];
 const LEGACY_SURAH_BOOKMARKS_KEY = 'quran_bookmarks';
+const LEGACY_QURAN_HOOK_CACHE_PREFIX = 'quran_hook_cache_';
 const VERSE_BOOKMARKS_KEY = 'quran_verse_bookmarks';
 const GUEST_SESSIONS_KEY = 'tasbihfy-guest-sessions';
 const PRAYER_LOG_KEY = 'prayer_log';
@@ -259,6 +260,52 @@ export class LocalStorageCleanup {
   }
 
   /**
+   * Drop expired Quran payloads and the retired `quran_hook_cache_*` layer,
+   * which duplicated every surah a user read. Entries are identified by the
+   * cache-item shape, so bookmarks, last-read and settings are never touched.
+   */
+  static cleanupQuranCache(): number {
+    if (typeof window === 'undefined') return 0;
+
+    let cleaned = 0;
+
+    try {
+      const keys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('quran_')) keys.push(key);
+      }
+
+      for (const key of keys) {
+        if (key.startsWith(LEGACY_QURAN_HOOK_CACHE_PREFIX)) {
+          localStorage.removeItem(key);
+          cleaned++;
+          continue;
+        }
+
+        try {
+          const item = JSON.parse(localStorage.getItem(key) || 'null');
+          if (
+            item &&
+            typeof item === 'object' &&
+            typeof item.expires === 'number' &&
+            Date.now() > item.expires
+          ) {
+            localStorage.removeItem(key);
+            cleaned++;
+          }
+        } catch {
+          // Not a cache entry.
+        }
+      }
+    } catch (error) {
+      console.error('Failed to clean Quran cache:', error);
+    }
+
+    return cleaned;
+  }
+
+  /**
    * Get localStorage usage statistics
    */
   static getStorageStats(): StorageStats {
@@ -284,7 +331,7 @@ export class LocalStorageCleanup {
       let category = 'other';
       if (key.startsWith(DHIKR_SESSION_PREFIX)) category = 'dhikr-sessions';
       else if (key.startsWith(TEMP_DHIKR_PREFIX)) category = 'temp-dhikrs';
-      else if (key.startsWith('quran_cache_')) category = 'quran-cache';
+      else if (key.startsWith('quran_surah')) category = 'quran-cache';
       else if (BOOKMARK_KEYS.includes(key)) category = 'bookmarks';
       else if (key.includes('settings')) category = 'settings';
       else if (key.includes('guest')) category = 'guest-data';
@@ -304,6 +351,7 @@ export class LocalStorageCleanup {
     bookmarks: number;
     guestSessions: number;
     prayerLog: number;
+    quranCache: number;
     totalCleaned: number;
   } {
     const results = {
@@ -312,11 +360,13 @@ export class LocalStorageCleanup {
       bookmarks: this.limitBookmarks(),
       guestSessions: this.cleanupGuestSessions(),
       prayerLog: this.cleanupPrayerLog(),
+      quranCache: this.cleanupQuranCache(),
       totalCleaned: 0
     };
 
     results.totalCleaned = results.dhikrSessions + results.tempDhikrs +
-                          results.bookmarks + results.guestSessions + results.prayerLog;
+                          results.bookmarks + results.guestSessions +
+                          results.prayerLog + results.quranCache;
     
     console.log('localStorage cleanup completed:', results);
     return results;

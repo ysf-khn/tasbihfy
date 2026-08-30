@@ -85,9 +85,14 @@ export interface PrayerTime {
   name: string;
   time: string;
   arabicName: string;
-  isPast: boolean;
-  isNext: boolean;
-  isCurrent: boolean;
+  /**
+   * Optional because the API has never sent these: they are derived from the
+   * current clock, which only the client knows. PrayerTimesList computes them
+   * locally rather than reading them off the payload.
+   */
+  isPast?: boolean;
+  isNext?: boolean;
+  isCurrent?: boolean;
 }
 
 export interface LocationData {

@@ -20,25 +20,43 @@ interface CityData {
 interface PrayerTimesLocationClientProps {
   cityData: CityData;
   initialLocation: string;
+  /** Rendered on the server; null only if that prerender failed. */
+  initialData?: PrayerTimesData | null;
 }
 
 export default function PrayerTimesLocationClient({
   cityData,
-  initialLocation
+  initialLocation,
+  initialData = null
 }: PrayerTimesLocationClientProps) {
   const { data: session } = useSession();
-  const [prayerData, setPrayerData] = useState<PrayerTimesData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [prayerData, setPrayerData] = useState<PrayerTimesData | null>(initialData);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch prayer times for this specific location
+  // Only a fallback now: the page renders the times into the HTML, so this
+  // runs only when the server-side prerender failed.
   useEffect(() => {
+    if (initialData) return;
+
+    const controller = new AbortController();
+
     const fetchLocationPrayerTimes = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/prayer-times?location=${encodeURIComponent(cityData.name)}`);
+        // Coordinates, not the city name: cityData already carries them, and
+        // the name forces a geocode the page never needed.
+        const params = new URLSearchParams({
+          latitude: String(cityData.lat),
+          longitude: String(cityData.lng),
+          location: cityData.name,
+        });
+
+        const response = await fetch(`/api/prayer-times?${params}`, {
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -48,6 +66,7 @@ export default function PrayerTimesLocationClient({
         const data: PrayerTimesData = await response.json();
         setPrayerData(data);
       } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return;
         const errorMessage = err instanceof Error ? err.message : 'Failed to fetch prayer times';
         setError(errorMessage);
         console.error('Prayer times error:', err);
@@ -57,7 +76,9 @@ export default function PrayerTimesLocationClient({
     };
 
     fetchLocationPrayerTimes();
-  }, [initialLocation, cityData.name]);
+
+    return () => controller.abort();
+  }, [initialData, initialLocation, cityData.name, cityData.lat, cityData.lng]);
 
   // Loading state
   if (loading) {

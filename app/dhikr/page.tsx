@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useSessionTracking } from "@/hooks/useSessionTracking";
 import { useConfetti } from "@/components/ui/Confetti";
 import DhikrCounter from "@/components/counter/DhikrCounter";
-import hisnulMuslim from "@/data/hisnul-muslim-complete.json";
 import HomeDhikrCard from "@/components/dhikr/HomeDhikrCard";
 import CreateDhikrModal, { commonDhikrs } from "@/components/dhikr/CreateDhikrModal";
 import islamicTexts from "@/data/islamic-texts.json";
@@ -53,24 +52,53 @@ function DhikrContent() {
   // Instant Tasbih state (simple counter, no persistence)
   const [instantCount, setInstantCount] = useState(0);
 
-  // Create temp dhikr object for temporary sessions (memoized to prevent infinite re-renders)
-  const tempDhikr = useMemo(() => {
-    if (!isTemp || !chapterId || !duaId) return null;
+  // Temp dhikr for temporary (dua) sessions. The Hisnul Muslim data is 273 KB
+  // and is only needed on this path, so it is loaded on demand rather than
+  // statically imported into every visitor's bundle for this route.
+  const [tempDhikr, setTempDhikr] = useState<{
+    id: string;
+    name: string;
+    targetCount: number;
+    arabic: string;
+    transliteration: string;
+    source: string;
+  } | null>(null);
 
-    const chapter = hisnulMuslim.chapters.find(
-      (c) => c.id === parseInt(chapterId)
-    );
-    const dua = chapter?.duas.find((d) => d.id === parseInt(duaId));
+  useEffect(() => {
+    if (!isTemp || !chapterId || !duaId) {
+      setTempDhikr(null);
+      return;
+    }
 
-    if (!dua) return null;
+    let cancelled = false;
 
-    return {
-      id: "temp",
-      name: dua.translation,
-      targetCount: 33, // Default count for duas
-      arabic: dua.arabic,
-      transliteration: dua.transliteration,
-      source: `Hisnul Muslim - ${dua.hisnNumber}`,
+    (async () => {
+      const { default: hisnulMuslim } = await import(
+        "@/data/hisnul-muslim-complete.json"
+      );
+      if (cancelled) return;
+
+      const chapter = hisnulMuslim.chapters.find(
+        (c) => c.id === parseInt(chapterId)
+      );
+      const dua = chapter?.duas.find((d) => d.id === parseInt(duaId));
+
+      setTempDhikr(
+        dua
+          ? {
+              id: "temp",
+              name: dua.translation,
+              targetCount: 33, // Default count for duas
+              arabic: dua.arabic,
+              transliteration: dua.transliteration,
+              source: `Hisnul Muslim - ${dua.hisnNumber}`,
+            }
+          : null
+      );
+    })();
+
+    return () => {
+      cancelled = true;
     };
   }, [isTemp, chapterId, duaId]);
 

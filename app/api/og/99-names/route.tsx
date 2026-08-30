@@ -1,7 +1,8 @@
+import { withEdgeCache } from "@/lib/http/edge-cache";
 import { NextRequest } from "next/server";
 import { ImageResponse } from "next/og";
 
-export async function GET(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     return new ImageResponse(
       (
@@ -160,6 +161,12 @@ export async function GET(request: NextRequest) {
       {
         width: 1200,
         height: 630,
+        headers: {
+          // The image is a pure function of the query string, so a crawler
+          // re-hitting this URL should never re-render it.
+          "Cache-Control":
+            "public, s-maxage=604800, stale-while-revalidate=86400",
+        },
       }
     );
   } catch (e: any) {
@@ -169,3 +176,5 @@ export async function GET(request: NextRequest) {
     });
   }
 }
+
+export const GET = withEdgeCache(handler);

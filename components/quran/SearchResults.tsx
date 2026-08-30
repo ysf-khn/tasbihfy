@@ -27,8 +27,6 @@ export default function SearchResults({
   query,
   totalResults,
 }: SearchResultsProps) {
-  const scriptClass = useArabicScriptClass();
-
   if (results.length === 0) {
     return (
       <div className="card bg-base-100 border border-base-200">
@@ -63,6 +61,8 @@ export default function SearchResults({
 }
 
 function SearchResultCard({ result }: { result: QuranSearchResult }) {
+  const scriptClass = useArabicScriptClass();
+
   const [surahId, verseNumber] = result.verse_key.split(":").map(Number);
   if (!surahId || !verseNumber) return null;
 

@@ -28,6 +28,7 @@ import {
   useQuranBookmarks,
 } from "@/hooks/useQuranData";
 import { useQuranSettings } from "@/hooks/useQuranSettings";
+import { readCachedSurahArabic } from "@/lib/quran/api";
 
 // Declare gtag type for Google Analytics tracking
 declare global {
@@ -58,7 +59,7 @@ export default function QuranClient({ surahId }: QuranClientProps) {
   );
 
   // Hooks
-  const { settings } = useQuranSettings();
+  const { settings, isLoading: settingsLoading } = useQuranSettings();
   const translationIds = Array.from(settings.selectedTranslations || []);
 
   // Use different hooks based on active tab - only fetch what's needed
@@ -67,13 +68,22 @@ export default function QuranClient({ surahId }: QuranClientProps) {
     surahData: translationData,
     loading: translationLoading,
     error: translationError,
-  } = useQuranSurah(surahId, translationIds, activeTab === "translation");
+  } = useQuranSurah(
+    surahId,
+    translationIds,
+    // Wait for the stored translation choice: fetching on the defaults first
+    // means a second full-surah download for anyone who changed them.
+    activeTab === "translation" && !settingsLoading
+  );
 
   const {
     surahData: arabicData,
     loading: arabicLoading,
     error: arabicError,
-  } = useQuranSurahArabicOnly(surahId, activeTab === "reading");
+  } = useQuranSurahArabicOnly(
+    surahId,
+    activeTab === "reading" && !settingsLoading
+  );
 
   const { updateLastRead } = useLastRead();
 
@@ -85,8 +95,11 @@ export default function QuranClient({ surahId }: QuranClientProps) {
 
   // Progressive loading strategy: show Arabic immediately, load translations in background
   const surahData = activeTab === "translation" ? translationData : arabicData;
+  // Settings still loading means the fetch is gated, not finished, so keep the
+  // page in its loading state rather than flashing an empty one.
   const loading =
-    activeTab === "translation" ? translationLoading : arabicLoading;
+    settingsLoading ||
+    (activeTab === "translation" ? translationLoading : arabicLoading);
   const error = activeTab === "translation" ? translationError : arabicError;
 
   // For progressive loading: if we're in translation mode but still loading,
@@ -98,22 +111,11 @@ export default function QuranClient({ surahId }: QuranClientProps) {
 
   useEffect(() => {
     if (activeTab === "translation" && translationLoading && !translationData) {
-      // Try to get Arabic-only data from cache for immediate display
-      const arabicCacheKey = `quran_hook_cache_surah_arabic_${surahId}_${
-        settings.selectedScript || "uthmani"
-      }`;
-      try {
-        const cached = localStorage.getItem(arabicCacheKey);
-        if (cached) {
-          const { data, timestamp } = JSON.parse(cached);
-          const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
-          if (Date.now() - timestamp < CACHE_DURATION) {
-            setProgressiveData(data);
-          }
-        }
-      } catch (e) {
-        // Ignore cache errors
-      }
+      // Show the Arabic-only payload if it is already cached, so the page has
+      // text while the translated fetch is still in flight.
+      setProgressiveData(
+        readCachedSurahArabic(surahId, settings.selectedScript || "uthmani")
+      );
     } else {
       setProgressiveData(null);
     }

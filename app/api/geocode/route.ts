@@ -1,6 +1,7 @@
+import { withEdgeCache } from "@/lib/http/edge-cache";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const lat = searchParams.get("lat");
@@ -56,13 +57,23 @@ export async function GET(request: NextRequest) {
       formattedAddress += `, ${country}`;
     }
 
-    return NextResponse.json({
-      city,
-      state,
-      country,
-      countryCode,
-      formattedAddress,
-    });
+    return NextResponse.json(
+      {
+        city,
+        state,
+        country,
+        countryCode,
+        formattedAddress,
+      },
+      {
+        headers: {
+          // A coordinate-to-city mapping never changes, and this proxies
+          // rate-limited Nominatim, so it is worth caching hard.
+          "Cache-Control":
+            "public, s-maxage=2592000, stale-while-revalidate=86400",
+        },
+      }
+    );
   } catch (error) {
     console.error("Reverse geocoding error:", error);
     return NextResponse.json(
@@ -71,3 +82,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withEdgeCache(handler);

@@ -9,6 +9,14 @@ import {
 } from "@/lib/supabase-queries";
 import { z } from "zod";
 
+
+/**
+ * Per-user data. Without an explicit directive browsers apply heuristic
+ * caching to these responses, which is never right for an authenticated
+ * payload.
+ */
+const PRIVATE_NO_STORE = { "Cache-Control": "private, no-store" } as const;
+
 const updateDhikrSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   targetCount: z.number().int().min(1).max(10000).optional(),
@@ -35,7 +43,7 @@ export async function GET(
       return NextResponse.json({ error: "Dhikr not found" }, { status: 404 });
     }
 
-    return NextResponse.json(dhikr);
+    return NextResponse.json(dhikr, { headers: PRIVATE_NO_STORE });
   } catch (error) {
     console.error("Error fetching dhikr:", error);
     return NextResponse.json(

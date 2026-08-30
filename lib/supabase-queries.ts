@@ -22,6 +22,10 @@ function generateId(): string {
 export async function getDhikrsForUser(userId: string): Promise<DhikrWithSessions[]> {
   const supabase = createServerClient()
 
+  // The session filter/order/limit are pushed into the query rather than done
+  // in JS: this used to transfer every session row a user had ever created
+  // just to render a list of dhikrs. Filtering an embedded resource drops
+  // child rows without dropping the parent dhikr, which is what we want.
   const { data, error } = await supabase
     .from('Dhikr')
     .select(`
@@ -29,11 +33,13 @@ export async function getDhikrsForUser(userId: string): Promise<DhikrWithSession
       sessions:DhikrSession(*)
     `)
     .eq('userId', userId)
+    .eq('sessions.completed', false)
+    .order('startedAt', { referencedTable: 'DhikrSession', ascending: false })
+    .limit(1, { referencedTable: 'DhikrSession' })
     .order('createdAt', { ascending: false })
 
   if (error) throw error
 
-  // Filter to only incomplete sessions and take the latest
   return ((data || []) as any[]).map(dhikr => ({
     id: dhikr.id,
     userId: dhikr.userId,
@@ -45,11 +51,6 @@ export async function getDhikrsForUser(userId: string): Promise<DhikrWithSession
     arabicText: dhikr.arabicText,
     transliteration: dhikr.transliteration,
     sessions: (dhikr.sessions || [])
-      .filter((s: { completed: boolean }) => !s.completed)
-      .sort((a: { startedAt: string }, b: { startedAt: string }) =>
-        new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
-      )
-      .slice(0, 1)
       .map((s: Record<string, unknown>) => ({
         id: s.id as string,
         dhikrId: s.dhikrId as string,
@@ -66,6 +67,8 @@ export async function getDhikrsForUser(userId: string): Promise<DhikrWithSession
 export async function getDhikrById(id: string, userId: string): Promise<DhikrWithSessions | null> {
   const supabase = createServerClient()
 
+  // Same treatment as getDhikrsForUser: the latest incomplete session is the
+  // only one any caller uses, so don't transfer the user's whole history.
   const { data, error } = await supabase
     .from('Dhikr')
     .select(`
@@ -74,6 +77,9 @@ export async function getDhikrById(id: string, userId: string): Promise<DhikrWit
     `)
     .eq('id', id)
     .eq('userId', userId)
+    .eq('sessions.completed', false)
+    .order('startedAt', { referencedTable: 'DhikrSession', ascending: false })
+    .limit(1, { referencedTable: 'DhikrSession' })
     .single()
 
   if (error || !data) return null
@@ -90,9 +96,6 @@ export async function getDhikrById(id: string, userId: string): Promise<DhikrWit
     arabicText: d.arabicText,
     transliteration: d.transliteration,
     sessions: (d.sessions || [])
-      .sort((a: { startedAt: string }, b: { startedAt: string }) =>
-        new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
-      )
       .map((s: Record<string, unknown>) => ({
         id: s.id as string,
         dhikrId: s.dhikrId as string,
@@ -130,6 +133,45 @@ export async function getDhikrByIdSimple(id: string, userId: string): Promise<Dh
     arabicText: d.arabicText,
     transliteration: d.transliteration,
   }
+}
+
+/**
+ * Batch counterpart to getDhikrByIdSimple, keyed by id. The sessions batch
+ * route needs several dhikrs per flush and used to fetch them one at a time,
+ * which meant a separate Worker-to-Supabase round trip per queued update.
+ */
+export async function getDhikrsByIds(
+  ids: string[],
+  userId: string
+): Promise<Map<string, Dhikr>> {
+  const byId = new Map<string, Dhikr>()
+  if (ids.length === 0) return byId
+
+  const supabase = createServerClient()
+
+  const { data, error } = await supabase
+    .from('Dhikr')
+    .select('*')
+    .eq('userId', userId)
+    .in('id', ids)
+
+  if (error) throw error
+
+  for (const row of (data || []) as any[]) {
+    byId.set(row.id, {
+      id: row.id,
+      userId: row.userId,
+      name: row.name,
+      targetCount: row.targetCount,
+      isFavorite: row.isFavorite,
+      createdAt: new Date(row.createdAt),
+      updatedAt: new Date(row.updatedAt),
+      arabicText: row.arabicText,
+      transliteration: row.transliteration,
+    })
+  }
+
+  return byId
 }
 
 export async function createDhikr(data: {
@@ -487,6 +529,44 @@ export async function getPrayerLocation(userId: string): Promise<PrayerLocation 
   }
 }
 
+/**
+ * Batch counterpart to getPrayerLocation. The reminder cron runs every five
+ * minutes over every subscribed user and used to look each location up inside
+ * the loop, which was a Supabase round trip per user per tick.
+ */
+export async function getPrayerLocationsByUserIds(
+  userIds: string[]
+): Promise<Map<string, PrayerLocation>> {
+  const byUserId = new Map<string, PrayerLocation>()
+  if (userIds.length === 0) return byUserId
+
+  const supabase = createServerClient()
+
+  const { data, error } = await supabase
+    .from('PrayerLocation')
+    .select('*')
+    .in('userId', userIds)
+
+  if (error) throw error
+
+  for (const row of (data || []) as any[]) {
+    byUserId.set(row.userId, {
+      id: row.id,
+      userId: row.userId,
+      name: row.name,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      timezone: row.timezone,
+      country: row.country,
+      countryCode: row.countryCode,
+      createdAt: new Date(row.createdAt),
+      updatedAt: new Date(row.updatedAt),
+    })
+  }
+
+  return byUserId
+}
+
 export async function upsertPrayerLocation(
   userId: string,
   data: {
@@ -559,6 +639,33 @@ export async function upsertPrayerLocation(
 
 // ========== PRAYER TIME CACHE QUERIES ==========
 
+function mapPrayerTimeCache(row: any): PrayerTimeCache {
+  return {
+    id: row.id,
+    locationQuery: row.locationQuery,
+    date: new Date(row.date),
+    fajr: row.fajr,
+    shurooq: row.shurooq,
+    dhuhr: row.dhuhr,
+    asr: row.asr,
+    maghrib: row.maghrib,
+    isha: row.isha,
+    locationName: row.locationName ?? null,
+    qiblaDirection: row.qiblaDirection,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    timezone: row.timezone,
+    country: row.country,
+    countryCode: row.countryCode,
+    temperature: row.temperature,
+    pressure: row.pressure,
+    hijri: (row.hijri as Record<string, unknown> | null) ?? null,
+    raw: (row.raw as Record<string, string> | null) ?? null,
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+  }
+}
+
 export async function getCachedPrayerTimes(locationQuery: string, date: Date): Promise<PrayerTimeCache | null> {
   const supabase = createServerClient()
   const dateStr = date.toISOString().split('T')[0]
@@ -568,33 +675,34 @@ export async function getCachedPrayerTimes(locationQuery: string, date: Date): P
     .select('*')
     .eq('locationQuery', locationQuery.toLowerCase())
     .eq('date', dateStr)
-    .single()
+    .order('createdAt', { ascending: false })
+    .limit(1)
+    .maybeSingle()
 
   if (error || !data) return null
 
-  return {
-    id: data.id,
-    locationQuery: data.locationQuery,
-    date: new Date(data.date),
-    fajr: data.fajr,
-    shurooq: data.shurooq,
-    dhuhr: data.dhuhr,
-    asr: data.asr,
-    maghrib: data.maghrib,
-    isha: data.isha,
-    qiblaDirection: data.qiblaDirection,
-    latitude: data.latitude,
-    longitude: data.longitude,
-    timezone: data.timezone,
-    country: data.country,
-    countryCode: data.countryCode,
-    temperature: data.temperature,
-    pressure: data.pressure,
-    hijri: (data.hijri as Record<string, unknown> | null) ?? null,
-    raw: (data.raw as Record<string, string> | null) ?? null,
-    createdAt: new Date(data.createdAt),
-    updatedAt: new Date(data.updatedAt),
-  }
+  return mapPrayerTimeCache(data)
+}
+
+/**
+ * Newest cached row for a location, whatever its date. Two uses: it answers
+ * "is today already cached?" and, when it isn't, it carries the resolved
+ * city/country/timezone so a cold day never needs a fresh geocode.
+ */
+export async function getLatestPrayerCache(locationQuery: string): Promise<PrayerTimeCache | null> {
+  const supabase = createServerClient()
+
+  const { data, error } = await supabase
+    .from('PrayerTimeCache')
+    .select('*')
+    .eq('locationQuery', locationQuery.toLowerCase())
+    .order('date', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error || !data) return null
+
+  return mapPrayerTimeCache(data)
 }
 
 export async function cachePrayerTimes(data: {
@@ -606,6 +714,7 @@ export async function cachePrayerTimes(data: {
   asr: string
   maghrib: string
   isha: string
+  locationName?: string | null
   qiblaDirection?: string | null
   latitude?: string | null
   longitude?: string | null
@@ -620,9 +729,7 @@ export async function cachePrayerTimes(data: {
   const supabase = createServerClient()
 
   const now = new Date().toISOString()
-  const { data: cache, error } = await supabase
-    .from('PrayerTimeCache')
-    .insert({
+  const row = {
       id: generateId(),
       locationQuery: data.locationQuery.toLowerCase(),
       date: data.date.toISOString().split('T')[0],
@@ -632,6 +739,7 @@ export async function cachePrayerTimes(data: {
       asr: data.asr,
       maghrib: data.maghrib,
       isha: data.isha,
+      locationName: data.locationName ?? null,
       qiblaDirection: data.qiblaDirection ?? null,
       latitude: data.latitude ?? null,
       longitude: data.longitude ?? null,
@@ -644,35 +752,29 @@ export async function cachePrayerTimes(data: {
       raw: data.raw ?? null,
       createdAt: now,
       updatedAt: now,
-    })
+  }
+
+  let { data: cache, error } = await supabase
+    .from('PrayerTimeCache')
+    .insert(row)
     .select()
     .single()
 
+  // `locationName` arrived with migrations/2026-08-29-prayer-cache-name.sql.
+  // Until that has been run the column is missing; caching still has to work,
+  // so retry once without it rather than losing the whole row.
+  if (error && /locationName/.test(error.message ?? '')) {
+    const { locationName, ...withoutName } = row
+    ;({ data: cache, error } = await supabase
+      .from('PrayerTimeCache')
+      .insert(withoutName)
+      .select()
+      .single())
+  }
+
   if (error) throw error
 
-  return {
-    id: cache.id,
-    locationQuery: cache.locationQuery,
-    date: new Date(cache.date),
-    fajr: cache.fajr,
-    shurooq: cache.shurooq,
-    dhuhr: cache.dhuhr,
-    asr: cache.asr,
-    maghrib: cache.maghrib,
-    isha: cache.isha,
-    qiblaDirection: cache.qiblaDirection,
-    latitude: cache.latitude,
-    longitude: cache.longitude,
-    timezone: cache.timezone,
-    country: cache.country,
-    countryCode: cache.countryCode,
-    temperature: cache.temperature,
-    pressure: cache.pressure,
-    hijri: (cache.hijri as Record<string, unknown> | null) ?? null,
-    raw: (cache.raw as Record<string, string> | null) ?? null,
-    createdAt: new Date(cache.createdAt),
-    updatedAt: new Date(cache.updatedAt),
-  }
+  return mapPrayerTimeCache(cache)
 }
 
 export async function deleteOldPrayerCache(locationQuery: string, beforeDate: Date): Promise<void> {

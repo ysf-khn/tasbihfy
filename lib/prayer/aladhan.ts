@@ -1,6 +1,5 @@
 import {
   AladhanHijriDate,
-  AladhanQiblaResponse,
   AladhanTimingsResponse,
   HijriDate,
   MonthlyTimetableDay,
@@ -275,24 +274,30 @@ export async function fetchMonthlyCalendar(
   });
 }
 
-/** Qibla is a separate endpoint; a failure here shouldn't sink the whole request. */
-export async function fetchQiblaDirection(
+/**
+ * Qibla bearing (degrees clockwise from true north) toward the Kaaba.
+ * This used to be an upstream Aladhan request; it is five lines of spherical
+ * trigonometry and a pure function of the coordinates, so it runs locally.
+ */
+const KAABA_LATITUDE = 21.4225;
+const KAABA_LONGITUDE = 39.8262;
+
+export function computeQiblaDirection(
   latitude: number,
   longitude: number
-): Promise<string | null> {
-  try {
-    const response = await fetch(
-      `${ALADHAN_BASE}/qibla/${latitude}/${longitude}`
-    );
+): string {
+  const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 
-    if (!response.ok) return null;
+  const lat = toRadians(latitude);
+  const kaabaLat = toRadians(KAABA_LATITUDE);
+  const deltaLon = toRadians(KAABA_LONGITUDE - longitude);
 
-    const body: AladhanQiblaResponse = await response.json();
-    const direction = body.data?.direction;
+  const y = Math.sin(deltaLon) * Math.cos(kaabaLat);
+  const x =
+    Math.cos(lat) * Math.sin(kaabaLat) -
+    Math.sin(lat) * Math.cos(kaabaLat) * Math.cos(deltaLon);
 
-    return typeof direction === "number" ? direction.toFixed(2) : null;
-  } catch (error) {
-    console.warn("Qibla lookup failed:", error);
-    return null;
-  }
+  const bearing = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+
+  return bearing.toFixed(2);
 }

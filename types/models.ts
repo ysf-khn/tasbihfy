@@ -97,6 +97,8 @@ export interface PrayerLocation {
 export interface PrayerTimeCache {
   id: string
   locationQuery: string
+  /** Resolved display name ("Karachi"), so a cache hit never shows raw coords. */
+  locationName: string | null
   date: Date
   fajr: string
   shurooq: string

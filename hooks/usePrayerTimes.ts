@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from '@/lib/auth-client';
 import { PrayerTimesData, PrayerTime } from '@/types/prayer';
 
@@ -130,8 +130,17 @@ export function usePrayerTimes(): UsePrayerTimesResult {
     return null;
   }, [session?.user]);
 
+  // In-flight request, so a refetch (location change, manual refresh) cancels
+  // the previous one instead of letting a slower response land last.
+  const inFlightRef = useRef<AbortController | null>(null);
+
   // Fetch prayer times from API
   const fetchPrayerTimes = useCallback(async (locationQuery?: string) => {
+    inFlightRef.current?.abort();
+    const controller = new AbortController();
+    inFlightRef.current = controller;
+    const isStale = () => inFlightRef.current !== controller;
+
     try {
       setLoading(true);
       setError(null);
@@ -142,6 +151,15 @@ export function usePrayerTimes(): UsePrayerTimesResult {
       }
 
       const searchParams = new URLSearchParams();
+
+      // The server can't tell which day the user is on from a UTC clock, and
+      // getting it wrong shifts the Hijri date by one.
+      try {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (timezone) searchParams.append('tz', timezone);
+      } catch {
+        // Fall back to the server's own derivation.
+      }
 
       if (location) {
         searchParams.append('location', location);
@@ -162,7 +180,9 @@ export function usePrayerTimes(): UsePrayerTimesResult {
         searchParams.append('longitude', String(position.coords.longitude));
       }
 
-      const response = await fetch(`/api/prayer-times?${searchParams}`);
+      const response = await fetch(`/api/prayer-times?${searchParams}`, {
+        signal: controller.signal,
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -170,6 +190,7 @@ export function usePrayerTimes(): UsePrayerTimesResult {
       }
 
       const data: PrayerTimesData = await response.json();
+      if (isStale()) return;
       setPrayerData(data);
       saveToCache(data);
 
@@ -199,12 +220,20 @@ export function usePrayerTimes(): UsePrayerTimesResult {
       }
 
     } catch (err: any) {
+      // An abort is this hook superseding itself, not a failure to report.
+      if (err?.name === 'AbortError' || isStale()) return;
       setError(err.message || 'Failed to fetch prayer times');
       console.error('Error fetching prayer times:', err);
     } finally {
-      setLoading(false);
+      if (!isStale()) {
+        inFlightRef.current = null;
+        setLoading(false);
+      }
     }
   }, [getSavedLocation, saveToCache, session?.user]);
+
+  // Drop any in-flight request when the consumer unmounts.
+  useEffect(() => () => inFlightRef.current?.abort(), []);
 
   // Calculate next prayer
   const calculateNextPrayer = useCallback(() => {

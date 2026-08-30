@@ -6,6 +6,14 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { togglePrayerLog, getPrayerLogRange } from "@/lib/supabase-queries";
 
+
+/**
+ * Per-user data. Without an explicit directive browsers apply heuristic
+ * caching to these responses, which is never right for an authenticated
+ * payload.
+ */
+const PRIVATE_NO_STORE = { "Cache-Control": "private, no-store" } as const;
+
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 const toggleSchema = z.object({
@@ -32,7 +40,7 @@ export async function GET(request: NextRequest) {
     }
 
     const logs = await getPrayerLogRange(session.user.id, from, to);
-    return NextResponse.json({ logs });
+    return NextResponse.json({ logs }, { headers: PRIVATE_NO_STORE });
   } catch (error) {
     console.error("Prayer log GET error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

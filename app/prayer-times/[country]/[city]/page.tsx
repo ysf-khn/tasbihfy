@@ -3,6 +3,14 @@ import { notFound } from "next/navigation";
 import { cities, findCity, popularSearchTerms } from "@/data/cities";
 import StructuredData from "@/components/seo/StructuredData";
 import PrayerTimesLocationClient from "./PrayerTimesLocationClient";
+import { getPrayerTimes } from "@/lib/prayer/prayer-times-service";
+import type { PrayerTimesData } from "@/types/prayer";
+
+// These pages exist to rank for "prayer times in <city>". Rendering the times
+// into the HTML (rather than fetching them from the browser) is what makes
+// them worth crawling, and an hour is well inside the tolerance of a daily
+// prayer schedule.
+export const revalidate = 3600;
 
 // Generate metadata for each city
 export async function generateMetadata({
@@ -107,6 +115,25 @@ export default async function PrayerTimesLocationPage({
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://tasbihfy.com";
   const pageUrl = `${baseUrl}/prayer-times/${country}/${city}`;
+
+  // The city's coordinates are already known, so pass them instead of the name
+  // and skip a geocode the page never needed. A failure here must not take the
+  // page down: the client falls back to fetching.
+  let initialData: PrayerTimesData | null = null;
+  try {
+    initialData = await getPrayerTimes({
+      latitude: cityData.lat,
+      longitude: cityData.lng,
+      location: cityData.name,
+      known: {
+        name: cityData.name,
+        country: cityData.country,
+        countryCode: cityData.countryCode,
+      },
+    });
+  } catch (error) {
+    console.warn(`Prayer times prerender failed for ${cityData.name}:`, error);
+  }
 
   // Structured data for prayer times page
   const structuredData = {
@@ -226,6 +253,7 @@ export default async function PrayerTimesLocationPage({
       <PrayerTimesLocationClient
         cityData={cityData}
         initialLocation={`${cityData.lat},${cityData.lng}`}
+        initialData={initialData}
       />
     </>
   );
